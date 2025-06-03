@@ -1,24 +1,17 @@
-//
-//  LoginView.swift
-//  GeniusParentingAISwift
-//
-//  Created by James Tang on 2025/6/1.
-//
-
-
 import SwiftUI
 import KeychainAccess
 
 struct LoginView: View {
+    @Binding var isLoggedIn: Bool // Binding to control login state
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
-    @State private var isLoggedIn = false
+    @State private var isShowingSignup = false // To control navigation to SignupView
 
-    let keychain = Keychain(service: "com.yourcompany.GeniusParentingAISwift")
+    let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
-        NavigationView {
+        ZStack {
             VStack(spacing: 20) {
                 Text("GeniusParentingAISwift")
                     .font(.largeTitle)
@@ -52,19 +45,28 @@ struct LoginView: View {
                 }
                 .padding(.horizontal)
 
-                NavigationLink("Sign Up", destination: SignupView())
-                    .padding()
-
-                NavigationLink(destination: MainView(), isActive: $isLoggedIn) {
-                    EmptyView()
+                Button(action: {
+                    // Navigate to SignupView
+                    isShowingSignup = true
+                }) {
+                    Text("Don't have an account? Sign Up")
+                        .foregroundColor(.blue)
                 }
+                .padding()
             }
             .padding()
+
+            // Show SignupView when requested
+            if isShowingSignup {
+                SignupView(isLoggedIn: $isLoggedIn)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()
+            }
         }
     }
 
     func login() {
-        let url = URL(string: "https://strapi.geniusParentingAI.ca/api/auth/local")!
+        let url = URL(string: "https://strapi.geniusparentingai.ca/api/auth/local")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -75,10 +77,19 @@ struct LoginView: View {
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
+                    print("Network error: \(error.localizedDescription)") // Debug log
                     errorMessage = "Network error: \(error.localizedDescription)"
                     return
                 }
-                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    errorMessage = "Invalid response from server"
+                    return
+                }
+                print("Status code: \(httpResponse.statusCode)") // Debug log
+                if let data = data, let dataString = String(data: data, encoding: .utf8) {
+                    print("Response data: \(dataString)") // Debug log
+                }
+                guard httpResponse.statusCode == 200,
                       let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let jwt = json["jwt"] as? String else {
@@ -94,6 +105,6 @@ struct LoginView: View {
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView()
+        LoginView(isLoggedIn: .constant(false))
     }
 }
