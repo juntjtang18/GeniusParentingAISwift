@@ -3,64 +3,66 @@ import KeychainAccess
 
 struct LoginView: View {
     @Binding var isLoggedIn: Bool // Binding to control login state
+    @State private var currentView: ViewState = .login // State to manage active view
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
-    @State private var isShowingSignup = false // To control navigation to SignupView
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
+    // Enum to manage view states
+    enum ViewState {
+        case login
+        case signup
+    }
+
     var body: some View {
-        ZStack {
-            VStack(spacing: 20) {
-                Text("GeniusParentingAISwift")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+        Group {
+            if currentView == .login {
+                VStack(spacing: 20) {
+                    Text("GeniusParentingAISwift")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
 
-                TextField("Email", text: $email)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
+                    TextField("Email", text: $email)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                        .padding(.horizontal)
+
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal)
+
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    }
+
+                    Button(action: {
+                        login()
+                    }) {
+                        Text("Login")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                    }
                     .padding(.horizontal)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-
-                if !errorMessage.isEmpty {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-
-                Button(action: {
-                    login()
-                }) {
-                    Text("Login")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                }
-                .padding(.horizontal)
-
-                Button(action: {
-                    // Navigate to SignupView
-                    isShowingSignup = true
-                }) {
-                    Text("Don't have an account? Sign Up")
-                        .foregroundColor(.blue)
+                    Button(action: {
+                        currentView = .signup // Switch to SignupView
+                    }) {
+                        Text("Don't have an account? Sign Up")
+                            .foregroundColor(.blue)
+                    }
+                    .padding()
                 }
                 .padding()
-            }
-            .padding()
-
-            // Show SignupView when requested
-            if isShowingSignup {
-                SignupView(isLoggedIn: $isLoggedIn)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .ignoresSafeArea()
+            } else if currentView == .signup {
+                SignupView(isLoggedIn: $isLoggedIn, currentView: $currentView)
             }
         }
     }
@@ -77,7 +79,7 @@ struct LoginView: View {
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("Network error: \(error.localizedDescription)") // Debug log
+                    print("Network error: \(error.localizedDescription)")
                     errorMessage = "Network error: \(error.localizedDescription)"
                     return
                 }
@@ -85,9 +87,9 @@ struct LoginView: View {
                     errorMessage = "Invalid response from server"
                     return
                 }
-                print("Status code: \(httpResponse.statusCode)") // Debug log
+                print("Status code: \(httpResponse.statusCode)")
                 if let data = data, let dataString = String(data: data, encoding: .utf8) {
-                    print("Response data: \(dataString)") // Debug log
+                    print("Response data: \(dataString)")
                 }
                 guard httpResponse.statusCode == 200,
                       let data = data,

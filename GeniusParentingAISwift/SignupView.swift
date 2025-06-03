@@ -3,71 +3,73 @@ import KeychainAccess
 
 struct SignupView: View {
     @Binding var isLoggedIn: Bool // Binding to control login state
+    @Binding var currentView: LoginView.ViewState // Binding to manage view state
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var errorMessage = ""
-    @State private var isSignupSuccessful = false // To control navigation to LoginView
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 20) {
-                Text("Sign Up for GeniusParentingAISwift")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
-                TextField("Email", text: $email)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
-                    .padding(.horizontal)
-
-                SecureField("Password", text: $password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-
-                SecureField("Confirm Password", text: $confirmPassword)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-
-                if !errorMessage.isEmpty {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-
+        VStack(spacing: 20) {
+            // Custom Back Button
+            HStack {
                 Button(action: {
-                    signup()
+                    currentView = .login // Return to LoginView
                 }) {
-                    Text("Sign Up")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                }
-                .padding(.horizontal)
-
-                Button(action: {
-                    // Navigate back to LoginView
-                    isSignupSuccessful = true
-                }) {
-                    Text("Already have an account? Log In")
-                        .foregroundColor(.blue)
+                    Image(systemName: "chevron.left")
+                    Text("Back")
                 }
                 .padding()
+                Spacer()
+            }
+
+            Text("Sign Up for GeniusParentingAISwift")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            TextField("Email", text: $email)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .autocapitalization(.none)
+                .keyboardType(.emailAddress)
+                .padding(.horizontal)
+
+            SecureField("Password", text: $password)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+
+            SecureField("Confirm Password", text: $confirmPassword)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+
+            if !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+
+            Button(action: {
+                signup()
+            }) {
+                Text("Sign Up")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+            }
+            .padding(.horizontal)
+
+            Button(action: {
+                currentView = .login // Navigate back to LoginView
+            }) {
+                Text("Already have an account? Log In")
+                    .foregroundColor(.blue)
             }
             .padding()
-
-            // Show LoginView after successful signup or manual navigation
-            if isSignupSuccessful {
-                LoginView(isLoggedIn: $isLoggedIn)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .ignoresSafeArea()
-            }
         }
+        .padding()
     }
 
     func signup() {
@@ -93,7 +95,7 @@ struct SignupView: View {
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("Network error: \(error.localizedDescription)") // Debug log
+                    print("Network error: \(error.localizedDescription)")
                     errorMessage = "Network error: \(error.localizedDescription)"
                     return
                 }
@@ -101,9 +103,9 @@ struct SignupView: View {
                     errorMessage = "Invalid response from server"
                     return
                 }
-                print("Status code: \(httpResponse.statusCode)") // Debug log
+                print("Status code: \(httpResponse.statusCode)")
                 if let data = data, let dataString = String(data: data, encoding: .utf8) {
-                    print("Response data: \(dataString)") // Debug log
+                    print("Response data: \(dataString)")
                 }
                 guard httpResponse.statusCode == 200,
                       let data = data,
@@ -112,9 +114,8 @@ struct SignupView: View {
                     errorMessage = "Signup failed. Please try again."
                     return
                 }
-                // Store JWT and navigate to LoginView
                 keychain["jwt"] = jwt
-                isSignupSuccessful = true
+                currentView = .login // Navigate back to LoginView after successful signup
             }
         }.resume()
     }
@@ -122,6 +123,6 @@ struct SignupView: View {
 
 struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
-        SignupView(isLoggedIn: .constant(false))
+        SignupView(isLoggedIn: .constant(false), currentView: .constant(.signup))
     }
 }
