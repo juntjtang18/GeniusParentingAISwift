@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1A53DA462DEE763A00C1AD2B /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 1A53DA452DEE763A00C1AD2B /* KeychainAccess */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1A6281172DECC52600DD0D1C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +33,22 @@
 		1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1A6281342DECC5FF00DD0D1C /* Exceptions for "GeniusParentingAISwift" folder in "GeniusParentingAISwift" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1A6281052DECC52400DD0D1C /* GeniusParentingAISwift */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1A6281342DECC5FF00DD0D1C /* Exceptions for "GeniusParentingAISwift" folder in "GeniusParentingAISwift" target */,
+			);
 			path = GeniusParentingAISwift;
 			sourceTree = "<group>";
 		};
@@ -52,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A53DA462DEE763A00C1AD2B /* KeychainAccess in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +96,7 @@
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
 				1A6281232DECC52600DD0D1C /* GeniusParentingAISwiftUITests */,
+				1A6281382DED033A00DD0D1C /* Frameworks */,
 				1A6281072DECC52400DD0D1C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +109,13 @@
 				1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1A6281382DED033A00DD0D1C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +138,7 @@
 			);
 			name = GeniusParentingAISwift;
 			packageProductDependencies = (
+				1A53DA452DEE763A00C1AD2B /* KeychainAccess */,
 			);
 			productName = GeniusParentingAISwift;
 			productReference = 1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */;
@@ -195,6 +222,9 @@
 			);
 			mainGroup = 1A6280FD2DECC52400DD0D1C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1A6281352DECF86C00DD0D1C /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A6281072DECC52400DD0D1C /* Products */;
 			projectDirPath = "";
@@ -399,6 +429,7 @@
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GeniusParentingAISwift/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +459,7 @@
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GeniusParentingAISwift/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -558,6 +590,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1A6281352DECF86C00DD0D1C /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1A53DA452DEE763A00C1AD2B /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A6281352DECF86C00DD0D1C /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A6280FE2DECC52400DD0D1C /* Project object */;
 }
