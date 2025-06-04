@@ -124,18 +124,13 @@ struct MainView: View {
             }
             .tag(0)
 
-            // Course Tab (Placeholder)
-            VStack {
-                Text("Course View")
-                    .font(.title)
-                    .padding()
-                Spacer()
-            }
-            .tabItem {
-                Image(systemName: "book.fill")
-                Text("Course")
-            }
-            .tag(1)
+            // Course Tab
+            CourseView()
+                .tabItem {
+                    Image(systemName: "book.fill")
+                    Text("Course")
+                }
+                .tag(1)
 
             // AI Tab (Placeholder)
             VStack {

@@ -84,7 +84,7 @@ struct SignupView: View {
         }
 
         // Strapi signup endpoint
-        let url = URL(string: "https://strapi.geniusparentingai.ca/api/auth/local/register")!
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

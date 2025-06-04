@@ -68,7 +68,7 @@ struct LoginView: View {
     }
 
     func login() {
-        let url = URL(string: "https://strapi.geniusparentingai.ca/api/auth/local")!
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
