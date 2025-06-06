@@ -1,5 +1,5 @@
 import SwiftUI
-import AVKit  // For VideoPlayer and AVPlayerViewController
+import AVKit  // For VideoPlayer, AVPlayerViewController, AVAsset, AVAssetImageGenerator
 import WebKit // For VideoPlayerWebView
 
 // MARK: - Content Component View
@@ -9,7 +9,7 @@ struct ContentComponentView: View {
     let language: String
     @StateObject private var speechManager = SpeechManager()
     @State private var webViewForExternalVideo: WKWebView? = nil
-    @State private var showUploadedVideoPlayer = false // State to control modal presentation
+    @State private var showUploadedVideoPlayer = false
 
     var body: some View {
         let _ = print("\n--- Rendering Component: \(contentItem.__component) (ID: \(contentItem.id ?? -1)) ---")
@@ -20,13 +20,16 @@ struct ContentComponentView: View {
                 let _ = print("    - Data: '\(contentItem.data ?? "nil")'")
                 if let textData = contentItem.data, !textData.isEmpty {
                     Text(textData)
-                        .font(.system(size: contentItem.style?.fontSize ?? 17,
+                        .font(.system(size: contentItem.style?.fontSize ?? 16,
                                       weight: contentItem.style?.isBold == true ? .bold : .regular))
                         .italic(contentItem.style?.isItalic == true)
                         .foregroundColor(Color(hex: contentItem.style?.fontColor ?? "#333333"))
                         .lineSpacing(5)
                         .multilineTextAlignment(textAlignmentFor(contentItem.style?.textAlign))
+                        // This modifier ensures text wraps instead of expanding horizontally.
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: frameAlignmentFor(contentItem.style?.textAlign))
+                    
                     HStack {
                         Spacer()
                         Button(action: {
@@ -64,29 +67,28 @@ struct ContentComponentView: View {
                 let _ = print("    - Media Object: \(contentItem.videoFile != nil ? "Present" : "nil") | URL: \(contentItem.videoFile?.data?.attributes.url ?? "nil")")
                 if let media = contentItem.videoFile?.data {
                    if let videoURL = URL(string: media.attributes.url) {
-                        // --- UPDATED VIDEO PLAYER LOGIC ---
-                        // Show a placeholder with a play button instead of embedding the player directly.
+                        // --- ROLLED BACK TO STABLE VERSION ---
+                        // Show a simple placeholder with a play button instead of the thumbnail generator.
+                        // This avoids the complex layout timing issue that was affecting the text component.
                         ZStack {
-                            // Placeholder background
-                            Rectangle()
-                                .fill(Color.black.opacity(0.8))
-                                .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
-                                .cornerRadius(10)
+                            Color.black // Simple, stable placeholder
                             
-                            // Play button
                             Button(action: {
                                 self.showUploadedVideoPlayer = true
                             }) {
                                 Image(systemName: "play.circle.fill")
                                     .font(.system(size: 60))
-                                    .foregroundColor(.white.opacity(0.9))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .shadow(radius: 5)
                             }
                         }
+                        .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
+                        .cornerRadius(10)
+                        .clipped()
                         .sheet(isPresented: $showUploadedVideoPlayer) {
-                            // Present the robust video player modally
                             UploadedVideoPlayerView(url: videoURL)
                         }
-                        // --- END OF UPDATED LOGIC ---
+                        // --- END OF ROLLBACK ---
 
                         if let caption = media.attributes.caption, !caption.isEmpty {
                             Text(caption).font(.caption).foregroundColor(.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
@@ -95,7 +97,7 @@ struct ContentComponentView: View {
                 } else { Text("Uploaded video not available.").foregroundColor(.red).padding() }
 
             case "coursecontent.external-video":
-                 let _ = print("    - URL: \(contentItem.externalUrl ?? "nil") | Thumbnail: \(contentItem.thumbnail?.data?.attributes.url ?? "nil")")
+                let _ = print("    - URL: \(contentItem.externalUrl ?? "nil") | Thumbnail: \(contentItem.thumbnail?.data?.attributes.url ?? "nil")")
                 VStack(alignment: .leading, spacing: 5) {
                     if let thumbnailMedia = contentItem.thumbnail?.data {
                        if let thumbnailUrl = URL(string: thumbnailMedia.attributes.url) {
@@ -163,7 +165,7 @@ struct ContentComponentView: View {
         .padding(.vertical, 8)
     }
 
-    // Helper functions
+    // ... Helper functions remain unchanged ...
     private func alignmentFor(_ textAlign: String?) -> HorizontalAlignment {
         switch textAlign?.lowercased() { case "center": .center; case "right": .trailing; default: .leading }
     }
@@ -179,8 +181,42 @@ struct ContentComponentView: View {
     }
 }
 
-// MARK: - Dedicated View for Uploaded Videos
-/// A robust video player view that wraps AVPlayerViewController to provide full native controls.
+// NOTE: VideoThumbnailGeneratorView is no longer used in this version and could be removed from the project
+// to avoid confusion, but is left here for reference.
+struct VideoThumbnailGeneratorView: View {
+    let videoUrl: URL
+    @State private var thumbnailImage: Image? = nil
+    var body: some View {
+        ZStack {
+            if let image = thumbnailImage { image.resizable().aspectRatio(contentMode: .fill) }
+            else { Color.black.onAppear(perform: generateThumbnail) }
+        }
+    }
+    private func generateThumbnail() {
+        Task(priority: .userInitiated) {
+            let image = await getThumbnailImage(from: videoUrl)
+            await MainActor.run {
+                if let image = image { self.thumbnailImage = Image(uiImage: image) }
+            }
+        }
+    }
+    private func getThumbnailImage(from url: URL) async -> UIImage? {
+        // ... implementation for thumbnail generation ...
+        let asset = AVAsset(url: url)
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.appliesPreferredTrackTransform = true
+        guard let duration = try? await asset.load(.duration), duration.seconds > 0 else { return nil }
+        let time = CMTime(seconds: min(1.0, duration.seconds), preferredTimescale: 600)
+        do {
+            let cgImage = try await imageGenerator.image(at: time).image
+            return UIImage(cgImage: cgImage)
+        } catch { return nil }
+    }
+}
+
+
+// MARK: - Dedicated View for Uploaded Videos (AVPlayerViewController wrapper)
+
 struct UploadedVideoPlayerView: UIViewControllerRepresentable {
     let url: URL
 
@@ -189,26 +225,14 @@ struct UploadedVideoPlayerView: UIViewControllerRepresentable {
         let controller = AVPlayerViewController()
         controller.player = player
         controller.showsPlaybackControls = true
-        
-        // Configuration for embedding
         controller.entersFullScreenWhenPlaybackBegins = false
         controller.exitsFullScreenWhenPlaybackEnds = true
-
-        // Optional: auto-play when the view appears.
-        // Be mindful of user experience; sometimes it's better to let the user initiate playback.
         player.play() // Autoplay when presented
-        
         print("UploadedVideoPlayerView (AVPlayerViewController) created for URL: \(url.absoluteString)")
         return controller
     }
 
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-        // This function is used to update the view controller when SwiftUI state changes.
-        // If the URL could change, you would update the player's current item here.
-        // For a fixed URL, this is often empty.
-        // Example if URL could change:
-        // if uiViewController.player?.currentItem?.asset != AVAsset(url: url) {
-        //     uiViewController.player?.replaceCurrentItem(with: AVPlayerItem(url: url))
-        // }
+        // No update logic needed for a fixed URL
     }
 }
