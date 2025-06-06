@@ -9,7 +9,11 @@ struct ContentComponentView: View {
     let language: String // For speech synthesis, if components have translatable text
     @StateObject private var speechManager = SpeechManager()
 
-    // Each instance of VideoPlayerWebView needs its own WKWebView state.
+    // State variables for quiz interactivity, scoped to this component instance
+    @State private var selectedOption: String? = nil
+    @State private var isAnswerSubmitted = false
+    
+    // State for WKWebView, specific to each instance of VideoPlayerWebView if used
     @State private var webViewForExternalVideo: WKWebView? = nil
 
     var body: some View {
@@ -129,10 +133,7 @@ struct ContentComponentView: View {
                 }
 
             case "coursecontent.quiz":
-                let _ = print("""
-                    - Type: Quiz
-                    - Question: \(contentItem.question ?? "nil")
-                """)
+                let _ = print("    - Question: \(contentItem.question ?? "nil")")
                 VStack(alignment: .leading, spacing: 12) {
                     if let questionText = contentItem.question, !questionText.isEmpty {
                         Text(questionText).font(.headline).padding(.bottom, 5)
@@ -140,19 +141,55 @@ struct ContentComponentView: View {
                     if let optionsArray = contentItem.options {
                         ForEach(optionsArray, id: \.self) { optionText in
                             Button(action: {
-                                print("Quiz Option: \(optionText) tapped. Correct: \(contentItem.correctAnswer ?? "N/A")")
+                                if !isAnswerSubmitted { // Allow selection only once
+                                    selectedOption = optionText
+                                    isAnswerSubmitted = true
+                                }
                             }) {
                                 HStack {
                                     Text(optionText).foregroundColor(Color(UIColor.label))
                                     Spacer()
+                                    
+                                    // Logic for visual feedback
+                                    if isAnswerSubmitted {
+                                        if optionText == contentItem.correctAnswer {
+                                            // Always show the green check on the correct answer once submitted
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.green)
+                                                .font(.headline)
+                                        } else if optionText == selectedOption {
+                                            // Show a red cross on the user's incorrect selection
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.red)
+                                                .font(.headline)
+                                        }
+                                    }
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(8)
+                                .overlay(
+                                    // Add a border to indicate selection
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(selectedOption == optionText ? Color.accentColor : Color.clear, lineWidth: 2)
+                                )
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .disabled(isAnswerSubmitted) // Disable button after submission
                         }
+                    }
+                    
+                    // Show the correct answer explanation if a wrong answer was selected
+                    if isAnswerSubmitted, let selected = selectedOption, selected != contentItem.correctAnswer {
+                        HStack(alignment: .top) {
+                            Image(systemName: "info.circle.fill").foregroundColor(.blue)
+                            Text("The correct answer is: **\(contentItem.correctAnswer ?? "N/A")**")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 10)
+                        .transition(.opacity.animation(.easeInOut))
                     }
                 }.padding()
 
