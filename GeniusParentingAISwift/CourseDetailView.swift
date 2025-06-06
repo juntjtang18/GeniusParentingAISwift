@@ -43,28 +43,32 @@ struct ShowACourseView: View {
                     TabView(selection: $currentPageIndex) {
                         ForEach(pages.indices, id: \.self) { pageIndex in
                             ScrollView {
+                                // --- FIXED: The parent VStack is now explicitly constrained ---
+                                // This creates a stable layout boundary for all child components,
+                                // ensuring Text views wrap correctly without expanding off-screen.
                                 VStack(alignment: .leading, spacing: 15) {
                                     ForEach(pages[pageIndex], id: \.uniqueIdForList) { item in
-                                        if item.__component != "content.pagebreaker" {
+                                        if item.__component != "coursecontent.pagebreaker" {
                                             ContentComponentView(contentItem: item, language: selectedLanguage)
                                                 .id(item.uniqueIdForList)
                                         }
                                     }
-                                }.padding()
+                                }
+                                .padding(.horizontal) // Apply horizontal padding to the VStack's content
+                                .frame(maxWidth: .infinity, alignment: .leading) // Constrain the VStack to the screen width
                             }.tag(pageIndex)
                         }
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // Hides default dots
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                     .animation(.easeInOut, value: currentPageIndex)
                     
-                    // Custom Navigation Controls
                     HStack {
                         let pageBreakerSettings = findPageBreakerSettings(forCurrentPage: currentPageIndex, totalPages: pages.count, allContent: course.content ?? [])
                         
                         if pageBreakerSettings.showBackButton {
                             Button { withAnimation { currentPageIndex -= 1 } } label: { Image(systemName: "arrow.left.circle.fill").font(.title) }
                         } else {
-                            Spacer().frame(width: 44) // Keep spacing consistent if button is hidden
+                            Spacer().frame(width: 44)
                         }
                         Spacer()
                         Text("Page \(currentPageIndex + 1) of \(pages.count)").font(.caption)
@@ -72,59 +76,67 @@ struct ShowACourseView: View {
                         if pageBreakerSettings.showNextButton {
                             Button { withAnimation { currentPageIndex += 1 } } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
                         } else {
-                             Spacer().frame(width: 44) // Keep spacing consistent
+                             Spacer().frame(width: 44)
                         }
                     }.padding()
                 } else {
                     Text("No content for this course.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-            } else if !viewModel.isLoading { // Course is nil, not loading, no error yet means no data
+            } else if !viewModel.isLoading {
                  Text("Course data not found.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationTitle(viewModel.course?.translations?[selectedLanguage]?.title ?? viewModel.course?.title ?? "Course")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    Task {
+                        await viewModel.fetchCourse(courseId: courseId)
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                  Button { showLanguagePicker = true } label: { Image(systemName: "globe") }
             }
         }
         .popover(isPresented: $showLanguagePicker) { LanguagePickerView(selectedLanguage: $selectedLanguage) }
-        .task { await viewModel.fetchCourse(courseId: courseId) }
+        .task {
+            if viewModel.course == nil {
+                await viewModel.fetchCourse(courseId: courseId)
+            }
+        }
     }
 
     func groupContentIntoPages(content: [Content]) -> [[Content]] {
         var pages: [[Content]] = []
         var currentPage: [Content] = []
         for item in content {
-            if item.__component == "content.pagebreaker" {
+            if item.__component == "coursecontent.pagebreaker" {
                 if !currentPage.isEmpty { pages.append(currentPage) }
-                currentPage = [] // Pagebreaker itself doesn't go onto a page
+                currentPage = []
             } else { currentPage.append(item) }
         }
         if !currentPage.isEmpty { pages.append(currentPage) }
-        // If there's content but no pagebreakers, it's all one page
         if pages.isEmpty && !content.isEmpty {
-            pages.append(content.filter { $0.__component != "content.pagebreaker" })
+            pages.append(content.filter { $0.__component != "coursecontent.pagebreaker" })
         }
         return pages
     }
     
-    /// Determines button visibility based on the `pagebreaker` that *ends* the page *before* the current one (for back)
-    /// and the pagebreaker that *ends* the *current* page (for next).
     func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [Content]) -> (showBackButton: Bool, showNextButton: Bool) {
         var canGoBack = true
         var canGoNext = true
-
         if pageIdx == 0 {
-            canGoBack = false // Cannot go back from the first page
+            canGoBack = false
         } else {
-            // Find the pagebreaker that *ended the previous page* (i.e., started the current page)
             var pageCounter = 0
             var foundPageBreakerForBack: Content?
             for item in allContent {
-                 if item.__component == "content.pagebreaker" {
-                    if pageCounter == pageIdx - 1 { // This is the pagebreaker that ended the previous page
+                 if item.__component == "coursecontent.pagebreaker" {
+                    if pageCounter == pageIdx - 1 {
                         foundPageBreakerForBack = item
                         break
                     }
@@ -133,16 +145,14 @@ struct ShowACourseView: View {
             }
             canGoBack = foundPageBreakerForBack?.backbutton ?? true
         }
-
         if pageIdx >= totalPages - 1 {
-            canGoNext = false // Cannot go next from the last page
+            canGoNext = false
         } else {
-            // Find the pagebreaker that *ends the current page*
             var pageCounter = 0
             var foundPageBreakerForNext: Content?
             for item in allContent {
-                if item.__component == "content.pagebreaker" {
-                     if pageCounter == pageIdx { // This is the pagebreaker that ends the current page
+                if item.__component == "coursecontent.pagebreaker" {
+                     if pageCounter == pageIdx {
                         foundPageBreakerForNext = item
                         break
                     }
@@ -151,7 +161,6 @@ struct ShowACourseView: View {
             }
             canGoNext = foundPageBreakerForNext?.nextbutton ?? true
         }
-        
         return (showBackButton: canGoBack, showNextButton: canGoNext)
     }
 }
@@ -159,21 +168,15 @@ struct ShowACourseView: View {
 
 struct LanguagePickerView: View {
     @Binding var selectedLanguage: String
-    @Environment(\.dismiss) var dismiss // Used to dismiss the popover
-
+    @Environment(\.dismiss) var dismiss
     var body: some View {
-        NavigationView { // Often good to embed lists in NavigationView for titles/toolbars in popovers
+        NavigationView {
             List {
                 Button("English") { selectedLanguage = "en"; dismiss() }
                 Button("Spanish") { selectedLanguage = "es"; dismiss() }
-                // Add more languages as needed
             }
             .navigationTitle("Select Language")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) { // Or .navigationBarTrailing
-                    Button("Done") { dismiss() }
-                }
-            }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
 }
@@ -191,64 +194,40 @@ class ShowACourseViewModel: ObservableObject {
         isLoading = true; errorMessage = nil
         print("Fetching course with ID: \(courseId)")
         guard let token = keychain["jwt"] else {
-            print("Error: No JWT token found in Keychain.")
-            errorMessage = "Authentication token not found."; isLoading = false; return
+            print("Error: No JWT token found in Keychain."); errorMessage = "Authentication token not found."; isLoading = false; return
         }
-
-        // --- UPDATED POPULATE QUERY ---
-        // Using the highly specific query to ensure all fields are populated correctly.
-        let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][on][coursecontent.text][populate]=data&populate[content][on][coursecontent.image][populate]=image_file&populate[content][on][coursecontent.video][populate]=video_file&populate[content][on][coursecontent.external-video][populate]=thumbnail&populate=translations"
+        
+        // This query now correctly populates all component types and their nested fields
+        let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][on][coursecontent.text][populate]=*&populate[content][on][coursecontent.image][populate]=*&populate[content][on][coursecontent.video][populate]=*&populate[content][on][coursecontent.quiz][populate]=*&populate[content][on][coursecontent.external-video][populate]=*&populate[content][on][coursecontent.pagebreaker][populate]=*&populate=translations"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
-            print("Error: Invalid URL for fetching course: \(strapiUrl)/courses/\(courseId)?\(populateQuery)")
-            errorMessage = "Internal error: Invalid URL."; isLoading = false; return
+            print("Error: Invalid URL."); errorMessage = "Internal error: Invalid URL."; isLoading = false; return
         }
         
         var request = URLRequest(url: url); request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-
         print("Fetching course ID \(courseId) from URL: \(url.absoluteString)")
-
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-
             guard let httpResponse = response as? HTTPURLResponse else {
-                print("Invalid response from server for course ID \(courseId).")
-                errorMessage = "Invalid server response."; isLoading = false; return
+                print("Invalid response from server."); errorMessage = "Invalid server response."; isLoading = false; return
             }
-            
             print("Show course (ID: \(courseId)) status: \(httpResponse.statusCode)")
-            if let responseBody = String(data: data, encoding: .utf8) {
-                print("Response body for course \(courseId): \(String(responseBody))")
-            }
-
+            if let responseBody = String(data: data, encoding: .utf8) { print("Response body for course \(courseId): \(String(responseBody))") }
             guard (200...299).contains(httpResponse.statusCode) else {
                 var detailedError = "Server error \(httpResponse.statusCode)."
-                print("Error: Received HTTP \(httpResponse.statusCode) for course fetch (ID: \(courseId)).")
-                if let errData = try? JSONDecoder().decode(StrapiErrorResponse.self, from: data) {
-                    detailedError = errData.error.message
-                    print("Strapi error for course \(courseId): \(errData.error.message) - \(errData.error.details ?? .null)")
-                } else if let responseBody = String(data: data, encoding: .utf8) {
-                    print("Error response body for course \(courseId): \(responseBody)")
-                }
-                errorMessage = detailedError
-                isLoading = false; return
+                if let errData = try? JSONDecoder().decode(StrapiErrorResponse.self, from: data) { detailedError = errData.error.message }
+                errorMessage = detailedError; isLoading = false; return
             }
-            
             let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
-            // Use StrapiSingleResponse for fetching a single course
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
             self.course = decodedResponse.data
             print("Successfully fetched course: \(self.course?.title ?? "Unknown Title") (ID: \(courseId))")
-
         } catch {
-            if let decError = error as? DecodingError {
-                 errorMessage = "Data parsing error. Check if the Swift models match the JSON response."
-                 print("Decoding error details for course \(courseId): \(decError)")
-            }
+            if let decError = error as? DecodingError { errorMessage = "Data parsing error. Check if the Swift models match the JSON response."; print("Decoding error details for course \(courseId): \(decError)") }
             else { errorMessage = "Fetch error: \(error.localizedDescription)" }
-             print("Fetch course ID \(courseId) error: \(error)")
+            print("Fetch course ID \(courseId) error: \(error)")
         }
         isLoading = false
     }
