@@ -150,18 +150,13 @@ struct MainView: View {
                     .tag(1)
 
                 // AI Tab (Placeholder)
-                VStack {
-                    Text("AI View")
-                        .font(.title)
-                        .padding()
-                    Spacer()
-                }
-                .tabItem {
-                    Image(systemName: "brain.fill")
-                    Text("AI")
-                }
-                .tag(2)
-
+                AIView() // <-- Replace the placeholder VStack with this
+                    .tabItem {
+                        Image(systemName: "brain.fill")
+                        Text("AI")
+                    }
+                    .tag(2)
+                
                 // Community Tab (Placeholder)
                 VStack {
                     Text("Community View")
