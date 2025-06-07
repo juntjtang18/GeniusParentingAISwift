@@ -21,11 +21,10 @@ struct Media: Codable, Hashable, Identifiable {
         let url: String
         let previewUrl: String?
         let provider: String
-        let providerMetadata: JSONValue? // Added missing property
+        let providerMetadata: JSONValue? // Assumes JSONValue is defined elsewhere in your project
         let createdAt: String
         let updatedAt: String
         
-        // Explicitly define CodingKeys to match the JSON, especially for snake_case keys
         private enum CodingKeys: String, CodingKey {
             case name, alternativeText, caption, width, height, formats, hash, ext, mime, size, url, provider, createdAt, updatedAt
             case previewUrl = "preview_url"
@@ -55,6 +54,7 @@ struct MediaFormat: Codable, Hashable {
     let url: String
 }
 
+// Assumes StrapiRelation is defined elsewhere or is not needed by the new models
 struct StrapiRelation<T: Codable & Identifiable>: Codable, Hashable {
     let data: T?
     func hash(into hasher: inout Hasher) { hasher.combine(data?.id) }
@@ -65,6 +65,35 @@ struct StrapiRelation<T: Codable & Identifiable>: Codable, Hashable {
     }
 }
 
+// MARK: - Daily Lesson Models
+
+// Model for Courses within a Daily Lesson
+struct LessonCourse: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: Course.Attributes
+}
+
+// Model for Daily Lesson Selection Component
+struct DailyLessonSelection: Codable, Identifiable {
+    let id: Int
+    let day: String
+    // Assumes StrapiListResponse is defined elsewhere in your project
+    let courses: StrapiListResponse<LessonCourse>
+}
+
+// Model for the Daily Lesson Plan Single Type
+struct DailyLessonPlan: Codable, Identifiable {
+    let id: Int
+    let attributes: Attributes
+
+    struct Attributes: Codable {
+        let dailylessons: [DailyLessonSelection]
+    }
+}
+
+
+// MARK: - Existing App Models
+
 struct CategoryData: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: CategoryAttributes
@@ -73,9 +102,9 @@ struct CategoryData: Codable, Identifiable, Hashable {
     }
 }
 
-struct Course: Codable, Identifiable {
+struct Course: Codable, Identifiable, Hashable {
     let id: Int
-    private let attributes: Attributes
+    let attributes: Attributes
 
     var title: String { attributes.title }
     var iconImageMedia: Media? { attributes.iconImage?.data }
@@ -86,7 +115,7 @@ struct Course: Codable, Identifiable {
     var updatedAt: String? { attributes.updatedAt }
     var publishedAt: String? { attributes.publishedAt }
 
-    struct Attributes: Codable {
+    struct Attributes: Codable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
         let category: StrapiRelation<CategoryData>?
@@ -110,9 +139,8 @@ struct Content: Codable, Identifiable, Hashable {
     let id: Int?
     let __component: String
 
-    // Properties are now camelCase to work seamlessly with the .convertFromSnakeCase strategy
     let data: String?
-    let style: Styles? // Matched to JSON 'style' key
+    let style: Styles?
     let imageFile: StrapiRelation<Media>?
     let videoFile: StrapiRelation<Media>?
     let externalUrl: String?
