@@ -124,10 +124,13 @@ struct Course: Codable, Identifiable, Hashable {
         let createdAt: String?
         let updatedAt: String?
         let publishedAt: String?
-        private enum CodingKeys: String, CodingKey {
-            case title, category, content, translations, createdAt, updatedAt, publishedAt
-            case iconImage = "icon_image"
-        }
+        
+        // --- FIX: ADDED MISSING LOCALE PROPERTY ---
+        let locale: String?
+        
+        // --- FIX: REMOVED CODINGKEYS TO ALLOW .convertFromSnakeCase TO WORK ---
+        // By removing this, the decoder will automatically map the
+        // JSON key "icon_image" to the Swift property "iconImage".
     }
 
     struct CourseTranslation: Codable, Hashable {
