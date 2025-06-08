@@ -1,8 +1,16 @@
 import SwiftUI
+import Speech
 
 struct AIView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var newMessage: String = ""
+    @State private var isInputExpanded: Bool = false
+    @State private var lines: Int = 1
+    @State private var isRecording = false
+    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    @State private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    @State private var recognitionTask: SFSpeechRecognitionTask?
+    private let audioEngine = AVAudioEngine()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,9 +25,7 @@ struct AIView: View {
                     }
                     .padding()
                 }
-                // --- FIX: Updated .onChange syntax for iOS 17+ ---
                 .onChange(of: viewModel.messages) {
-                    // The scrolling fix remains the same.
                     if let lastMessage = viewModel.messages.last {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                             withAnimation(.spring()) {
@@ -30,46 +36,194 @@ struct AIView: View {
                 }
             }
 
-            // Input area
-            HStack(spacing: 12) {
-                TextField("Ask a parenting question...", text: $newMessage, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(1...5)
-                    .padding(.vertical, 8)
+            Spacer()
 
-                Button(action: sendMessage) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title)
+            // --- INPUT PANEL: Updated Styling ---
+            VStack(spacing: 0) {
+                // Empty space for thin border effect (padding at the top)
+                Color.clear
+                    .frame(height: 4)
+
+                HStack(alignment: .bottom, spacing: 8) {
+                    ZStack(alignment: .topTrailing) {
+                        TextField("Ask a parenting question...", text: $newMessage, axis: .vertical)
+                            .lineLimit(lines == 1 ? 1 : (lines == 2 ? 3 : 4), reservesSpace: true)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 12)
+                            .background(Color(UIColor.systemBackground))
+                            .cornerRadius(18)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .stroke(Color(UIColor.systemGray4), lineWidth: 0.5)
+                            )
+                            .submitLabel(.done)
+
+                        if !isInputExpanded {
+                            Button(action: {
+                                withAnimation {
+                                    isInputExpanded = true
+                                    lines = 2 // Expand to 3 lines first
+                                }
+                            }) {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.caption)
+                                    .padding(4)
+                                    .background(Color(UIColor.systemGray5).opacity(0.8))
+                                    .clipShape(Circle())
+                            }
+                            .offset(x: -5, y: 5)
+                        } else {
+                            Button(action: {
+                                withAnimation {
+                                    if lines == 2 {
+                                        lines = 3 // Expand to 4 lines
+                                    } else {
+                                        isInputExpanded = false
+                                        lines = 1 // Collapse back to 1 line
+                                    }
+                                }
+                            }) {
+                                Image(systemName: lines == 2 ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
+                                    .font(.caption)
+                                    .padding(4)
+                                    .background(Color(UIColor.systemGray5).opacity(0.8))
+                                    .clipShape(Circle())
+                            }
+                            .offset(x: -5, y: 5)
+                        }
+                    }
+
+                    Button(action: sendMessage) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.title)
+                            .foregroundColor(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                    }
+                    .disabled(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isAwaitingResponse)
+
+                    // Button to switch input method/language
+                    Button(action: {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Image(systemName: "globe")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
+
+                    // Voice input button
+                    Button(action: toggleRecording) {
+                        Image(systemName: isRecording ? "mic.slash.fill" : "mic.fill")
+                            .font(.title2)
+                            .foregroundColor(isRecording ? .red : .blue)
+                    }
+                    .disabled(speechRecognizer == nil)
                 }
-                .disabled(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isAwaitingResponse)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
             }
-            .padding([.horizontal, .bottom])
-            .padding(.top, 8)
-            .background(.thinMaterial)
+            .background(Color(UIColor.systemBackground))
+            // --- INPUT PANEL: End of Updated Styling ---
         }
         .navigationTitle("AI Assistant")
         .onAppear {
             if viewModel.messages.isEmpty {
-                 let greeting = ChatMessage(content: "Hello! How can I help you with your parenting questions today?", isUser: false)
-                 viewModel.messages.append(greeting)
+                let greeting = ChatMessage(content: "Hello! How can I help you with your parenting questions today?", isUser: false)
+                viewModel.messages.append(greeting)
             }
+            requestSpeechAuthorization()
         }
     }
 
     private func sendMessage() {
         viewModel.sendMessage(text: newMessage)
         newMessage = ""
+        withAnimation {
+            isInputExpanded = false
+            lines = 1
+        }
+    }
+
+    private func requestSpeechAuthorization() {
+        SFSpeechRecognizer.requestAuthorization { authStatus in
+            DispatchQueue.main.async {
+                if authStatus == .authorized {
+                    speechRecognizer?.delegate = nil
+                }
+            }
+        }
+    }
+
+    private func toggleRecording() {
+        if isRecording {
+            audioEngine.stop()
+            recognitionRequest?.endAudio()
+            isRecording = false
+            recognitionTask?.cancel()
+            recognitionTask = nil
+            recognitionRequest = nil
+        } else {
+            startRecording()
+            isRecording = true
+        }
+    }
+
+    private func startRecording() {
+        if recognitionTask != nil {
+            recognitionTask?.cancel()
+            recognitionTask = nil
+        }
+
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("Audio session setup failed: \(error)")
+        }
+
+        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        guard let recognitionRequest = recognitionRequest else { return }
+
+        recognitionRequest.shouldReportPartialResults = true
+
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer, _) in
+            recognitionRequest.append(buffer)
+        }
+
+        audioEngine.prepare()
+        do {
+            try audioEngine.start()
+        } catch {
+            print("Audio engine start failed: \(error)")
+            return
+        }
+
+        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { result, error in
+            if let result = result {
+                newMessage = result.bestTranscription.formattedString
+            }
+
+            if error != nil || result?.isFinal == true {
+                audioEngine.stop()
+                inputNode.removeTap(onBus: 0)
+                recognitionRequest.endAudio()
+                isRecording = false
+                recognitionTask = nil
+            }
+        }
     }
 }
 
-// The MessageView subview remains unchanged.
+// The MessageView subview corrected.
 struct MessageView: View {
     let message: ChatMessage
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if !message.isUser {
-                // Bot's message with avatar on the left
                 Image("chatbot")
                     .resizable()
                     .scaledToFit()
@@ -85,7 +239,6 @@ struct MessageView: View {
 
                 Spacer(minLength: 50)
             } else {
-                // User's message with avatar on the right
                 Spacer(minLength: 50)
 
                 Text(message.content)

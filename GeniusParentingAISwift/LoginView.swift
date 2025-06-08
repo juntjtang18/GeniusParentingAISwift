@@ -1,9 +1,10 @@
+// LoginView.swift
 import SwiftUI
 import KeychainAccess
 
 struct LoginView: View {
-    @Binding var isLoggedIn: Bool // Binding to control login state
-    @State private var currentView: ViewState = .login // State to manage active view
+    @Binding var isLoggedIn: Bool
+    @State private var currentView: ViewState = .login
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""

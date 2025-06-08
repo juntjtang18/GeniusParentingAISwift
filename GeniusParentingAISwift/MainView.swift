@@ -1,24 +1,24 @@
+// MainView.swift
+
 import SwiftUI
 import KeychainAccess
 
 struct MainView: View {
-    @Binding var isLoggedIn: Bool // Binding to control login state
-    @State private var selectedTab: Int = 0 // For TabView navigation
+    @Binding var isLoggedIn: Bool
+    @State private var selectedTab: Int = 0
     
-    // 1. Add a StateObject for the HomeViewModel
     @StateObject private var homeViewModel = HomeViewModel()
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
-        // Wrap the TabView in a NavigationView to allow navigation from lesson cards
         NavigationView {
             TabView(selection: $selectedTab) {
                 // Home Tab
                 VStack(spacing: 20) {
                     // Header with Title and Logo
                     HStack {
-                        Image("gpa-logo") // Placeholder for logo
+                        Image("gpa-logo")
                             .resizable()
                             .clipShape(Circle())
                             .frame(width: 45, height: 45)
@@ -37,7 +37,6 @@ struct MainView: View {
                                 .font(.title2)
                                 .padding(.horizontal)
 
-                            // 2. Replace the placeholder UI with the view model's data
                             if homeViewModel.isLoading {
                                 ProgressView()
                                     .frame(height: 150)
@@ -55,7 +54,6 @@ struct MainView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 15) {
                                         ForEach(homeViewModel.todaysLessons) { lesson in
-                                            // Link to the course detail view
                                             NavigationLink(destination: ShowACourseView(courseId: lesson.id)) {
                                                 LessonCardView(lesson: lesson)
                                             }
@@ -67,7 +65,7 @@ struct MainView: View {
                             }
                         }
 
-                        // Hot Topics Section (remains placeholder for now)
+                        // Hot Topics Section
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Hot Topics")
                                 .font(.title2)
@@ -96,7 +94,7 @@ struct MainView: View {
                             .frame(height: 150)
                         }
 
-                        // Daily Tips Section (remains placeholder for now)
+                        // Daily Tips Section
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Daily Tips")
                                 .font(.title2)
@@ -133,7 +131,6 @@ struct MainView: View {
                     Text("Home")
                 }
                 .tag(0)
-                // 3. Call the fetch function when the view appears
                 .onAppear {
                     print("MainView: Home tab .onAppear has been triggered.")
                     Task {
@@ -149,15 +146,15 @@ struct MainView: View {
                     }
                     .tag(1)
 
-                // AI Tab (Placeholder)
-                AIView() // <-- Replace the placeholder VStack with this
+                // AI Tab
+                AIView()
                     .tabItem {
                         Image(systemName: "brain.fill")
                         Text("AI")
                     }
                     .tag(2)
                 
-                // Community Tab (Placeholder)
+                // Community Tab
                 VStack {
                     Text("Community View")
                         .font(.title)
@@ -170,31 +167,38 @@ struct MainView: View {
                 }
                 .tag(3)
 
-                // Profile Tab (With Logout)
-                VStack {
-                    Text("Profile")
-                        .font(.title)
-                        .padding()
-                    Button("Logout") {
-                        keychain["jwt"] = nil
-                        isLoggedIn = false
+                // --- MODIFICATION START ---
+                // Replace the old VStack with the new ProfileView
+                ProfileView(isLoggedIn: $isLoggedIn)
+                    .tabItem {
+                        Image(systemName: "person.fill")
+                        Text("Profile")
                     }
-                    .padding()
-                    .background(Color.red)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
-                    Spacer()
-                }
-                .tabItem {
-                    Image(systemName: "person.fill")
-                    Text("Profile")
-                }
-                .tag(4)
+                    .tag(4)
+                // --- MODIFICATION END ---
             }
-            .navigationTitle("Home")
-            .navigationBarHidden(true) // Hides the title from the navigation bar
+            // --- MODIFICATION START ---
+            // Set the navigation title based on the selected tab
+            .navigationTitle(navigationTitle(for: selectedTab))
+            // Hide the navigation bar only for the Home tab (tag 0)
+            .navigationBarHidden(selectedTab == 0)
+            // --- MODIFICATION END ---
         }
     }
+    
+    // --- MODIFICATION START ---
+    // Helper function to determine the navigation title for each tab
+    private func navigationTitle(for index: Int) -> String {
+        switch index {
+        case 0: return "Home"
+        case 1: return "Courses"
+        case 2: return "AI Assistant"
+        case 3: return "Community"
+        case 4: return "Profile"
+        default: return ""
+        }
+    }
+    // --- MODIFICATION END ---
 }
 
 struct MainView_Previews: PreviewProvider {
