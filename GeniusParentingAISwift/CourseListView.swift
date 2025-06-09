@@ -4,26 +4,34 @@ import KeychainAccess
 // MARK: - Course List View & ViewModel
 
 struct CourseView: View {
-    @StateObject private var viewModel = CourseViewModel()
+    // This viewModel is passed in from MainView and is now observed.
+    @ObservedObject var viewModel: CourseViewModel
     @State private var selectedLanguage: String = "en"
 
     var body: some View {
-        // --- FIX: REMOVED the wrapping NavigationView here ---
-        // This view is already inside a NavigationView from MainView.
-        // Nesting them causes a double navigation bar.
+        // This view is now simpler. It just displays the state of the ViewModel.
+        // The .task modifier has been removed.
         VStack {
             if viewModel.isLoading {
                 ProgressView("Loading Courses...")
             } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
-                    .padding()
+                VStack(spacing: 15) {
+                    Text("Error: \(errorMessage)")
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    Button("Retry") {
+                        Task {
+                            // The retry button still works by calling the function directly.
+                            await viewModel.fetchCourses()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             } else if viewModel.courses.isEmpty {
                 Text("No courses available.")
                     .foregroundColor(.gray)
             } else {
-                // The NavigationLink inside this List will now use the
-                // navigation stack from MainView, which is the correct behavior.
                 List(viewModel.courses) { course in
                     let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
                     NavigationLink(destination: ShowACourseView(courseId: course.id)) {
@@ -53,8 +61,6 @@ struct CourseView: View {
                         }
                     }
                 }
-                // This toolbar will now correctly be placed in the navigation bar
-                // managed by MainView.
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Picker("Language", selection: $selectedLanguage) {
@@ -64,25 +70,33 @@ struct CourseView: View {
                 }
             }
         }
-        // --- FIX: Consolidated the navigationTitle modifier ---
-        // It's now applied once to the VStack and will correctly
-        // configure the title on the navigation bar from MainView.
         .navigationTitle("Courses")
-        .task { await viewModel.fetchCourses() }
     }
 }
 
 @MainActor
 class CourseViewModel: ObservableObject {
     @Published var courses: [Course] = []
-    @Published var isLoading: Bool = true
+    @Published var isLoading: Bool = true // Start in a loading state
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
+    // --- MODIFICATION START ---
+    // The ViewModel now triggers its own data fetch upon initialization.
+    init() {
+        Task {
+            await fetchCourses()
+        }
+    }
+    // --- MODIFICATION END ---
+
     func fetchCourses() async {
-        isLoading = true; errorMessage = nil
+        // Ensure state is correctly set for a new fetch or a retry
+        self.isLoading = true
+        self.errorMessage = nil
+
         print("Starting fetchCourses")
         guard let token = keychain["jwt"] else {
             print("No JWT token found in Keychain")
@@ -122,6 +136,8 @@ class CourseViewModel: ObservableObject {
             print("Successfully decoded StrapiListResponse for courses.")
             self.courses = decodedResponse.data
         } catch {
+            // Because the task is no longer tied to the view, we don't expect a cancellation
+            // error from the UI, so any cancellation is likely real and should be reported.
             if let decError = error as? DecodingError {
                 errorMessage = "Data parsing error: \(decError.localizedDescription)"
                 print("Decoding error details: \(decError)")

@@ -6,8 +6,10 @@ import KeychainAccess
 struct MainView: View {
     @Binding var isLoggedIn: Bool
     @State private var selectedTab: Int = 0
-    
+
+    // State-managed ViewModels for persistent state across tabs
     @StateObject private var homeViewModel = HomeViewModel()
+    @StateObject private var courseViewModel = CourseViewModel() // <-- ADDED
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -139,7 +141,8 @@ struct MainView: View {
                 }
 
                 // Course Tab
-                CourseView()
+                // Pass the existing viewModel instance to the view
+                CourseView(viewModel: courseViewModel) // <-- MODIFIED
                     .tabItem {
                         Image(systemName: "book.fill")
                         Text("Course")
@@ -153,7 +156,7 @@ struct MainView: View {
                         Text("AI")
                     }
                     .tag(2)
-                
+
                 // Community Tab
                 VStack {
                     Text("Community View")
@@ -167,26 +170,19 @@ struct MainView: View {
                 }
                 .tag(3)
 
-                // --- MODIFICATION START ---
-                // Replace the old VStack with the new ProfileView
+                // Profile Tab
                 ProfileView(isLoggedIn: $isLoggedIn)
                     .tabItem {
                         Image(systemName: "person.fill")
                         Text("Profile")
                     }
                     .tag(4)
-                // --- MODIFICATION END ---
             }
-            // --- MODIFICATION START ---
-            // Set the navigation title based on the selected tab
             .navigationTitle(navigationTitle(for: selectedTab))
-            // Hide the navigation bar only for the Home tab (tag 0)
             .navigationBarHidden(selectedTab == 0)
-            // --- MODIFICATION END ---
         }
     }
-    
-    // --- MODIFICATION START ---
+
     // Helper function to determine the navigation title for each tab
     private func navigationTitle(for index: Int) -> String {
         switch index {
@@ -198,7 +194,6 @@ struct MainView: View {
         default: return ""
         }
     }
-    // --- MODIFICATION END ---
 }
 
 struct MainView_Previews: PreviewProvider {
