@@ -5,6 +5,7 @@ import KeychainAccess
 struct ProfileView: View {
     @Binding var isLoggedIn: Bool
     @StateObject private var viewModel = ProfileViewModel()
+    @State private var isShowingEditView = false // State to control the edit sheet
 
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -34,10 +35,6 @@ struct ProfileView: View {
 
                     if let profile = user.user_profile {
                         Section(header: Text("Family Information")) {
-                            // --- FIX: REMOVED the 'Number of Children' row ---
-                            // This row was deleted because the 'numberOfChildren' field
-                            // no longer exists in the UserProfile model.
-
                             if let children = profile.children, !children.isEmpty {
                                 ForEach(children) { child in
                                     VStack(alignment: .leading, spacing: 4) {
@@ -80,6 +77,21 @@ struct ProfileView: View {
                     }
                 }
                 .listStyle(GroupedListStyle())
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Edit") {
+                            isShowingEditView = true
+                        }
+                        // Disable the edit button if there is no profile to edit.
+                        .disabled(viewModel.user?.user_profile == nil)
+                    }
+                }
+                // MARK: MODIFICATION START
+                .sheet(isPresented: $isShowingEditView) {
+                    // Present the ProfileEditView when isShowingEditView is true.
+                    ProfileEditView(isPresented: $isShowingEditView, viewModel: viewModel)
+                }
+                // MARK: MODIFICATION END
             }
         }
         .onAppear {
