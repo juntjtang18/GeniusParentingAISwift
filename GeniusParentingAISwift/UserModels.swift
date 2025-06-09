@@ -13,7 +13,8 @@ struct Child: Codable, Identifiable, Hashable {
 struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
     let consentForEmailNotice: Bool
-    let numberOfChildren: Int?
+    // --- FIX: REMOVED numberOfChildren ---
+    // The 'numberOfChildren' property has been deleted to match the updated Strapi schema.
     let children: [Child]?
 }
 

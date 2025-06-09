@@ -8,65 +8,67 @@ struct CourseView: View {
     @State private var selectedLanguage: String = "en"
 
     var body: some View {
-        NavigationView {
-            VStack {
-                if viewModel.isLoading {
-                    ProgressView("Loading Courses...")
-                        .navigationTitle("Courses")
-                } else if let errorMessage = viewModel.errorMessage {
-                    Text("Error: \(errorMessage)")
-                        .foregroundColor(.red)
-                        .padding()
-                        .navigationTitle("Courses")
-                } else if viewModel.courses.isEmpty {
-                    Text("No courses available.")
-                        .foregroundColor(.gray)
-                        .navigationTitle("Courses")
-                } else {
-                    List(viewModel.courses) { course in
-                        let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                        NavigationLink(destination: ShowACourseView(courseId: course.id)) {
-                            HStack {
-                                if let iconMedia = course.iconImageMedia {
-                                    // iconMedia.attributes.url is non-optional String
-                                    // The URL initializer returns an Optional URL, so 'if let' is correct for imageUrl
-                                    if let imageUrl = URL(string: iconMedia.attributes.url) {
-                                        AsyncImage(url: imageUrl) { phase in
-                                            switch phase {
-                                            case .empty: ProgressView().frame(width: 40, height: 40)
-                                            case .success(let image): image.resizable().aspectRatio(contentMode: .fill).frame(width: 40, height: 40).clipShape(Circle())
-                                            case .failure: Image(systemName: "photo.circle.fill").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
-                                            @unknown default: EmptyView().frame(width: 40, height: 40)
-                                            }
+        // --- FIX: REMOVED the wrapping NavigationView here ---
+        // This view is already inside a NavigationView from MainView.
+        // Nesting them causes a double navigation bar.
+        VStack {
+            if viewModel.isLoading {
+                ProgressView("Loading Courses...")
+            } else if let errorMessage = viewModel.errorMessage {
+                Text("Error: \(errorMessage)")
+                    .foregroundColor(.red)
+                    .padding()
+            } else if viewModel.courses.isEmpty {
+                Text("No courses available.")
+                    .foregroundColor(.gray)
+            } else {
+                // The NavigationLink inside this List will now use the
+                // navigation stack from MainView, which is the correct behavior.
+                List(viewModel.courses) { course in
+                    let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
+                    NavigationLink(destination: ShowACourseView(courseId: course.id)) {
+                        HStack {
+                            if let iconMedia = course.iconImageMedia {
+                                if let imageUrl = URL(string: iconMedia.attributes.url) {
+                                    AsyncImage(url: imageUrl) { phase in
+                                        switch phase {
+                                        case .empty: ProgressView().frame(width: 40, height: 40)
+                                        case .success(let image): image.resizable().aspectRatio(contentMode: .fill).frame(width: 40, height: 40).clipShape(Circle())
+                                        case .failure: Image(systemName: "photo.circle.fill").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
+                                        @unknown default: EmptyView().frame(width: 40, height: 40)
                                         }
-                                    } else {
-                                        // Handle case where URL string is invalid, though less likely if data is good
-                                        Image(systemName: "exclamationmark.circle.fill").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.orange)
                                     }
                                 } else {
-                                    Image(systemName: "book.closed.circle").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
+                                    Image(systemName: "exclamationmark.circle.fill").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.orange)
                                 }
-                                VStack(alignment: .leading) {
-                                    Text(displayTitle).font(.headline)
-                                    if let categoryName = course.category?.attributes.name {
-                                        Text(categoryName).font(.caption).foregroundColor(.gray)
-                                    }
+                            } else {
+                                Image(systemName: "book.closed.circle").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
+                            }
+                            VStack(alignment: .leading) {
+                                Text(displayTitle).font(.headline)
+                                if let categoryName = course.category?.attributes.name {
+                                    Text(categoryName).font(.caption).foregroundColor(.gray)
                                 }
                             }
                         }
                     }
-                    .navigationTitle("Courses")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Picker("Language", selection: $selectedLanguage) {
-                                Text("English").tag("en"); Text("Spanish").tag("es")
-                            }.pickerStyle(.menu)
-                        }
+                }
+                // This toolbar will now correctly be placed in the navigation bar
+                // managed by MainView.
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Picker("Language", selection: $selectedLanguage) {
+                            Text("English").tag("en"); Text("Spanish").tag("es")
+                        }.pickerStyle(.menu)
                     }
                 }
             }
-            .task { await viewModel.fetchCourses() }
         }
+        // --- FIX: Consolidated the navigationTitle modifier ---
+        // It's now applied once to the VStack and will correctly
+        // configure the title on the navigation bar from MainView.
+        .navigationTitle("Courses")
+        .task { await viewModel.fetchCourses() }
     }
 }
 
@@ -77,7 +79,7 @@ class CourseViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift") // Ensure this matches your app's bundle ID or a consistent service name
+    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     func fetchCourses() async {
         isLoading = true; errorMessage = nil
@@ -88,7 +90,6 @@ class CourseViewModel: ObservableObject {
         }
         print("Using JWT token (first 10 chars): \(String(token.prefix(10)))...")
 
-        // Populate icon_image and its internal attributes (like url, formats), category, and content (deeply)
         let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][populate]=*&populate=translations"
         guard let url = URL(string: "\(strapiUrl)/courses?\(populateQuery)") else {
             print("Invalid URL construction for: \(strapiUrl)/courses?\(populateQuery)")

@@ -34,7 +34,9 @@ struct ProfileView: View {
 
                     if let profile = user.user_profile {
                         Section(header: Text("Family Information")) {
-                            ProfileRow(label: "Number of Children", value: "\(profile.numberOfChildren ?? 0)")
+                            // --- FIX: REMOVED the 'Number of Children' row ---
+                            // This row was deleted because the 'numberOfChildren' field
+                            // no longer exists in the UserProfile model.
 
                             if let children = profile.children, !children.isEmpty {
                                 ForEach(children) { child in
