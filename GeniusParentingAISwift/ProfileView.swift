@@ -4,8 +4,10 @@ import KeychainAccess
 
 struct ProfileView: View {
     @Binding var isLoggedIn: Bool
+    @Binding var selectedTab: Int
+
     @StateObject private var viewModel = ProfileViewModel()
-    @State private var isShowingEditView = false // State to control the edit sheet
+    @State private var isShowingEditView = false
 
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -82,16 +84,15 @@ struct ProfileView: View {
                         Button("Edit") {
                             isShowingEditView = true
                         }
-                        // Disable the edit button if there is no profile to edit.
                         .disabled(viewModel.user?.user_profile == nil)
+                        // --- FIX: Control visibility with opacity and disabled state ---
+                        .opacity(selectedTab == 4 ? 1 : 0)
+                        .disabled(selectedTab != 4)
                     }
                 }
-                // MARK: MODIFICATION START
                 .sheet(isPresented: $isShowingEditView) {
-                    // Present the ProfileEditView when isShowingEditView is true.
                     ProfileEditView(isPresented: $isShowingEditView, viewModel: viewModel)
                 }
-                // MARK: MODIFICATION END
             }
         }
         .onAppear {
@@ -121,6 +122,6 @@ struct ProfileRow: View {
 
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
-        ProfileView(isLoggedIn: .constant(true))
+        ProfileView(isLoggedIn: .constant(true), selectedTab: .constant(4))
     }
 }

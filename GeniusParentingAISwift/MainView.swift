@@ -1,5 +1,4 @@
 // MainView.swift
-
 import SwiftUI
 import KeychainAccess
 
@@ -9,7 +8,7 @@ struct MainView: View {
 
     // State-managed ViewModels for persistent state across tabs
     @StateObject private var homeViewModel = HomeViewModel()
-    @StateObject private var courseViewModel = CourseViewModel() // <-- ADDED
+    @StateObject private var courseViewModel = CourseViewModel()
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -141,8 +140,7 @@ struct MainView: View {
                 }
 
                 // Course Tab
-                // Pass the existing viewModel instance to the view
-                CourseView(viewModel: courseViewModel) // <-- MODIFIED
+                CourseView(viewModel: courseViewModel)
                     .tabItem {
                         Image(systemName: "book.fill")
                         Text("Course")
@@ -171,7 +169,8 @@ struct MainView: View {
                 .tag(3)
 
                 // Profile Tab
-                ProfileView(isLoggedIn: $isLoggedIn)
+                // --- FIX: Pass the selectedTab binding to the ProfileView initializer ---
+                ProfileView(isLoggedIn: $isLoggedIn, selectedTab: $selectedTab)
                     .tabItem {
                         Image(systemName: "person.fill")
                         Text("Profile")
