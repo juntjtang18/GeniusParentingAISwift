@@ -2,7 +2,8 @@ import SwiftUI
 
 struct SideMenuView: View {
     @Binding var isShowing: Bool
-    @Binding var selectedTab: Int
+    // This binding controls the new profile sheet
+    @Binding var isShowingProfileSheet: Bool
     @Binding var isShowingLanguageSheet: Bool
 
     var body: some View {
@@ -20,26 +21,25 @@ struct SideMenuView: View {
             // 2. Menu Items
             VStack(alignment: .leading, spacing: 1) {
                 Button(action: {
-                    // Navigate to Profile
+                    // Action is now to show the profile sheet
                     handleMenuSelection {
-                        selectedTab = 4
+                        isShowingProfileSheet = true
                     }
                 }) {
                     Label("Profile", systemImage: "person.fill")
                 }
-                .buttonStyle(SideMenuItemButtonStyle()) // Apply the custom ButtonStyle
+                .buttonStyle(SideMenuItemButtonStyle())
 
                 Divider()
 
                 Button(action: {
-                    // Show the language picker
                     handleMenuSelection {
                         isShowingLanguageSheet = true
                     }
                 }) {
                     Label("Language", systemImage: "globe")
                 }
-                .buttonStyle(SideMenuItemButtonStyle()) // Apply the custom ButtonStyle
+                .buttonStyle(SideMenuItemButtonStyle())
             }
 
             Spacer()
@@ -47,19 +47,16 @@ struct SideMenuView: View {
         .background(Color(UIColor.systemGroupedBackground))
     }
 
-    /// Helper function to close the menu with an animation before executing an action.
     private func handleMenuSelection(action: @escaping () -> Void) {
         withAnimation(.easeInOut) {
             isShowing = false
         }
-        // Dispatch the action after the animation to avoid jarring UI changes
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             action()
         }
     }
 }
 
-// --- FIX: Replaced ViewModifier with the more appropriate ButtonStyle ---
 struct SideMenuItemButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -72,12 +69,11 @@ struct SideMenuItemButtonStyle: ButtonStyle {
     }
 }
 
-
 struct SideMenuView_Previews: PreviewProvider {
     static var previews: some View {
         SideMenuView(
             isShowing: .constant(true),
-            selectedTab: .constant(0),
+            isShowingProfileSheet: .constant(false),
             isShowingLanguageSheet: .constant(false)
         )
     }

@@ -5,11 +5,12 @@ struct MainView: View {
     @Binding var isLoggedIn: Bool
     @State private var selectedTab: Int = 0
     
-    // Centralized state for language management
+    // State management for sheets
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
+    @State private var isShowingProfileSheet = false // New state for profile
     
-    // New state to control the side menu's visibility
+    // State for the side menu
     @State private var isSideMenuShowing = false
 
     @StateObject private var homeViewModel = HomeViewModel()
@@ -18,9 +19,7 @@ struct MainView: View {
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
-        // ZStack is now the root view to layer the side menu over the main content
         ZStack {
-            // --- Main Content ---
             NavigationView {
                 TabView(selection: $selectedTab) {
                     homeTab
@@ -51,17 +50,11 @@ struct MainView: View {
                         }
                         .tag(3)
 
-                    profileTab
-                        .tabItem {
-                            Image(systemName: "person.fill")
-                            Text("Profile")
-                        }
-                        .tag(4)
+                    // The Profile Tab has been removed from the TabView
                 }
                 .navigationTitle(navigationTitle(for: selectedTab))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        // This button now toggles the side menu
                         Button(action: {
                             withAnimation(.easeInOut) {
                                 isSideMenuShowing.toggle()
@@ -75,11 +68,15 @@ struct MainView: View {
                 .sheet(isPresented: $isShowingLanguageSheet) {
                     LanguagePickerView(selectedLanguage: $selectedLanguage)
                 }
+                // New sheet for presenting the ProfileView
+                .sheet(isPresented: $isShowingProfileSheet) {
+                    NavigationView {
+                        ProfileView(isLoggedIn: $isLoggedIn)
+                    }
+                }
             }
             
             // --- Side Menu Layer ---
-            
-            // Dimming overlay that appears behind the menu
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
@@ -91,16 +88,15 @@ struct MainView: View {
                     .transition(.opacity)
             }
 
-            // The Side Menu View itself, pushed to the right
             HStack {
                 Spacer()
                 SideMenuView(
                     isShowing: $isSideMenuShowing,
-                    selectedTab: $selectedTab,
+                    isShowingProfileSheet: $isShowingProfileSheet,
                     isShowingLanguageSheet: $isShowingLanguageSheet
                 )
-                .frame(width: UIScreen.main.bounds.width * 0.7) // 70% of screen width
-                .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width) // Animate offset
+                .frame(width: UIScreen.main.bounds.width * 0.7)
+                .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)
             }
             .ignoresSafeArea()
         }
@@ -111,7 +107,6 @@ struct MainView: View {
     private var homeTab: some View {
         ScrollView {
             VStack(spacing: 30) {
-                // Today's Lesson Section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Today's Lesson")
                         .font(.title2).bold()
@@ -138,7 +133,6 @@ struct MainView: View {
                     }
                 }
 
-                // Hot Topics Section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Hot Topics")
                         .font(.title2).bold()
@@ -163,7 +157,6 @@ struct MainView: View {
                     }
                 }
 
-                // Daily Tips Section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Daily Tips")
                         .font(.title2).bold()
@@ -213,9 +206,7 @@ struct MainView: View {
         Text("Community View").font(.title).padding()
     }
     
-    private var profileTab: some View {
-        ProfileView(isLoggedIn: $isLoggedIn, selectedTab: $selectedTab)
-    }
+    // The profileTab computed property has been removed
     
     // MARK: - Helper Functions
     
@@ -225,13 +216,13 @@ struct MainView: View {
         case 1: return "Courses"
         case 2: return "AI Assistant"
         case 3: return "Community"
-        case 4: return "Profile"
+        // Case 4 for "Profile" is no longer needed
         default: return ""
         }
     }
 }
 
-// --- Language Picker View is now here for central access ---
+// Language Picker View (no changes)
 struct LanguagePickerView: View {
     @Binding var selectedLanguage: String
     @Environment(\.dismiss) var dismiss

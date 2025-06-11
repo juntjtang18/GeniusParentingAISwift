@@ -4,14 +4,15 @@ import KeychainAccess
 
 struct ProfileView: View {
     @Binding var isLoggedIn: Bool
-    @Binding var selectedTab: Int
 
     @StateObject private var viewModel = ProfileViewModel()
     @State private var isShowingEditView = false
+    @Environment(\.dismiss) var dismiss // To close the sheet
 
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
+        // This view is now self-contained for sheet presentation
         VStack {
             if viewModel.isLoading {
                 ProgressView("Loading Profile...")
@@ -69,7 +70,7 @@ struct ProfileView: View {
                     Section {
                          Button(action: {
                              keychain["jwt"] = nil
-                             keychain["user_id"] = nil // Also clear the user_id on logout
+                             keychain["user_id"] = nil
                              isLoggedIn = false
                          }) {
                              Text("Logout")
@@ -79,24 +80,27 @@ struct ProfileView: View {
                     }
                 }
                 .listStyle(GroupedListStyle())
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Edit") {
-                            isShowingEditView = true
-                        }
-                        .disabled(viewModel.user?.user_profile == nil)
-                        // --- FIX: Control visibility with opacity and disabled state ---
-                        .opacity(selectedTab == 4 ? 1 : 0)
-                        .disabled(selectedTab != 4)
-                    }
-                }
-                .sheet(isPresented: $isShowingEditView) {
-                    ProfileEditView(isPresented: $isShowingEditView, viewModel: viewModel)
-                }
             }
         }
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Edit") {
+                    isShowingEditView = true
+                }
+                .disabled(viewModel.user?.user_profile == nil)
+            }
+        }
+        .sheet(isPresented: $isShowingEditView) {
+            ProfileEditView(isPresented: $isShowingEditView, viewModel: viewModel)
+        }
         .onAppear {
-            print("ProfileView: .onAppear triggered.")
             if viewModel.user == nil {
                 Task {
                     await viewModel.fetchUserProfile()
@@ -122,6 +126,8 @@ struct ProfileRow: View {
 
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
-        ProfileView(isLoggedIn: .constant(true), selectedTab: .constant(4))
+        NavigationView {
+            ProfileView(isLoggedIn: .constant(true))
+        }
     }
 }
