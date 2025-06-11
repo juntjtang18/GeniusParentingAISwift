@@ -83,29 +83,30 @@ struct MainView: View {
                             }
                         }
 
-                        // Daily Tips Section (Placeholder)
+                        // --- UPDATED: Daily Tips Section ---
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Daily Tips")
                                 .font(.title2).bold()
                                 .padding(.horizontal)
 
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 15) {
-                                    // Placeholder content
-                                    ForEach(0..<3) { _ in
-                                        ZStack(alignment: .bottomLeading) {
-                                            Image("dailyTipsImage")
-                                                .resizable().aspectRatio(contentMode: .fill)
-                                            LinearGradient(gradient: Gradient(colors: [.clear, .black.opacity(0.8)]), startPoint: .center, endPoint: .bottom)
-                                            Text("Understanding your child inside")
-                                                .font(.headline).foregroundColor(.white).padding()
+                            if homeViewModel.isLoadingDailyTips {
+                                ProgressView().frame(height: 150)
+                            } else if let errorMessage = homeViewModel.dailyTipsErrorMessage {
+                                Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                            } else if homeViewModel.dailyTips.isEmpty {
+                                Text("No daily tips available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 15) {
+                                        ForEach(homeViewModel.dailyTips) { tip in
+                                            // Each tip is displayed using the new card view.
+                                            DailyTipCardView(tip: tip)
                                         }
-                                        .frame(width: 250, height: 150).clipped().cornerRadius(12)
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
+                                .frame(height: 150)
                             }
-                            .frame(height: 150)
                         }
                         
                         Spacer()
@@ -120,9 +121,10 @@ struct MainView: View {
                 .onAppear {
                     print("MainView: Home tab .onAppear has been triggered.")
                     Task {
-                        // Fetch both sets of data when the view appears
+                        // Fetch all required data when the view appears
                         await homeViewModel.fetchDailyLessons()
                         await homeViewModel.fetchHotTopics()
+                        await homeViewModel.fetchDailyTips() // Fetch daily tips
                     }
                 }
 

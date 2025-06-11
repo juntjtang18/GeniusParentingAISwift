@@ -10,9 +10,72 @@ class HomeViewModel: ObservableObject {
     @Published var hotTopics: [Topic] = []
     @Published var isLoadingHotTopics: Bool = true
     @Published var hotTopicsErrorMessage: String? = nil
+    
+    // --- ADDITIONS START ---
+    @Published var dailyTips: [Tip] = []
+    @Published var isLoadingDailyTips: Bool = true
+    @Published var dailyTipsErrorMessage: String? = nil
+    // --- ADDITIONS END ---
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+
+    // --- NEW FUNCTION START ---
+    func fetchDailyTips() async {
+        print("HomeViewModel: Starting fetchDailyTips...")
+        isLoadingDailyTips = true
+        dailyTipsErrorMessage = nil
+
+        guard let token = keychain["jwt"] else {
+            dailyTipsErrorMessage = "Authentication token not found."
+            isLoadingDailyTips = false
+            return
+        }
+        
+        // Populate the 'tips' relation and the 'icon_image' within each tip
+        let populateQuery = "populate[tips][populate][icon_image]=true"
+        
+        guard let url = URL(string: "\(strapiUrl)/daily-tip?\(populateQuery)") else {
+            dailyTipsErrorMessage = "Invalid URL."
+            isLoadingDailyTips = false
+            return
+        }
+        
+        print("HomeViewModel: Fetching daily tips from URL: \(url.absoluteString)")
+
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                print("HomeViewModel: Received non-200 status code for daily tips: \(statusCode)")
+                dailyTipsErrorMessage = "Server error or no tips configured."
+                isLoadingDailyTips = false
+                return
+            }
+            
+            let decoder = JSONDecoder()
+            let decodedResponse = try decoder.decode(StrapiSingleResponse<DailyTip>.self, from: data)
+            
+            self.dailyTips = decodedResponse.data.attributes.tips.data
+            print("HomeViewModel: Successfully fetched \(self.dailyTips.count) daily tips.")
+
+        } catch {
+            dailyTipsErrorMessage = "Failed to fetch daily tips: \(error.localizedDescription)"
+            print("HomeViewModel: An error occurred in the daily tips fetch process: \(error)")
+            if let decodingError = error as? DecodingError {
+               print("HomeViewModel: Daily Tip Decoding error details: \(decodingError)")
+           }
+        }
+
+        isLoadingDailyTips = false
+        print("HomeViewModel: fetchDailyTips finished.")
+    }
+    // --- NEW FUNCTION END ---
 
     func fetchHotTopics() async {
         print("HomeViewModel: Starting fetchHotTopics...")

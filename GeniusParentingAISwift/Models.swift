@@ -30,6 +30,34 @@ struct HotTopic: Codable, Identifiable {
     }
 }
 
+// MARK: - Daily Tip Models
+struct Tip: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: Attributes
+
+    var text: String { attributes.text }
+    var iconImageMedia: Media? { attributes.iconImage?.data }
+
+    struct Attributes: Codable, Hashable {
+        let text: String
+        let iconImage: StrapiRelation<Media>?
+
+        enum CodingKeys: String, CodingKey {
+            case text
+            case iconImage = "icon_image"
+        }
+    }
+}
+
+struct DailyTip: Codable, Identifiable {
+    let id: Int
+    let attributes: Attributes
+
+    struct Attributes: Codable {
+        let tips: StrapiListResponse<Tip>
+    }
+}
+
 
 // MARK: - Primary Data Models
 
