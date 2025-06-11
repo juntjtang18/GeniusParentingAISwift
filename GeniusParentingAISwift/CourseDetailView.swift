@@ -2,14 +2,12 @@ import SwiftUI
 import KeychainAccess
 import AVKit // For VideoPlayer
 
-// MARK: - Single Course View & ViewModel
-
 struct ShowACourseView: View {
     @StateObject private var viewModel = ShowACourseViewModel()
-    @State private var selectedLanguage: String = "en"
+    // This now receives the language selection from the parent view
+    @Binding var selectedLanguage: String
     let courseId: Int
     @State private var currentPageIndex = 0
-    @State private var showLanguagePicker = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,9 +41,6 @@ struct ShowACourseView: View {
                     TabView(selection: $currentPageIndex) {
                         ForEach(pages.indices, id: \.self) { pageIndex in
                             ScrollView {
-                                // --- FIXED: The parent VStack is now explicitly constrained ---
-                                // This creates a stable layout boundary for all child components,
-                                // ensuring Text views wrap correctly without expanding off-screen.
                                 VStack(alignment: .leading, spacing: 15) {
                                     ForEach(pages[pageIndex], id: \.uniqueIdForList) { item in
                                         if item.__component != "coursecontent.pagebreaker" {
@@ -54,8 +49,8 @@ struct ShowACourseView: View {
                                         }
                                     }
                                 }
-                                .padding(.horizontal) // Apply horizontal padding to the VStack's content
-                                .frame(maxWidth: .infinity, alignment: .leading) // Constrain the VStack to the screen width
+                                .padding(.horizontal)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }.tag(pageIndex)
                         }
                     }
@@ -98,11 +93,8 @@ struct ShowACourseView: View {
                     Image(systemName: "arrow.clockwise")
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                 Button { showLanguagePicker = true } label: { Image(systemName: "globe") }
-            }
+            // The language picker toolbar item and popover have been removed.
         }
-        .popover(isPresented: $showLanguagePicker) { LanguagePickerView(selectedLanguage: $selectedLanguage) }
         .task {
             if viewModel.course == nil {
                 await viewModel.fetchCourse(courseId: courseId)
@@ -165,21 +157,7 @@ struct ShowACourseView: View {
     }
 }
 
-
-struct LanguagePickerView: View {
-    @Binding var selectedLanguage: String
-    @Environment(\.dismiss) var dismiss
-    var body: some View {
-        NavigationView {
-            List {
-                Button("English") { selectedLanguage = "en"; dismiss() }
-                Button("Spanish") { selectedLanguage = "es"; dismiss() }
-            }
-            .navigationTitle("Select Language")
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-        }
-    }
-}
+// The separate LanguagePickerView struct has been removed from this file.
 
 @MainActor
 class ShowACourseViewModel: ObservableObject {
@@ -192,42 +170,34 @@ class ShowACourseViewModel: ObservableObject {
 
     func fetchCourse(courseId: Int) async {
         isLoading = true; errorMessage = nil
-        print("Fetching course with ID: \(courseId)")
         guard let token = keychain["jwt"] else {
-            print("Error: No JWT token found in Keychain."); errorMessage = "Authentication token not found."; isLoading = false; return
+            errorMessage = "Authentication token not found."; isLoading = false; return
         }
         
-        // This query now correctly populates all component types and their nested fields
         let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][on][coursecontent.text][populate]=*&populate[content][on][coursecontent.image][populate]=*&populate[content][on][coursecontent.video][populate]=*&populate[content][on][coursecontent.quiz][populate]=*&populate[content][on][coursecontent.external-video][populate]=*&populate[content][on][coursecontent.pagebreaker][populate]=*&populate=translations"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
-            print("Error: Invalid URL."); errorMessage = "Internal error: Invalid URL."; isLoading = false; return
+            errorMessage = "Internal error: Invalid URL."; isLoading = false; return
         }
         
         var request = URLRequest(url: url); request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        print("Fetching course ID \(courseId) from URL: \(url.absoluteString)")
+
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("Invalid response from server."); errorMessage = "Invalid server response."; isLoading = false; return
-            }
-            print("Show course (ID: \(courseId)) status: \(httpResponse.statusCode)")
-            if let responseBody = String(data: data, encoding: .utf8) { print("Response body for course \(courseId): \(String(responseBody))") }
-            guard (200...299).contains(httpResponse.statusCode) else {
-                var detailedError = "Server error \(httpResponse.statusCode)."
+            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                var detailedError = "Server error \(statusCode)."
                 if let errData = try? JSONDecoder().decode(StrapiErrorResponse.self, from: data) { detailedError = errData.error.message }
                 errorMessage = detailedError; isLoading = false; return
             }
             let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
             self.course = decodedResponse.data
-            print("Successfully fetched course: \(self.course?.title ?? "Unknown Title") (ID: \(courseId))")
         } catch {
-            if let decError = error as? DecodingError { errorMessage = "Data parsing error. Check if the Swift models match the JSON response."; print("Decoding error details for course \(courseId): \(decError)") }
+            if let decError = error as? DecodingError { errorMessage = "Data parsing error. Check if the Swift models match the JSON response." }
             else { errorMessage = "Fetch error: \(error.localizedDescription)" }
-            print("Fetch course ID \(courseId) error: \(error)")
         }
         isLoading = false
     }
