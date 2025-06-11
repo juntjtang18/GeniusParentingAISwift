@@ -91,7 +91,20 @@ struct MainView: View {
         }
     }
     
-    // The menuToolbar helper property has been removed.
+    // MARK: - Toolbar Content
+    
+    private var menuToolbar: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button(action: {
+                withAnimation(.easeInOut) {
+                    isSideMenuShowing.toggle()
+                }
+            }) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.title3)
+            }
+        }
+    }
     
     // MARK: - Tab Views
     
@@ -100,19 +113,7 @@ struct MainView: View {
             HomeContentView(viewModel: homeViewModel, selectedLanguage: $selectedLanguage)
                 .navigationTitle("Home")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    // --- FIX: ToolbarItem is now defined directly here ---
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            withAnimation(.easeInOut) {
-                                isSideMenuShowing.toggle()
-                            }
-                        }) {
-                            Image(systemName: "line.3.horizontal")
-                                .font(.title3)
-                        }
-                    }
-                }
+                .toolbar { menuToolbar }
         }
     }
     
@@ -121,19 +122,7 @@ struct MainView: View {
             CourseView(viewModel: courseViewModel, selectedLanguage: $selectedLanguage)
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    // --- FIX: ToolbarItem is now defined directly here ---
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            withAnimation(.easeInOut) {
-                                isSideMenuShowing.toggle()
-                            }
-                        }) {
-                            Image(systemName: "line.3.horizontal")
-                                .font(.title3)
-                        }
-                    }
-                }
+                .toolbar { menuToolbar }
         }
     }
     
@@ -142,19 +131,7 @@ struct MainView: View {
             AIView()
                 .navigationTitle("AI Assistant")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    // --- FIX: ToolbarItem is now defined directly here ---
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            withAnimation(.easeInOut) {
-                                isSideMenuShowing.toggle()
-                            }
-                        }) {
-                            Image(systemName: "line.3.horizontal")
-                                .font(.title3)
-                        }
-                    }
-                }
+                .toolbar { menuToolbar }
         }
     }
     
@@ -165,19 +142,7 @@ struct MainView: View {
                 .padding()
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    // --- FIX: ToolbarItem is now defined directly here ---
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            withAnimation(.easeInOut) {
-                                isSideMenuShowing.toggle()
-                            }
-                        }) {
-                            Image(systemName: "line.3.horizontal")
-                                .font(.title3)
-                        }
-                    }
-                }
+                .toolbar { menuToolbar }
         }
     }
 }
@@ -208,7 +173,7 @@ struct HomeContentView: View {
     private var todaysLessonSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Today's Lesson")
-                .font(.title2).bold()
+                .font(.title2)
                 .padding(.horizontal)
 
             Group {
@@ -238,7 +203,7 @@ struct HomeContentView: View {
     private var hotTopicsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Hot Topics")
-                .font(.title2).bold()
+                .font(.title2)
                 .padding(.horizontal)
             
             Group {
@@ -266,7 +231,7 @@ struct HomeContentView: View {
     private var dailyTipsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Daily Tips")
-                .font(.title2).bold()
+                .font(.title2)
                 .padding(.horizontal)
 
             Group {

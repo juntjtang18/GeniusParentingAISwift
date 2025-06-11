@@ -2,8 +2,8 @@ import SwiftUI
 import KeychainAccess
 
 struct SignupView: View {
-    @Binding var isLoggedIn: Bool // Binding to control login state
-    @Binding var currentView: LoginView.ViewState // Binding to manage view state
+    @Binding var isLoggedIn: Bool
+    @Binding var currentView: LoginView.ViewState
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -13,10 +13,9 @@ struct SignupView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            // Custom Back Button
             HStack {
                 Button(action: {
-                    currentView = .login // Return to LoginView
+                    currentView = .login
                 }) {
                     Image(systemName: "chevron.left")
                     Text("Back")
@@ -25,9 +24,10 @@ struct SignupView: View {
                 Spacer()
             }
 
-            Text("Sign Up for GeniusParentingAISwift")
+            Text("Sign Up for Genius Parenting AI")
                 .font(.largeTitle)
-                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
 
             TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -62,7 +62,7 @@ struct SignupView: View {
             .padding(.horizontal)
 
             Button(action: {
-                currentView = .login // Navigate back to LoginView
+                currentView = .login
             }) {
                 Text("Already have an account? Log In")
                     .foregroundColor(.blue)
@@ -73,7 +73,6 @@ struct SignupView: View {
     }
 
     func signup() {
-        // Basic validation
         guard !email.isEmpty, !password.isEmpty else {
             errorMessage = "Please fill in all fields"
             return
@@ -83,7 +82,6 @@ struct SignupView: View {
             return
         }
 
-        // Strapi signup endpoint
         let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -115,7 +113,7 @@ struct SignupView: View {
                     return
                 }
                 keychain["jwt"] = jwt
-                currentView = .login // Navigate back to LoginView after successful signup
+                currentView = .login
             }
         }.resume()
     }
@@ -123,6 +121,6 @@ struct SignupView: View {
 
 struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
-        SignupView(isLoggedIn: .constant(false), currentView: .constant(.signup))
+        SignupView(isLoggedIn: .constant(false), currentView: .constant(.login))
     }
 }

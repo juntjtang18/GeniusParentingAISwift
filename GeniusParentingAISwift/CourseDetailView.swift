@@ -1,13 +1,12 @@
 import SwiftUI
 import KeychainAccess
-import AVKit // For VideoPlayer
+import AVKit
 
-// --- NEW: A simple singleton class to act as a shared cache for course details ---
 class CourseCache {
     static let shared = CourseCache()
-    private init() {} // Private initializer to ensure singleton instance
+    private init() {}
 
-    private(set) var courses: [Int: Course] = [:] // [CourseID: CourseData]
+    private(set) var courses: [Int: Course] = [:]
 
     func get(courseId: Int) -> Course? {
         return courses[courseId]
@@ -33,7 +32,7 @@ struct ShowACourseView: View {
                  Text("Error: \(errorMessage)").foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let course = viewModel.course {
                 let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                HStack { // Header
+                HStack {
                     if let iconMedia = course.iconImageMedia {
                         if let imgUrl = URL(string: iconMedia.attributes.url) {
                             AsyncImage(url: imgUrl) { phase in
@@ -48,7 +47,7 @@ struct ShowACourseView: View {
                             Image(systemName: "exclamationmark.circle.fill").resizable().scaledToFit().frame(width: 30, height: 30).foregroundColor(.orange)
                         }
                     } else { Image(systemName: "book.fill").resizable().scaledToFit().frame(width: 30, height: 30) }
-                    Text(displayTitle).font(.headline).fontWeight(.bold).lineLimit(2).minimumScaleFactor(0.8)
+                    Text(displayTitle).font(.headline).lineLimit(2).minimumScaleFactor(0.8)
                     Spacer()
                 }.padding([.horizontal, .top])
 
@@ -174,7 +173,6 @@ class ShowACourseViewModel: ObservableObject {
     func fetchCourse(courseId: Int) async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
         
-        // --- UPDATED LOGIC: Check the cache first ---
         if !isRefreshEnabled, let cachedCourse = CourseCache.shared.get(courseId: courseId) {
             print("ShowACourseViewModel: Found course \(courseId) in cache.")
             self.course = cachedCourse
@@ -182,7 +180,6 @@ class ShowACourseViewModel: ObservableObject {
             return
         }
 
-        // If not in cache or if refresh is enabled, proceed to fetch
         print("ShowACourseViewModel: Fetching course \(courseId) from network.")
         isLoading = true; errorMessage = nil
         
@@ -212,7 +209,6 @@ class ShowACourseViewModel: ObservableObject {
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
             let fetchedCourse = decodedResponse.data
             
-            // --- UPDATED LOGIC: Save the fetched course to the cache ---
             CourseCache.shared.set(course: fetchedCourse)
             print("ShowACourseViewModel: Saved course \(fetchedCourse.id) to cache.")
             

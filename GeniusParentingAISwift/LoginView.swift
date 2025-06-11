@@ -1,4 +1,3 @@
-// LoginView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -11,7 +10,6 @@ struct LoginView: View {
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
-    // Enum to manage view states
     enum ViewState {
         case login
         case signup
@@ -23,7 +21,8 @@ struct LoginView: View {
                 VStack(spacing: 20) {
                     Text("Welcome to Genius Parenting AI")
                         .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
 
                     TextField("Email", text: $email)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -54,7 +53,7 @@ struct LoginView: View {
                     .padding(.horizontal)
 
                     Button(action: {
-                        currentView = .signup // Switch to SignupView
+                        currentView = .signup
                     }) {
                         Text("Don't have an account? Sign Up")
                             .foregroundColor(.blue)

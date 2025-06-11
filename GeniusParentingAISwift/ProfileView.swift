@@ -1,18 +1,15 @@
-// ProfileView.swift
 import SwiftUI
 import KeychainAccess
 
 struct ProfileView: View {
     @Binding var isLoggedIn: Bool
-
     @StateObject private var viewModel = ProfileViewModel()
     @State private var isShowingEditView = false
-    @Environment(\.dismiss) var dismiss // To close the sheet
+    @Environment(\.dismiss) var dismiss
 
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     var body: some View {
-        // This view is now self-contained for sheet presentation
         VStack {
             if viewModel.isLoading {
                 ProgressView("Loading Profile...")
@@ -110,14 +107,13 @@ struct ProfileView: View {
     }
 }
 
-/// A helper view for consistent row layout in the profile.
 struct ProfileRow: View {
     var label: String
     var value: String
 
     var body: some View {
         HStack {
-            Text(label).fontWeight(.semibold)
+            Text(label)
             Spacer()
             Text(value).foregroundColor(.secondary)
         }

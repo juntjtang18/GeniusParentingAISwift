@@ -49,7 +49,7 @@ struct CourseView: View {
                                 Image(systemName: "book.closed.circle").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
                             }
                             VStack(alignment: .leading) {
-                                Text(displayTitle).font(.headline)
+                                Text(displayTitle).font(.subheadline)
                                 if let categoryName = course.category?.attributes.name {
                                     Text(categoryName).font(.caption).foregroundColor(.gray)
                                 }
@@ -59,7 +59,6 @@ struct CourseView: View {
                 }
             }
         }
-        // Modifier removed, as the parent NavigationView in MainView now controls this.
         .onAppear {
             Task {
                 await viewModel.fetchCourses()
