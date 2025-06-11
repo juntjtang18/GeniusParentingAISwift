@@ -1,14 +1,15 @@
 import SwiftUI
 import KeychainAccess
 
+// MARK: - Course List View & ViewModel
+
 struct CourseView: View {
     @ObservedObject var viewModel: CourseViewModel
-    // This now receives the language selection from the parent view
     @Binding var selectedLanguage: String
 
     var body: some View {
         VStack {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.courses.isEmpty { // Show loading only on first fetch
                 ProgressView("Loading Courses...")
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 15) {
@@ -29,7 +30,6 @@ struct CourseView: View {
             } else {
                 List(viewModel.courses) { course in
                     let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                    // --- FIX: The argument order is now correct ---
                     NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: course.id)) {
                         HStack {
                             if let iconMedia = course.iconImageMedia {
@@ -60,25 +60,35 @@ struct CourseView: View {
             }
         }
         .navigationTitle("Courses")
+        .onAppear {
+            Task {
+                await viewModel.fetchCourses()
+            }
+        }
     }
 }
 
 @MainActor
 class CourseViewModel: ObservableObject {
     @Published var courses: [Course] = []
-    @Published var isLoading: Bool = true
+    @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
-    init() {
-        Task {
-            await fetchCourses()
-        }
-    }
+    // The fetch is no longer called from init()
+    init() {}
 
     func fetchCourses() async {
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        // Only fetch if refresh mode is on, or if the courses list is empty (first load).
+        guard isRefreshEnabled || self.courses.isEmpty else {
+            print("CourseViewModel: Skipping fetch for courses, using cached data.")
+            return
+        }
+        
+        print("CourseViewModel: Fetching courses...")
         self.isLoading = true
         self.errorMessage = nil
 

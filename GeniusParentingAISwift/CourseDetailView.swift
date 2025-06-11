@@ -2,9 +2,25 @@ import SwiftUI
 import KeychainAccess
 import AVKit // For VideoPlayer
 
+// --- NEW: A simple singleton class to act as a shared cache for course details ---
+class CourseCache {
+    static let shared = CourseCache()
+    private init() {} // Private initializer to ensure singleton instance
+
+    private(set) var courses: [Int: Course] = [:] // [CourseID: CourseData]
+
+    func get(courseId: Int) -> Course? {
+        return courses[courseId]
+    }
+
+    func set(course: Course) {
+        courses[course.id] = course
+    }
+}
+
+
 struct ShowACourseView: View {
     @StateObject private var viewModel = ShowACourseViewModel()
-    // This now receives the language selection from the parent view
     @Binding var selectedLanguage: String
     let courseId: Int
     @State private var currentPageIndex = 0
@@ -93,12 +109,9 @@ struct ShowACourseView: View {
                     Image(systemName: "arrow.clockwise")
                 }
             }
-            // The language picker toolbar item and popover have been removed.
         }
         .task {
-            if viewModel.course == nil {
-                await viewModel.fetchCourse(courseId: courseId)
-            }
+            await viewModel.fetchCourse(courseId: courseId)
         }
     }
 
@@ -121,33 +134,25 @@ struct ShowACourseView: View {
     func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [Content]) -> (showBackButton: Bool, showNextButton: Bool) {
         var canGoBack = true
         var canGoNext = true
-        if pageIdx == 0 {
-            canGoBack = false
-        } else {
+        if pageIdx == 0 { canGoBack = false }
+        else {
             var pageCounter = 0
             var foundPageBreakerForBack: Content?
             for item in allContent {
                  if item.__component == "coursecontent.pagebreaker" {
-                    if pageCounter == pageIdx - 1 {
-                        foundPageBreakerForBack = item
-                        break
-                    }
+                    if pageCounter == pageIdx - 1 { foundPageBreakerForBack = item; break }
                     pageCounter += 1
                 }
             }
             canGoBack = foundPageBreakerForBack?.backbutton ?? true
         }
-        if pageIdx >= totalPages - 1 {
-            canGoNext = false
-        } else {
+        if pageIdx >= totalPages - 1 { canGoNext = false }
+        else {
             var pageCounter = 0
             var foundPageBreakerForNext: Content?
             for item in allContent {
                 if item.__component == "coursecontent.pagebreaker" {
-                     if pageCounter == pageIdx {
-                        foundPageBreakerForNext = item
-                        break
-                    }
+                     if pageCounter == pageIdx { foundPageBreakerForNext = item; break }
                     pageCounter += 1
                 }
             }
@@ -156,8 +161,6 @@ struct ShowACourseView: View {
         return (showBackButton: canGoBack, showNextButton: canGoNext)
     }
 }
-
-// The separate LanguagePickerView struct has been removed from this file.
 
 @MainActor
 class ShowACourseViewModel: ObservableObject {
@@ -169,7 +172,20 @@ class ShowACourseViewModel: ObservableObject {
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     func fetchCourse(courseId: Int) async {
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        
+        // --- UPDATED LOGIC: Check the cache first ---
+        if !isRefreshEnabled, let cachedCourse = CourseCache.shared.get(courseId: courseId) {
+            print("ShowACourseViewModel: Found course \(courseId) in cache.")
+            self.course = cachedCourse
+            self.isLoading = false
+            return
+        }
+
+        // If not in cache or if refresh is enabled, proceed to fetch
+        print("ShowACourseViewModel: Fetching course \(courseId) from network.")
         isLoading = true; errorMessage = nil
+        
         guard let token = keychain["jwt"] else {
             errorMessage = "Authentication token not found."; isLoading = false; return
         }
@@ -194,7 +210,14 @@ class ShowACourseViewModel: ObservableObject {
             }
             let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
-            self.course = decodedResponse.data
+            let fetchedCourse = decodedResponse.data
+            
+            // --- UPDATED LOGIC: Save the fetched course to the cache ---
+            CourseCache.shared.set(course: fetchedCourse)
+            print("ShowACourseViewModel: Saved course \(fetchedCourse.id) to cache.")
+            
+            self.course = fetchedCourse
+            
         } catch {
             if let decError = error as? DecodingError { errorMessage = "Data parsing error. Check if the Swift models match the JSON response." }
             else { errorMessage = "Fetch error: \(error.localizedDescription)" }

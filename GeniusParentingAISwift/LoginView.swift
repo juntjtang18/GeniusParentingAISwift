@@ -21,7 +21,7 @@ struct LoginView: View {
         Group {
             if currentView == .login {
                 VStack(spacing: 20) {
-                    Text("GeniusParentingAISwift")
+                    Text("Welcome to Genius Parenting AI")
                         .font(.largeTitle)
                         .fontWeight(.bold)
 

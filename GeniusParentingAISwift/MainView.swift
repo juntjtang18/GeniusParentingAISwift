@@ -8,7 +8,8 @@ struct MainView: View {
     // State management for sheets
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
-    @State private var isShowingProfileSheet = false // New state for profile
+    @State private var isShowingProfileSheet = false
+    @State private var isShowingSettingSheet = false // New state for settings sheet
     
     // State for the side menu
     @State private var isSideMenuShowing = false
@@ -49,8 +50,6 @@ struct MainView: View {
                             Text("Community")
                         }
                         .tag(3)
-
-                    // The Profile Tab has been removed from the TabView
                 }
                 .navigationTitle(navigationTitle(for: selectedTab))
                 .toolbar {
@@ -60,7 +59,7 @@ struct MainView: View {
                                 isSideMenuShowing.toggle()
                             }
                         }) {
-                            Image(systemName: "gearshape.fill")
+                            Image(systemName: "line.3.horizontal")
                                 .font(.title3)
                         }
                     }
@@ -68,10 +67,15 @@ struct MainView: View {
                 .sheet(isPresented: $isShowingLanguageSheet) {
                     LanguagePickerView(selectedLanguage: $selectedLanguage)
                 }
-                // New sheet for presenting the ProfileView
                 .sheet(isPresented: $isShowingProfileSheet) {
                     NavigationView {
                         ProfileView(isLoggedIn: $isLoggedIn)
+                    }
+                }
+                // New sheet for presenting the SettingView
+                .sheet(isPresented: $isShowingSettingSheet) {
+                    NavigationView {
+                        SettingView()
                     }
                 }
             }
@@ -93,7 +97,8 @@ struct MainView: View {
                 SideMenuView(
                     isShowing: $isSideMenuShowing,
                     isShowingProfileSheet: $isShowingProfileSheet,
-                    isShowingLanguageSheet: $isShowingLanguageSheet
+                    isShowingLanguageSheet: $isShowingLanguageSheet,
+                    isShowingSettingSheet: $isShowingSettingSheet // Pass new binding
                 )
                 .frame(width: UIScreen.main.bounds.width * 0.7)
                 .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)
@@ -206,8 +211,6 @@ struct MainView: View {
         Text("Community View").font(.title).padding()
     }
     
-    // The profileTab computed property has been removed
-    
     // MARK: - Helper Functions
     
     private func navigationTitle(for index: Int) -> String {
@@ -216,13 +219,12 @@ struct MainView: View {
         case 1: return "Courses"
         case 2: return "AI Assistant"
         case 3: return "Community"
-        // Case 4 for "Profile" is no longer needed
         default: return ""
         }
     }
 }
 
-// Language Picker View (no changes)
+// Language Picker View
 struct LanguagePickerView: View {
     @Binding var selectedLanguage: String
     @Environment(\.dismiss) var dismiss

@@ -11,18 +11,22 @@ class HomeViewModel: ObservableObject {
     @Published var isLoadingHotTopics: Bool = true
     @Published var hotTopicsErrorMessage: String? = nil
     
-    // --- ADDITIONS START ---
     @Published var dailyTips: [Tip] = []
     @Published var isLoadingDailyTips: Bool = true
     @Published var dailyTipsErrorMessage: String? = nil
-    // --- ADDITIONS END ---
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
-    // --- NEW FUNCTION START ---
     func fetchDailyTips() async {
-        print("HomeViewModel: Starting fetchDailyTips...")
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        // Only fetch if refresh mode is on, or if the data is empty (first load).
+        guard isRefreshEnabled || self.dailyTips.isEmpty else {
+            print("HomeViewModel: Skipping fetch for daily tips, using cached data.")
+            return
+        }
+        
+        print("HomeViewModel: Fetching daily tips...")
         isLoadingDailyTips = true
         dailyTipsErrorMessage = nil
 
@@ -32,17 +36,12 @@ class HomeViewModel: ObservableObject {
             return
         }
         
-        // Populate the 'tips' relation and the 'icon_image' within each tip
         let populateQuery = "populate[tips][populate][icon_image]=true"
-        
         guard let url = URL(string: "\(strapiUrl)/daily-tip?\(populateQuery)") else {
             dailyTipsErrorMessage = "Invalid URL."
-            isLoadingDailyTips = false
-            return
+            isLoadingDailyTips = false; return
         }
         
-        print("HomeViewModel: Fetching daily tips from URL: \(url.absoluteString)")
-
         do {
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
@@ -54,31 +53,31 @@ class HomeViewModel: ObservableObject {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                 print("HomeViewModel: Received non-200 status code for daily tips: \(statusCode)")
                 dailyTipsErrorMessage = "Server error or no tips configured."
-                isLoadingDailyTips = false
-                return
+                isLoadingDailyTips = false; return
             }
             
             let decoder = JSONDecoder()
             let decodedResponse = try decoder.decode(StrapiSingleResponse<DailyTip>.self, from: data)
             
             self.dailyTips = decodedResponse.data.attributes.tips.data
-            print("HomeViewModel: Successfully fetched \(self.dailyTips.count) daily tips.")
-
         } catch {
             dailyTipsErrorMessage = "Failed to fetch daily tips: \(error.localizedDescription)"
-            print("HomeViewModel: An error occurred in the daily tips fetch process: \(error)")
             if let decodingError = error as? DecodingError {
                print("HomeViewModel: Daily Tip Decoding error details: \(decodingError)")
            }
         }
-
         isLoadingDailyTips = false
-        print("HomeViewModel: fetchDailyTips finished.")
     }
-    // --- NEW FUNCTION END ---
 
     func fetchHotTopics() async {
-        print("HomeViewModel: Starting fetchHotTopics...")
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        // Only fetch if refresh mode is on, or if the data is empty (first load).
+        guard isRefreshEnabled || self.hotTopics.isEmpty else {
+            print("HomeViewModel: Skipping fetch for hot topics, using cached data.")
+            return
+        }
+
+        print("HomeViewModel: Fetching hot topics...")
         isLoadingHotTopics = true
         hotTopicsErrorMessage = nil
 
@@ -89,15 +88,12 @@ class HomeViewModel: ObservableObject {
         }
         
         let populateQuery = "populate[topics][populate][icon_image]=true"
-        
         guard let url = URL(string: "\(strapiUrl)/hot-topic?\(populateQuery)") else {
             hotTopicsErrorMessage = "Invalid URL."
             isLoadingHotTopics = false
             return
         }
         
-        print("HomeViewModel: Fetching hot topics from URL: \(url.absoluteString)")
-
         do {
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
@@ -105,21 +101,13 @@ class HomeViewModel: ObservableObject {
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
-            // --- DEBUBGING STEP: Print the raw JSON string from the server ---
             if let rawJSONString = String(data: data, encoding: .utf8) {
-                print("--- RAW HOT TOPIC JSON RESPONSE ---")
-                print(rawJSONString)
-                print("---------------------------------")
+                print("--- RAW HOT TOPIC JSON RESPONSE ---\n\(rawJSONString)\n---------------------------------")
             }
             
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                print("HomeViewModel: Received non-200 status code for hot topics: \(statusCode)")
-                if statusCode == 404 {
-                    hotTopicsErrorMessage = "No hot topics have been set for today."
-                } else {
-                    hotTopicsErrorMessage = "Server error."
-                }
+                hotTopicsErrorMessage = (statusCode == 404) ? "No hot topics have been set for today." : "Server error."
                 isLoadingHotTopics = false
                 return
             }
@@ -128,28 +116,24 @@ class HomeViewModel: ObservableObject {
             let decodedResponse = try decoder.decode(StrapiSingleResponse<HotTopic>.self, from: data)
             
             self.hotTopics = decodedResponse.data.attributes.topics.data
-            print("HomeViewModel: Successfully fetched \(self.hotTopics.count) hot topics.")
-            
-            // --- DEBUGING STEP: Verify the decoded data ---
-            for topic in self.hotTopics {
-                print("Decoded Topic ID: \(topic.id), Title: '\(topic.title)', Image URL: \(topic.iconImageMedia?.urlString ?? "NIL")")
-            }
-
         } catch {
             hotTopicsErrorMessage = "Failed to fetch hot topics: \(error.localizedDescription)"
-            print("HomeViewModel: An error occurred in the hot topics fetch process: \(error)")
             if let decodingError = error as? DecodingError {
                print("HomeViewModel: Hot Topic Decoding error details: \(decodingError)")
            }
         }
-
         isLoadingHotTopics = false
-        print("HomeViewModel: fetchHotTopics finished.")
     }
 
     func fetchDailyLessons() async {
-        // ... this function remains unchanged and will continue to work correctly.
-        print("HomeViewModel: Starting fetchDailyLessons...")
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        // Only fetch if refresh mode is on, or if the data is empty (first load).
+        guard isRefreshEnabled || self.todaysLessons.isEmpty else {
+            print("HomeViewModel: Skipping fetch for daily lessons, using cached data.")
+            return
+        }
+
+        print("HomeViewModel: Fetching daily lessons...")
         isLoading = true
         errorMessage = nil
 
@@ -160,11 +144,8 @@ class HomeViewModel: ObservableObject {
         }
         
         let populateQuery = "populate[dailylessons][populate][courses][populate][icon_image]=true"
-
         guard let url = URL(string: "\(strapiUrl)/dailylesson?\(populateQuery)") else {
-            errorMessage = "Invalid URL."
-            isLoading = false
-            return
+            errorMessage = "Invalid URL."; isLoading = false; return
         }
 
         do {
@@ -174,9 +155,7 @@ class HomeViewModel: ObservableObject {
             
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                errorMessage = "Server error."
-                isLoading = false
-                return
+                errorMessage = "Server error."; isLoading = false; return
             }
             
             let decoder = JSONDecoder()
@@ -200,7 +179,6 @@ class HomeViewModel: ObservableObject {
                print("HomeViewModel: Daily Lesson Decoding error details: \(decodingError)")
            }
         }
-
         isLoading = false
     }
 }

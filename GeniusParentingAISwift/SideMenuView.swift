@@ -2,9 +2,10 @@ import SwiftUI
 
 struct SideMenuView: View {
     @Binding var isShowing: Bool
-    // This binding controls the new profile sheet
     @Binding var isShowingProfileSheet: Bool
     @Binding var isShowingLanguageSheet: Bool
+    // New binding to control the settings sheet
+    @Binding var isShowingSettingSheet: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -21,7 +22,6 @@ struct SideMenuView: View {
             // 2. Menu Items
             VStack(alignment: .leading, spacing: 1) {
                 Button(action: {
-                    // Action is now to show the profile sheet
                     handleMenuSelection {
                         isShowingProfileSheet = true
                     }
@@ -38,6 +38,18 @@ struct SideMenuView: View {
                     }
                 }) {
                     Label("Language", systemImage: "globe")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+                
+                Divider()
+
+                // New "Setting" menu item
+                Button(action: {
+                    handleMenuSelection {
+                        isShowingSettingSheet = true
+                    }
+                }) {
+                    Label("Setting", systemImage: "gear")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
             }
@@ -74,7 +86,8 @@ struct SideMenuView_Previews: PreviewProvider {
         SideMenuView(
             isShowing: .constant(true),
             isShowingProfileSheet: .constant(false),
-            isShowingLanguageSheet: .constant(false)
+            isShowingLanguageSheet: .constant(false),
+            isShowingSettingSheet: .constant(false)
         )
     }
 }
