@@ -1,6 +1,36 @@
 import Foundation
 import SwiftUI // For CGFloat
 
+// MARK: - Hot Topic Models
+struct Topic: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: Attributes
+
+    var title: String { attributes.title }
+    var iconImageMedia: Media? { attributes.iconImage?.data }
+
+    struct Attributes: Codable, Hashable {
+        let title: String
+        let iconImage: StrapiRelation<Media>?
+
+        // --- FIX: Add explicit coding keys for robust decoding ---
+        enum CodingKeys: String, CodingKey {
+            case title
+            case iconImage = "icon_image"
+        }
+    }
+}
+
+struct HotTopic: Codable, Identifiable {
+    let id: Int
+    let attributes: Attributes
+
+    struct Attributes: Codable {
+        let topics: StrapiListResponse<Topic>
+    }
+}
+
+
 // MARK: - Primary Data Models
 
 struct Media: Codable, Hashable, Identifiable {
@@ -21,14 +51,14 @@ struct Media: Codable, Hashable, Identifiable {
         let url: String
         let previewUrl: String?
         let provider: String
-        let providerMetadata: JSONValue? // Assumes JSONValue is defined elsewhere in your project
+        // let providerMetadata: JSONValue?
         let createdAt: String
         let updatedAt: String
         
         private enum CodingKeys: String, CodingKey {
             case name, alternativeText, caption, width, height, formats, hash, ext, mime, size, url, provider, createdAt, updatedAt
             case previewUrl = "preview_url"
-            case providerMetadata = "provider_metadata"
+            // case providerMetadata = "provider_metadata"
         }
     }
 
@@ -54,7 +84,6 @@ struct MediaFormat: Codable, Hashable {
     let url: String
 }
 
-// Assumes StrapiRelation is defined elsewhere or is not needed by the new models
 struct StrapiRelation<T: Codable & Identifiable>: Codable, Hashable {
     let data: T?
     func hash(into hasher: inout Hasher) { hasher.combine(data?.id) }
@@ -67,21 +96,17 @@ struct StrapiRelation<T: Codable & Identifiable>: Codable, Hashable {
 
 // MARK: - Daily Lesson Models
 
-// Model for Courses within a Daily Lesson
 struct LessonCourse: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: Course.Attributes
 }
 
-// Model for Daily Lesson Selection Component
 struct DailyLessonSelection: Codable, Identifiable {
     let id: Int
     let day: String
-    // Assumes StrapiListResponse is defined elsewhere in your project
     let courses: StrapiListResponse<LessonCourse>
 }
 
-// Model for the Daily Lesson Plan Single Type
 struct DailyLessonPlan: Codable, Identifiable {
     let id: Int
     let attributes: Attributes
@@ -124,13 +149,7 @@ struct Course: Codable, Identifiable, Hashable {
         let createdAt: String?
         let updatedAt: String?
         let publishedAt: String?
-        
-        // --- FIX: ADDED MISSING LOCALE PROPERTY ---
         let locale: String?
-        
-        // --- FIX: REMOVED CODINGKEYS TO ALLOW .convertFromSnakeCase TO WORK ---
-        // By removing this, the decoder will automatically map the
-        // JSON key "icon_image" to the Swift property "iconImage".
     }
 
     struct CourseTranslation: Codable, Hashable {

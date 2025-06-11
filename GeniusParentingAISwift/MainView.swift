@@ -1,4 +1,3 @@
-// MainView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -6,7 +5,6 @@ struct MainView: View {
     @Binding var isLoggedIn: Bool
     @State private var selectedTab: Int = 0
 
-    // State-managed ViewModels for persistent state across tabs
     @StateObject private var homeViewModel = HomeViewModel()
     @StateObject private var courseViewModel = CourseViewModel()
 
@@ -16,41 +14,34 @@ struct MainView: View {
         NavigationView {
             TabView(selection: $selectedTab) {
                 // Home Tab
-                VStack(spacing: 20) {
-                    // Header with Title and Logo
-                    HStack {
-                        Image("gpa-logo")
-                            .resizable()
-                            .clipShape(Circle())
-                            .frame(width: 45, height: 45)
-                        Text("Genius Parenting AI")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
-                    }
-                    .padding()
+                ScrollView { // Make the whole home screen scrollable
+                    VStack(spacing: 30) { // Increased spacing
+                        // Header with Title and Logo
+                        HStack {
+                            Image("gpa-logo")
+                                .resizable()
+                                .clipShape(Circle())
+                                .frame(width: 45, height: 45)
+                            Text("Genius Parenting AI")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.black)
+                            Spacer() // Pushes title to the left
+                        }
+                        .padding(.horizontal)
 
-                    // Middle Content Areas
-                    VStack(spacing: 20) {
                         // Today's Lesson Section
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Today's Lesson")
-                                .font(.title2)
+                                .font(.title2).bold()
                                 .padding(.horizontal)
 
                             if homeViewModel.isLoading {
-                                ProgressView()
-                                    .frame(height: 150)
+                                ProgressView().frame(height: 150)
                             } else if let errorMessage = homeViewModel.errorMessage {
-                                Text(errorMessage)
-                                    .foregroundColor(.red)
-                                    .padding()
-                                    .frame(height: 150)
+                                Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
                             } else if homeViewModel.todaysLessons.isEmpty {
-                                 Text("No lessons scheduled for today.")
-                                     .foregroundColor(.gray)
-                                     .padding()
-                                     .frame(height: 150)
+                                 Text("No lessons scheduled for today.").foregroundColor(.gray).padding().frame(height: 150)
                             } else {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 15) {
@@ -66,66 +57,60 @@ struct MainView: View {
                             }
                         }
 
-                        // Hot Topics Section
+                        // --- UPDATED: Hot Topics Section ---
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Hot Topics")
-                                .font(.title2)
+                                .font(.title2).bold()
                                 .padding(.horizontal)
-
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 15) {
-                                    ForEach(0..<3) { _ in
-                                        ZStack {
-                                            Image("hotTopicsImage")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 250, height: 150)
-                                                .clipped()
-                                                .cornerRadius(10)
-                                            Text("No AI at Los Angeles")
-                                                .font(.subheadline)
-                                                .foregroundColor(.white)
-                                                .padding(.bottom, 10)
+                            
+                            if homeViewModel.isLoadingHotTopics {
+                                ProgressView().frame(height: 150)
+                            } else if let errorMessage = homeViewModel.hotTopicsErrorMessage {
+                                Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                            } else if homeViewModel.hotTopics.isEmpty {
+                                Text("No hot topics available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 15) {
+                                        ForEach(homeViewModel.hotTopics) { topic in
+                                            // You can wrap this in a NavigationLink if you have a detail view for topics
+                                            HotTopicCardView(topic: topic)
                                         }
-                                        .frame(width: 250, height: 150)
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
+                                .frame(height: 150)
                             }
-                            .frame(height: 150)
                         }
 
-                        // Daily Tips Section
+                        // Daily Tips Section (Placeholder)
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Daily Tips")
-                                .font(.title2)
+                                .font(.title2).bold()
                                 .padding(.horizontal)
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 15) {
+                                    // Placeholder content
                                     ForEach(0..<3) { _ in
-                                        ZStack {
+                                        ZStack(alignment: .bottomLeading) {
                                             Image("dailyTipsImage")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 250, height: 150)
-                                                .clipped()
-                                                .cornerRadius(10)
+                                                .resizable().aspectRatio(contentMode: .fill)
+                                            LinearGradient(gradient: Gradient(colors: [.clear, .black.opacity(0.8)]), startPoint: .center, endPoint: .bottom)
                                             Text("Understanding your child inside")
-                                                .font(.subheadline)
-                                                .foregroundColor(.white)
-                                                .padding(.bottom, 10)
+                                                .font(.headline).foregroundColor(.white).padding()
                                         }
-                                        .frame(width: 250, height: 150)
+                                        .frame(width: 250, height: 150).clipped().cornerRadius(12)
                                     }
                                 }
                                 .padding(.horizontal)
                             }
                             .frame(height: 150)
                         }
+                        
+                        Spacer()
                     }
-
-                    Spacer()
+                    .padding(.top)
                 }
                 .tabItem {
                     Image(systemName: "house.fill")
@@ -135,54 +120,37 @@ struct MainView: View {
                 .onAppear {
                     print("MainView: Home tab .onAppear has been triggered.")
                     Task {
+                        // Fetch both sets of data when the view appears
                         await homeViewModel.fetchDailyLessons()
+                        await homeViewModel.fetchHotTopics()
                     }
                 }
 
                 // Course Tab
                 CourseView(viewModel: courseViewModel)
-                    .tabItem {
-                        Image(systemName: "book.fill")
-                        Text("Course")
-                    }
+                    .tabItem { Image(systemName: "book.fill"); Text("Course") }
                     .tag(1)
 
                 // AI Tab
                 AIView()
-                    .tabItem {
-                        Image(systemName: "brain.fill")
-                        Text("AI")
-                    }
+                    .tabItem { Image(systemName: "brain.fill"); Text("AI") }
                     .tag(2)
 
                 // Community Tab
-                VStack {
-                    Text("Community View")
-                        .font(.title)
-                        .padding()
-                    Spacer()
-                }
-                .tabItem {
-                    Image(systemName: "person.2.fill")
-                    Text("Community")
-                }
-                .tag(3)
+                Text("Community View").font(.title).padding()
+                    .tabItem { Image(systemName: "person.2.fill"); Text("Community") }
+                    .tag(3)
 
                 // Profile Tab
-                // --- FIX: Pass the selectedTab binding to the ProfileView initializer ---
                 ProfileView(isLoggedIn: $isLoggedIn, selectedTab: $selectedTab)
-                    .tabItem {
-                        Image(systemName: "person.fill")
-                        Text("Profile")
-                    }
+                    .tabItem { Image(systemName: "person.fill"); Text("Profile") }
                     .tag(4)
             }
             .navigationTitle(navigationTitle(for: selectedTab))
-            .navigationBarHidden(selectedTab == 0)
+            .navigationBarHidden(selectedTab == 0) // Hide Nav bar only on Home
         }
     }
-
-    // Helper function to determine the navigation title for each tab
+    
     private func navigationTitle(for index: Int) -> String {
         switch index {
         case 0: return "Home"
