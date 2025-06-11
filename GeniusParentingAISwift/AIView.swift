@@ -40,7 +40,6 @@ struct AIView: View {
 
             // --- INPUT PANEL: Updated Styling ---
             VStack(spacing: 0) {
-                // Empty space for thin border effect (padding at the top)
                 Color.clear
                     .frame(height: 4)
 
@@ -62,7 +61,7 @@ struct AIView: View {
                             Button(action: {
                                 withAnimation {
                                     isInputExpanded = true
-                                    lines = 2 // Expand to 3 lines first
+                                    lines = 2
                                 }
                             }) {
                                 Image(systemName: "arrow.up.left.and.arrow.down.right")
@@ -76,10 +75,10 @@ struct AIView: View {
                             Button(action: {
                                 withAnimation {
                                     if lines == 2 {
-                                        lines = 3 // Expand to 4 lines
+                                        lines = 3
                                     } else {
                                         isInputExpanded = false
-                                        lines = 1 // Collapse back to 1 line
+                                        lines = 1
                                     }
                                 }
                             }) {
@@ -100,7 +99,6 @@ struct AIView: View {
                     }
                     .disabled(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isAwaitingResponse)
 
-                    // Button to switch input method/language
                     Button(action: {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
@@ -111,7 +109,6 @@ struct AIView: View {
                             .foregroundColor(.blue)
                     }
 
-                    // Voice input button
                     Button(action: toggleRecording) {
                         Image(systemName: isRecording ? "mic.slash.fill" : "mic.fill")
                             .font(.title2)
@@ -123,9 +120,8 @@ struct AIView: View {
                 .padding(.vertical, 6)
             }
             .background(Color(UIColor.systemBackground))
-            // --- INPUT PANEL: End of Updated Styling ---
         }
-        .navigationTitle("AI Assistant")
+        // Modifiers for title are removed, now handled by MainView
         .onAppear {
             if viewModel.messages.isEmpty {
                 let greeting = ChatMessage(content: "Hello! How can I help you with your parenting questions today?", isUser: false)

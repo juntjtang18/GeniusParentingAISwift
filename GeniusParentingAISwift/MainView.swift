@@ -9,7 +9,7 @@ struct MainView: View {
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
     @State private var isShowingProfileSheet = false
-    @State private var isShowingSettingSheet = false // New state for settings sheet
+    @State private var isShowingSettingSheet = false
     
     // State for the side menu
     @State private var isSideMenuShowing = false
@@ -21,62 +21,46 @@ struct MainView: View {
 
     var body: some View {
         ZStack {
-            NavigationView {
-                TabView(selection: $selectedTab) {
-                    homeTab
-                        .tabItem {
-                            Image(systemName: "house.fill")
-                            Text("Home")
-                        }
-                        .tag(0)
-
-                    courseTab
-                        .tabItem {
-                            Image(systemName: "book.fill")
-                            Text("Course")
-                        }
-                        .tag(1)
-
-                    aiTab
-                        .tabItem {
-                            Image(systemName: "brain.fill")
-                            Text("AI")
-                        }
-                        .tag(2)
-
-                    communityTab
-                        .tabItem {
-                            Image(systemName: "person.2.fill")
-                            Text("Community")
-                        }
-                        .tag(3)
-                }
-                .navigationTitle(navigationTitle(for: selectedTab))
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            withAnimation(.easeInOut) {
-                                isSideMenuShowing.toggle()
-                            }
-                        }) {
-                            Image(systemName: "line.3.horizontal")
-                                .font(.title3)
-                        }
+            TabView(selection: $selectedTab) {
+                homeTab
+                    .tabItem {
+                        Image(systemName: "house.fill")
+                        Text("Home")
                     }
-                }
-                .sheet(isPresented: $isShowingLanguageSheet) {
-                    LanguagePickerView(selectedLanguage: $selectedLanguage)
-                }
-                .sheet(isPresented: $isShowingProfileSheet) {
-                    NavigationView {
-                        ProfileView(isLoggedIn: $isLoggedIn)
+                    .tag(0)
+
+                courseTab
+                    .tabItem {
+                        Image(systemName: "book.fill")
+                        Text("Course")
                     }
-                }
-                // New sheet for presenting the SettingView
-                .sheet(isPresented: $isShowingSettingSheet) {
-                    NavigationView {
-                        SettingView()
+                    .tag(1)
+
+                aiTab
+                    .tabItem {
+                        Image(systemName: "brain.fill")
+                        Text("AI")
                     }
+                    .tag(2)
+
+                communityTab
+                    .tabItem {
+                        Image(systemName: "person.2.fill")
+                        Text("Community")
+                    }
+                    .tag(3)
+            }
+            .sheet(isPresented: $isShowingLanguageSheet) {
+                LanguagePickerView(selectedLanguage: $selectedLanguage)
+            }
+            .sheet(isPresented: $isShowingProfileSheet) {
+                NavigationView {
+                    ProfileView(isLoggedIn: $isLoggedIn)
+                }
+            }
+            .sheet(isPresented: $isShowingSettingSheet) {
+                NavigationView {
+                    SettingView()
                 }
             }
             
@@ -98,7 +82,7 @@ struct MainView: View {
                     isShowing: $isSideMenuShowing,
                     isShowingProfileSheet: $isShowingProfileSheet,
                     isShowingLanguageSheet: $isShowingLanguageSheet,
-                    isShowingSettingSheet: $isShowingSettingSheet // Pass new binding
+                    isShowingSettingSheet: $isShowingSettingSheet
                 )
                 .frame(width: UIScreen.main.bounds.width * 0.7)
                 .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)
@@ -107,122 +91,207 @@ struct MainView: View {
         }
     }
     
+    // The menuToolbar helper property has been removed.
+    
     // MARK: - Tab Views
     
     private var homeTab: some View {
+        NavigationView {
+            HomeContentView(viewModel: homeViewModel, selectedLanguage: $selectedLanguage)
+                .navigationTitle("Home")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // --- FIX: ToolbarItem is now defined directly here ---
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            withAnimation(.easeInOut) {
+                                isSideMenuShowing.toggle()
+                            }
+                        }) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.title3)
+                        }
+                    }
+                }
+        }
+    }
+    
+    private var courseTab: some View {
+        NavigationView {
+            CourseView(viewModel: courseViewModel, selectedLanguage: $selectedLanguage)
+                .navigationTitle("Courses")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // --- FIX: ToolbarItem is now defined directly here ---
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            withAnimation(.easeInOut) {
+                                isSideMenuShowing.toggle()
+                            }
+                        }) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.title3)
+                        }
+                    }
+                }
+        }
+    }
+    
+    private var aiTab: some View {
+        NavigationView {
+            AIView()
+                .navigationTitle("AI Assistant")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // --- FIX: ToolbarItem is now defined directly here ---
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            withAnimation(.easeInOut) {
+                                isSideMenuShowing.toggle()
+                            }
+                        }) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.title3)
+                        }
+                    }
+                }
+        }
+    }
+    
+    private var communityTab: some View {
+        NavigationView {
+            Text("Community View")
+                .font(.title)
+                .padding()
+                .navigationTitle("Community")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // --- FIX: ToolbarItem is now defined directly here ---
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            withAnimation(.easeInOut) {
+                                isSideMenuShowing.toggle()
+                            }
+                        }) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.title3)
+                        }
+                    }
+                }
+        }
+    }
+}
+
+struct HomeContentView: View {
+    @ObservedObject var viewModel: HomeViewModel
+    @Binding var selectedLanguage: String
+
+    var body: some View {
         ScrollView {
             VStack(spacing: 30) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Today's Lesson")
-                        .font(.title2).bold()
-                        .padding(.horizontal)
-
-                    if homeViewModel.isLoading {
-                        ProgressView().frame(height: 150)
-                    } else if let errorMessage = homeViewModel.errorMessage {
-                        Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
-                    } else if homeViewModel.todaysLessons.isEmpty {
-                         Text("No lessons scheduled for today.").foregroundColor(.gray).padding().frame(height: 150)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 15) {
-                                ForEach(homeViewModel.todaysLessons) { lesson in
-                                    NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id)) {
-                                        LessonCardView(lesson: lesson)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .frame(height: 150)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Hot Topics")
-                        .font(.title2).bold()
-                        .padding(.horizontal)
-                    
-                    if homeViewModel.isLoadingHotTopics {
-                        ProgressView().frame(height: 150)
-                    } else if let errorMessage = homeViewModel.hotTopicsErrorMessage {
-                        Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
-                    } else if homeViewModel.hotTopics.isEmpty {
-                        Text("No hot topics available right now.").foregroundColor(.gray).padding().frame(height: 150)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 15) {
-                                ForEach(homeViewModel.hotTopics) { topic in
-                                    HotTopicCardView(topic: topic)
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .frame(height: 150)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Daily Tips")
-                        .font(.title2).bold()
-                        .padding(.horizontal)
-
-                    if homeViewModel.isLoadingDailyTips {
-                        ProgressView().frame(height: 150)
-                    } else if let errorMessage = homeViewModel.dailyTipsErrorMessage {
-                        Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
-                    } else if homeViewModel.dailyTips.isEmpty {
-                        Text("No daily tips available right now.").foregroundColor(.gray).padding().frame(height: 150)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 15) {
-                                ForEach(homeViewModel.dailyTips) { tip in
-                                    DailyTipCardView(tip: tip)
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .frame(height: 150)
-                    }
-                }
-                
+                todaysLessonSection
+                hotTopicsSection
+                dailyTipsSection
                 Spacer()
             }
             .padding(.top)
         }
         .onAppear {
             Task {
-                await homeViewModel.fetchDailyLessons()
-                await homeViewModel.fetchHotTopics()
-                await homeViewModel.fetchDailyTips()
+                await viewModel.fetchDailyLessons()
+                await viewModel.fetchHotTopics()
+                await viewModel.fetchDailyTips()
             }
         }
     }
     
-    private var courseTab: some View {
-        CourseView(viewModel: courseViewModel, selectedLanguage: $selectedLanguage)
+    private var todaysLessonSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Today's Lesson")
+                .font(.title2).bold()
+                .padding(.horizontal)
+
+            Group {
+                if viewModel.isLoading {
+                    ProgressView().frame(height: 150)
+                } else if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                } else if viewModel.todaysLessons.isEmpty {
+                     Text("No lessons scheduled for today.").foregroundColor(.gray).padding().frame(height: 150)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(viewModel.todaysLessons) { lesson in
+                                NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id)) {
+                                    LessonCardView(lesson: lesson)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 150)
+                }
+            }
+        }
     }
     
-    private var aiTab: some View {
-        AIView()
+    private var hotTopicsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Hot Topics")
+                .font(.title2).bold()
+                .padding(.horizontal)
+            
+            Group {
+                if viewModel.isLoadingHotTopics {
+                    ProgressView().frame(height: 150)
+                } else if let errorMessage = viewModel.hotTopicsErrorMessage {
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                } else if viewModel.hotTopics.isEmpty {
+                    Text("No hot topics available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(viewModel.hotTopics) { topic in
+                                HotTopicCardView(topic: topic)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 150)
+                }
+            }
+        }
     }
     
-    private var communityTab: some View {
-        Text("Community View").font(.title).padding()
-    }
-    
-    // MARK: - Helper Functions
-    
-    private func navigationTitle(for index: Int) -> String {
-        switch index {
-        case 0: return "Home"
-        case 1: return "Courses"
-        case 2: return "AI Assistant"
-        case 3: return "Community"
-        default: return ""
+    private var dailyTipsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Daily Tips")
+                .font(.title2).bold()
+                .padding(.horizontal)
+
+            Group {
+                if viewModel.isLoadingDailyTips {
+                    ProgressView().frame(height: 150)
+                } else if let errorMessage = viewModel.dailyTipsErrorMessage {
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                } else if viewModel.dailyTips.isEmpty {
+                    Text("No daily tips available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(viewModel.dailyTips) { tip in
+                                DailyTipCardView(tip: tip)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 150)
+                }
+            }
         }
     }
 }
+
 
 // Language Picker View
 struct LanguagePickerView: View {

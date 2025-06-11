@@ -9,7 +9,7 @@ struct CourseView: View {
 
     var body: some View {
         VStack {
-            if viewModel.isLoading && viewModel.courses.isEmpty { // Show loading only on first fetch
+            if viewModel.isLoading && viewModel.courses.isEmpty {
                 ProgressView("Loading Courses...")
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 15) {
@@ -59,7 +59,7 @@ struct CourseView: View {
                 }
             }
         }
-        .navigationTitle("Courses")
+        // Modifier removed, as the parent NavigationView in MainView now controls this.
         .onAppear {
             Task {
                 await viewModel.fetchCourses()
@@ -77,12 +77,10 @@ class CourseViewModel: ObservableObject {
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
-    // The fetch is no longer called from init()
     init() {}
 
     func fetchCourses() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
-        // Only fetch if refresh mode is on, or if the courses list is empty (first load).
         guard isRefreshEnabled || self.courses.isEmpty else {
             print("CourseViewModel: Skipping fetch for courses, using cached data.")
             return
