@@ -1,17 +1,19 @@
+// StrapiAPIModels.swift
+
 import Foundation
 
 // MARK: - Strapi API Response Helper Structs
 
 // Generic Strapi response structure for a list of items
 struct StrapiListResponse<T: Codable>: Codable {
-    let data: [T]
-    let meta: StrapiMeta? // Optional: if you need pagination info
+    let data: [T]? // FIX: Made optional to handle cases where the data key is null
+    let meta: StrapiMeta?
 }
 
 // Strapi response for a single item
 struct StrapiSingleResponse<T: Codable>: Codable {
     let data: T
-    let meta: StrapiMeta? // Meta might not always be present for single item responses
+    let meta: StrapiMeta?
 }
 
 // Strapi's typical metadata structure (for pagination, etc.)
@@ -28,7 +30,7 @@ struct StrapiPagination: Codable {
 
 // Strapi's typical error response structure
 struct StrapiErrorResponse: Codable {
-    let data: JSONValue? // Can be null or an object with more error details
+    let data: JSONValue?
     let error: StrapiError
 }
 
@@ -36,7 +38,7 @@ struct StrapiError: Codable {
     let status: Int
     let name: String
     let message: String
-    let details: JSONValue? // Can be an object, array, or other JSON type
+    let details: JSONValue?
 }
 
 // Helper to decode flexible JSONValue for error details or other dynamic parts

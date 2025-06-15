@@ -114,7 +114,8 @@ class CourseViewModel: ObservableObject {
             }
             let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
-            self.courses = decodedResponse.data
+            self.courses = decodedResponse.data ?? []
+
         } catch {
             if let decError = error as? DecodingError {
                 errorMessage = "Data parsing error: \(decError.localizedDescription)"

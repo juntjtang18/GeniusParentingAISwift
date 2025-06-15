@@ -1,3 +1,5 @@
+// HomeViewModel.swift
+
 import Foundation
 import KeychainAccess
 
@@ -20,7 +22,6 @@ class HomeViewModel: ObservableObject {
 
     func fetchDailyTips() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
-        // Only fetch if refresh mode is on, or if the data is empty (first load).
         guard isRefreshEnabled || self.dailyTips.isEmpty else {
             print("HomeViewModel: Skipping fetch for daily tips, using cached data.")
             return
@@ -59,7 +60,8 @@ class HomeViewModel: ObservableObject {
             let decoder = JSONDecoder()
             let decodedResponse = try decoder.decode(StrapiSingleResponse<DailyTip>.self, from: data)
             
-            self.dailyTips = decodedResponse.data.attributes.tips.data
+            // FIX: Use ?? [] to safely unwrap the now-optional data property.
+            self.dailyTips = decodedResponse.data.attributes.tips.data ?? []
         } catch {
             dailyTipsErrorMessage = "Failed to fetch daily tips: \(error.localizedDescription)"
             if let decodingError = error as? DecodingError {
@@ -71,7 +73,6 @@ class HomeViewModel: ObservableObject {
 
     func fetchHotTopics() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
-        // Only fetch if refresh mode is on, or if the data is empty (first load).
         guard isRefreshEnabled || self.hotTopics.isEmpty else {
             print("HomeViewModel: Skipping fetch for hot topics, using cached data.")
             return
@@ -115,7 +116,8 @@ class HomeViewModel: ObservableObject {
             let decoder = JSONDecoder()
             let decodedResponse = try decoder.decode(StrapiSingleResponse<HotTopic>.self, from: data)
             
-            self.hotTopics = decodedResponse.data.attributes.topics.data
+            // FIX: Use ?? [] to safely unwrap the now-optional data property.
+            self.hotTopics = decodedResponse.data.attributes.topics.data ?? []
         } catch {
             hotTopicsErrorMessage = "Failed to fetch hot topics: \(error.localizedDescription)"
             if let decodingError = error as? DecodingError {
@@ -127,7 +129,6 @@ class HomeViewModel: ObservableObject {
 
     func fetchDailyLessons() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
-        // Only fetch if refresh mode is on, or if the data is empty (first load).
         guard isRefreshEnabled || self.todaysLessons.isEmpty else {
             print("HomeViewModel: Skipping fetch for daily lessons, using cached data.")
             return
@@ -168,7 +169,8 @@ class HomeViewModel: ObservableObject {
             let allLessonPlans = decodedResponse.data.attributes.dailylessons
             
             if let todaysPlan = allLessonPlans.first(where: { $0.day == weekdayString }) {
-                self.todaysLessons = todaysPlan.courses.data
+                // FIX: Use ?? [] to safely unwrap the now-optional data property.
+                self.todaysLessons = todaysPlan.courses.data ?? []
             } else {
                 self.todaysLessons = []
             }

@@ -136,14 +136,8 @@ struct MainView: View {
     }
     
     private var communityTab: some View {
-        NavigationView {
-            Text("Community View")
-                .font(.title)
-                .padding()
-                .navigationTitle("Community")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { menuToolbar }
-        }
+        // This view now calls the new CommunityView.
+        CommunityView()
     }
 }
 

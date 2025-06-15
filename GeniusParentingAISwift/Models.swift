@@ -1,5 +1,47 @@
+// Models.swift
+
 import Foundation
 import SwiftUI // For CGFloat
+
+// MARK: - Post Models
+struct Post: Codable, Identifiable {
+    let id: Int
+    let attributes: PostAttributes
+}
+
+struct PostAttributes: Codable {
+    let content: String
+    let create_time: String?
+    let media: StrapiListResponse<Media>?
+    // FIX: Changed relation from StrapiUser to the new PopulatedUser model.
+    let users_permissions_user: StrapiRelation<PopulatedUser>?
+    let likes: LikesCount?
+
+    var likeCount: Int {
+        return likes?.data.attributes.count ?? 0
+    }
+}
+
+// MARK: - Like Models
+
+// Structs to handle the JSON structure for a populated count.
+struct LikesCount: Codable {
+    let data: LikesCountData
+}
+
+struct LikesCountData: Codable {
+    let attributes: LikesCountAttributes
+}
+
+struct LikesCountAttributes: Codable {
+    let count: Int
+}
+
+// This model is no longer used for the post list but may be useful elsewhere.
+struct Like: Codable, Identifiable {
+    let id: Int
+}
+
 
 // MARK: - Hot Topic Models
 struct Topic: Codable, Identifiable, Hashable {
@@ -13,7 +55,6 @@ struct Topic: Codable, Identifiable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
 
-        // --- FIX: Add explicit coding keys for robust decoding ---
         enum CodingKeys: String, CodingKey {
             case title
             case iconImage = "icon_image"
@@ -79,14 +120,12 @@ struct Media: Codable, Hashable, Identifiable {
         let url: String
         let previewUrl: String?
         let provider: String
-        // let providerMetadata: JSONValue?
         let createdAt: String
         let updatedAt: String
         
         private enum CodingKeys: String, CodingKey {
             case name, alternativeText, caption, width, height, formats, hash, ext, mime, size, url, provider, createdAt, updatedAt
             case previewUrl = "preview_url"
-            // case providerMetadata = "provider_metadata"
         }
     }
 
