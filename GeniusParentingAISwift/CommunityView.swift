@@ -1,22 +1,18 @@
 import SwiftUI
 
 struct CommunityView: View {
-    @StateObject private var viewModel = CommunityViewModel()
+    @ObservedObject var viewModel: CommunityViewModel
 
     var body: some View {
         List {
             ForEach(viewModel.posts) { post in
                 PostRowView(post: post)
                     .environmentObject(viewModel)
-                    // The .onAppear modifier is removed from here to prevent the crash
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
 
-            // --- NEW PAGINATION TRIGGER ---
-            // This section at the end of the list handles loading more items.
             if viewModel.hasMorePages {
-                // The sentinel view. When this appears, we fetch the next page.
                 Rectangle()
                     .fill(Color.clear)
                     .frame(height: 1)
@@ -27,7 +23,6 @@ struct CommunityView: View {
                     }
             }
             
-            // Display a loading spinner at the very bottom if currently fetching
             if viewModel.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -35,6 +30,9 @@ struct CommunityView: View {
             }
         }
         .listStyle(.plain)
+        .refreshable {
+            await viewModel.fetchPosts(isRefresh: true)
+        }
         .onAppear {
             if viewModel.posts.isEmpty {
                 Task {
@@ -46,13 +44,11 @@ struct CommunityView: View {
 }
 
 struct PostRowView: View {
-    // This is now a 'let' constant again.
     let post: Post
     @EnvironmentObject var viewModel: CommunityViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // ... (Author Header, RichTextView, etc. remain the same)
             HStack(spacing: 10) {
                 AsyncImage(url: URL(string: post.author?.avatarUrl ?? "")) { image in image.resizable().aspectRatio(contentMode: .fill) }
                 placeholder: { Image(systemName: "person.circle.fill").font(.largeTitle).foregroundColor(.gray.opacity(0.5)) }

@@ -14,8 +14,10 @@ struct MainView: View {
     // State for the side menu
     @State private var isSideMenuShowing = false
 
+    // ViewModels are now all owned by the top-level MainView
     @StateObject private var homeViewModel = HomeViewModel()
     @StateObject private var courseViewModel = CourseViewModel()
+    @StateObject private var communityViewModel = CommunityViewModel()
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -137,13 +139,15 @@ struct MainView: View {
     
     private var communityTab: some View {
         NavigationView {
-            CommunityView() // <-- THE FIX IS HERE
+            CommunityView(viewModel: communityViewModel)
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
         }
     }
 }
+
+// --- MISSING VIEWS RESTORED BELOW ---
 
 struct HomeContentView: View {
     @ObservedObject var viewModel: HomeViewModel

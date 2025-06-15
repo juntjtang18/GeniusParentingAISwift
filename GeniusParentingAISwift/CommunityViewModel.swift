@@ -21,17 +21,25 @@ class CommunityViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    // --- Renamed for clarity ---
     var hasMorePages: Bool {
-        // We can load more if the current page is less than or equal to the total
         currentPage <= totalPages
     }
     
+    private let cacheManager = CacheManager.shared
     private var currentPage = 1
     private var totalPages = 1
     private var isFetching = false
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
+    
+    init() {
+        if let cachedPosts = cacheManager.load() {
+            self.posts = cachedPosts
+            print("ViewModel: Initialized with \(cachedPosts.count) posts from cache.")
+        } else {
+            print("ViewModel: No cached posts found.")
+        }
+    }
 
     func fetchLikedPosts() async {
         guard let token = keychain["jwt"],
@@ -63,9 +71,16 @@ class CommunityViewModel: ObservableObject {
         }
     }
 
-    func fetchPosts() async {
-        // Use a single guard to check all conditions
-        guard !isFetching, hasMorePages else { return }
+    func fetchPosts(isRefresh: Bool = false) async {
+        if !isRefresh {
+            guard !isFetching, hasMorePages else { return }
+        }
+        
+        if isRefresh {
+            currentPage = 1
+            totalPages = 1
+            // Don't clear posts immediately for a better refresh UX, they will be replaced.
+        }
         
         isFetching = true
         isLoading = true
@@ -91,9 +106,18 @@ class CommunityViewModel: ObservableObject {
             let (data, _) = try await URLSession.shared.data(for: request)
             let decodedResponse = try JSONDecoder().decode(StrapiPostResponse.self, from: data)
             
-            posts.append(contentsOf: decodedResponse.data)
+            if isRefresh {
+                posts = decodedResponse.data
+            } else {
+                posts.append(contentsOf: decodedResponse.data)
+            }
+            
             totalPages = decodedResponse.meta.pagination?.pageCount ?? 1
             currentPage += 1
+
+            if isRefresh {
+                cacheManager.save(posts: self.posts)
+            }
             
         } catch {
             errorMessage = "Failed to fetch posts: \(error.localizedDescription)"
@@ -105,41 +129,47 @@ class CommunityViewModel: ObservableObject {
     }
     
     func likePost(post: Post) async {
-        // ... (likePost function remains the same)
-        guard likedPosts[post.id] == nil else { return }
-        guard let token = keychain["jwt"], let userID = UserDefaults.standard.value(forKey: "userID") as? Int else { return }
-        guard let url = URL(string: "\(strapiUrl)/likes") else { return }
+        guard likedPosts[post.id] == nil,
+              let token = keychain["jwt"],
+              let userID = UserDefaults.standard.value(forKey: "userID") as? Int,
+              let url = URL(string: "\(strapiUrl)/likes") else { return }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let requestBody: [String: Any] = ["data": ["post": post.id, "users_permissions_user": userID]]
+        
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return }
+            
             let newLike = try JSONDecoder().decode(StrapiSingleResponse<LikeResponse>.self, from: data)
             likedPosts[post.id] = newLike.data.id
             if let index = posts.firstIndex(where: { $0.id == post.id }) { posts[index].likeCount += 1 }
-        } catch { print("CommunityViewModel: Error liking post - \(error)") }
+        } catch {
+            print("CommunityViewModel: Error liking post - \(error)")
+        }
     }
     
     func unlikePost(post: Post) async {
-        // ... (unlikePost function remains the same)
-        guard let likeID = likedPosts[post.id] else { return }
-        guard let token = keychain["jwt"] else { return }
-        guard let url = URL(string: "\(strapiUrl)/likes/\(likeID)") else { return }
+        guard let likeID = likedPosts[post.id],
+              let token = keychain["jwt"],
+              let url = URL(string: "\(strapiUrl)/likes/\(likeID)") else { return }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return }
+            
             likedPosts.removeValue(forKey: post.id)
             if let index = posts.firstIndex(where: { $0.id == post.id }) { posts[index].likeCount -= 1 }
-        } catch { print("CommunityViewModel: Error unliking post - \(error)") }
+        } catch {
+            print("CommunityViewModel: Error unliking post - \(error)")
+        }
     }
-    
-    // --- THIS FUNCTION IS NO LONGER NEEDED ---
-    // func loadMoreContentIfNeeded(currentItem item: Post?) { ... }
 }
