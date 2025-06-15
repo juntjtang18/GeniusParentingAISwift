@@ -15,11 +15,11 @@ struct StrapiSingleResponse<T: Codable>: Codable {
 }
 
 // Strapi's typical metadata structure (for pagination, etc.)
-struct StrapiMeta: Codable {
+struct StrapiMeta: Codable, Hashable {
     let pagination: StrapiPagination?
 }
 
-struct StrapiPagination: Codable {
+struct StrapiPagination: Codable, Hashable {
     let page: Int
     let pageSize: Int
     let pageCount: Int

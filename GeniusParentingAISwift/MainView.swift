@@ -137,9 +137,7 @@ struct MainView: View {
     
     private var communityTab: some View {
         NavigationView {
-            Text("Community View")
-                .font(.title)
-                .padding()
+            CommunityView() // <-- THE FIX IS HERE
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }

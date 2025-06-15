@@ -87,18 +87,28 @@ struct LoginView: View {
                     errorMessage = "Invalid response from server"
                     return
                 }
-                print("Status code: \(httpResponse.statusCode)")
-                if let data = data, let dataString = String(data: data, encoding: .utf8) {
-                    print("Response data: \(dataString)")
-                }
+                
+                // --- MODIFICATION START ---
+                // The success block is updated to extract the user ID.
+                
                 guard httpResponse.statusCode == 200,
                       let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let jwt = json["jwt"] as? String else {
+                      let jwt = json["jwt"] as? String,
+                      // 1. Safely access the nested 'user' object
+                      let userObject = json["user"] as? [String: Any],
+                      // 2. Safely access the 'id' from the user object
+                      let userID = userObject["id"] as? Int else {
                     errorMessage = "Invalid email or password"
                     return
                 }
+                
+                // 3. Save both the JWT token and the user's ID
                 keychain["jwt"] = jwt
+                UserDefaults.standard.set(userID, forKey: "userID")
+                
+                // --- MODIFICATION END ---
+                
                 isLoggedIn = true
             }
         }.resume()
