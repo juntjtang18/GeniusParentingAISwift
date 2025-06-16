@@ -4,30 +4,59 @@ import SwiftUI
 
 struct CommunityView: View {
     @StateObject private var viewModel = CommunityViewModel()
+    @State private var isShowingAddPostView = false
 
     var body: some View {
         NavigationView {
-            VStack {
-                if viewModel.isLoading {
-                    ProgressView("Loading Community...")
-                } else if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage).foregroundColor(.red).padding()
-                } else {
-                    List(viewModel.postRowViewModels) { rowViewModel in
-                        PostView(viewModel: rowViewModel)
-                            .listRowSeparator(.hidden)
-                            .padding(.vertical, 8)
+            ZStack {
+                VStack {
+                    if viewModel.isLoading {
+                        ProgressView("Loading Community...")
+                    } else if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage).foregroundColor(.red).padding()
+                    } else {
+                        List(viewModel.postRowViewModels) { rowViewModel in
+                            PostView(viewModel: rowViewModel)
+                                .listRowSeparator(.hidden)
+                                .padding(.vertical, 8)
+                        }
+                        .listStyle(PlainListStyle())
+                        .refreshable { await viewModel.initialLoad() }
                     }
-                    .listStyle(PlainListStyle())
-                    .refreshable { await viewModel.initialLoad() }
+                }
+                .navigationTitle("Community")
+                .navigationBarTitleDisplayMode(.inline)
+                
+                // Floating Action Button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            isShowingAddPostView = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 56))
+                                .foregroundColor(.accentColor)
+                                .shadow(radius: 5)
+                        }
+                        .padding()
+                    }
                 }
             }
-            .navigationTitle("Community")
-            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if viewModel.postRowViewModels.isEmpty {
                     Task { await viewModel.initialLoad() }
                 }
+            }
+            .sheet(isPresented: $isShowingAddPostView, onDismiss: {
+                // Refresh community view when sheet is dismissed
+                Task {
+                    await viewModel.initialLoad()
+                }
+            }) {
+                // Pass the CommunityViewModel to the AddPostView
+                AddPostView(communityViewModel: viewModel)
             }
         }
     }
@@ -56,9 +85,6 @@ struct PostView: View {
                         .scaleEffect(viewModel.isAnimating ? 1.5 : 1.0)
                         .animation(.interpolatingSpring(stiffness: 170, damping: 10), value: viewModel.isAnimating)
                 }
-                // THIS IS THE FIX:
-                // Applying .plain style prevents the List from hijacking the button's
-                // behavior and redrawing the whole row.
                 .buttonStyle(.plain)
                 
                 Text("\(viewModel.likeCount) likes")

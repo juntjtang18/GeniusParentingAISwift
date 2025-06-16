@@ -2,12 +2,11 @@
 
 import Foundation
 import KeychainAccess
+import UIKit // Needed for UIImage
 
 @MainActor
 class CommunityViewModel: ObservableObject {
-    // This now holds the view models for each row, not the raw data
     @Published var postRowViewModels: [PostRowViewModel] = []
-    
     @Published var isLoading: Bool = true
     @Published var errorMessage: String? = nil
     
@@ -119,5 +118,100 @@ class CommunityViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: - Post Creation Logic (UPDATED)
+
+    func createPost(content: String, mediaData: [Data]) async throws {
+        guard let token = keychain["jwt"], let userId = currentUser?.id else {
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated."])
+        }
+
+        // 1. Upload media if any exists
+        var mediaIds: [Int] = []
+        if !mediaData.isEmpty {
+            mediaIds = try await uploadMedia(mediaData: mediaData, token: token)
+        }
+
+        // 2. Create the post with uploaded media IDs
+        guard let url = URL(string: "\(strapiUrl)/posts") else {
+            throw NSError(domain: "URLError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL for creating post."])
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let postData: [String: Any] = [
+            "content": content,
+            "users_permissions_user": userId,
+            "media": mediaIds
+        ]
+        
+        let requestBody: [String: Any] = ["data": postData]
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        // --- DEBUG LOGGING ---
+        if let bodyForLog = request.httpBody {
+            print("➡️ [Debug] Create Post Request Body: \(String(data: bodyForLog, encoding: .utf8) ?? "Could not decode request body")")
+        }
+        // ---------------------
+        
+        let (responseData, response) = try await URLSession.shared.data(for: request)
+        
+        // --- DEBUG LOGGING ---
+        print("⬅️ [Debug] Create Post Response: \(response)")
+        print("⬅️ [Debug] Create Post Response Data: \(String(data: responseData, encoding: .utf8) ?? "Could not decode response data")")
+        // ---------------------
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create post."])
+        }
+    }
+
+    private func uploadMedia(mediaData: [Data], token: String) async throws -> [Int] {
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/upload") else {
+            throw NSError(domain: "URLError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid upload URL."])
+        }
+        
+        var uploadedMediaIDs: [Int] = []
+        
+        for (index, data) in mediaData.enumerated() {
+            let boundary = UUID().uuidString
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            
+            var body = Data()
+            let filename = "upload_\(index+1).jpg"
+            
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"files\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            body.append(data)
+            body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+            
+            request.httpBody = body
+            
+            let (responseData, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                 print("❌ [Debug] Upload Failed Response: \(response)")
+                 print("❌ [Debug] Upload Failed Response Data: \(String(data: responseData, encoding: .utf8) ?? "Could not decode response data")")
+                throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to upload media."])
+            }
+            
+            // --- DEBUG LOGGING & FIX ---
+            print("✅ [Debug] Upload Response Data: \(String(data: responseData, encoding: .utf8) ?? "Could not decode response data")")
+            
+            // Use the new UploadResponseMedia model here
+            let uploadedFiles = try JSONDecoder().decode([UploadResponseMedia].self, from: responseData)
+            uploadedMediaIDs.append(contentsOf: uploadedFiles.map { $0.id })
+            // --------------------------
+        }
+        
+        return uploadedMediaIDs
     }
 }

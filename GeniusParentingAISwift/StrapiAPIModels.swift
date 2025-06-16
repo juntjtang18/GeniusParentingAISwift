@@ -2,6 +2,28 @@
 
 import Foundation
 
+
+// MARK: - New Model for Upload Response
+// This model matches the flat structure returned by the /api/upload endpoint.
+struct UploadResponseMedia: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let alternativeText: String?
+    let caption: String?
+    let width: Int?
+    let height: Int?
+    let formats: MediaFormats?
+    let hash: String
+    let ext: String
+    let mime: String
+    let size: Double
+    let url: String
+    let previewUrl: String?
+    let provider: String
+    let createdAt: String
+    let updatedAt: String
+}
+
 // MARK: - Strapi API Response Helper Structs
 
 // Generic Strapi response structure for a list of items
