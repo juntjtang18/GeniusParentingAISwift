@@ -9,24 +9,24 @@ struct CommunityView: View {
         NavigationView {
             VStack {
                 if viewModel.isLoading {
-                    ProgressView()
+                    ProgressView("Loading Community...")
                 } else if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
+                    Text(errorMessage).foregroundColor(.red).padding()
                 } else {
-                    List(viewModel.posts) { post in
-                        PostView(post: post)
+                    List(viewModel.postRowViewModels) { rowViewModel in
+                        PostView(viewModel: rowViewModel)
                             .listRowSeparator(.hidden)
+                            .padding(.vertical, 8)
                     }
                     .listStyle(PlainListStyle())
+                    .refreshable { await viewModel.initialLoad() }
                 }
             }
             .navigationTitle("Community")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                Task {
-                    await viewModel.fetchPosts()
+                if viewModel.postRowViewModels.isEmpty {
+                    Task { await viewModel.initialLoad() }
                 }
             }
         }
@@ -34,53 +34,39 @@ struct CommunityView: View {
 }
 
 struct PostView: View {
-    let post: Post
+    @ObservedObject var viewModel: PostRowViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Author Info
+            // Author and content section
             HStack {
-                // Placeholder for avatar
                 Image(systemName: "person.crop.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundColor(.gray)
-                
-                // FIX: Access the username through the new attributes layer.
-                Text(post.attributes.users_permissions_user?.data?.attributes.username ?? "Unknown User")
+                    .font(.largeTitle).foregroundColor(.gray)
+                Text(viewModel.post.attributes.users_permissions_user?.data?.attributes.username ?? "Unknown User")
                     .font(.headline)
                 Spacer()
             }
+            Text(viewModel.post.attributes.content).font(.body)
 
-            // Content
-            Text(post.attributes.content)
-                .font(.body)
-
-            // Media
-            if let media = post.attributes.media?.data, !media.isEmpty {
-                 ForEach(media) { mediaItem in
-                    // A more complete implementation would use AsyncImage here.
-                    Text("Media: \(mediaItem.attributes.url)")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
-            }
-            
-            // Likes
+            // Like button and count section
             HStack {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.red)
-                Text("\(post.attributes.likeCount) likes")
+                Button(action: { viewModel.toggleLike() }) {
+                    Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")
+                        .foregroundColor(viewModel.isLiked ? .red : .gray)
+                        .scaleEffect(viewModel.isAnimating ? 1.5 : 1.0)
+                        .animation(.interpolatingSpring(stiffness: 170, damping: 10), value: viewModel.isAnimating)
+                }
+                // THIS IS THE FIX:
+                // Applying .plain style prevents the List from hijacking the button's
+                // behavior and redrawing the whole row.
+                .buttonStyle(.plain)
+                
+                Text("\(viewModel.likeCount) likes")
                     .font(.footnote)
             }
         }
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(10)
-    }
-}
-
-struct CommunityView_Previews: PreviewProvider {
-    static var previews: some View {
-        CommunityView()
     }
 }

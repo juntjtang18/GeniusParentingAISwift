@@ -1,24 +1,24 @@
 // Models.swift
 
 import Foundation
-import SwiftUI // For CGFloat
+import SwiftUI
 
 // MARK: - Post Models
 struct Post: Codable, Identifiable {
     let id: Int
-    let attributes: PostAttributes
+    let attributes: PostAttributes // Reverted to let
 }
 
 struct PostAttributes: Codable {
     let content: String
     let create_time: String?
     let media: StrapiListResponse<Media>?
-    // FIX: Changed relation from StrapiUser to the new PopulatedUser model.
     let users_permissions_user: StrapiRelation<PopulatedUser>?
-    let likes: LikesCount?
+    let likes: LikesCount? // Reverted to let
 
+    // This is now a simple getter again
     var likeCount: Int {
-        return likes?.data.attributes.count ?? 0
+        likes?.data.attributes.count ?? 0
     }
 }
 
@@ -26,19 +26,28 @@ struct PostAttributes: Codable {
 
 // Structs to handle the JSON structure for a populated count.
 struct LikesCount: Codable {
-    let data: LikesCountData
+    let data: LikesCountData // Reverted to let
 }
 
 struct LikesCountData: Codable {
-    let attributes: LikesCountAttributes
+    let attributes: LikesCountAttributes // Reverted to let
 }
 
 struct LikesCountAttributes: Codable {
-    let count: Int
+    let count: Int // Reverted to let
 }
 
-// This model is no longer used for the post list but may be useful elsewhere.
+// Updated Like model to decode which post a like belongs to.
 struct Like: Codable, Identifiable {
+    let id: Int
+    let attributes: LikeAttributes
+}
+
+struct LikeAttributes: Codable {
+    let post: StrapiRelation<LikedPost>?
+}
+
+struct LikedPost: Codable, Identifiable {
     let id: Int
 }
 
