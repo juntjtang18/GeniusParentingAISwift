@@ -67,7 +67,7 @@ struct PostView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Author and content section
+            // Author section
             HStack {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.largeTitle).foregroundColor(.gray)
@@ -75,7 +75,19 @@ struct PostView: View {
                     .font(.headline)
                 Spacer()
             }
-            Text(viewModel.post.attributes.content).font(.body)
+            
+            // Content text
+            if !viewModel.post.attributes.content.isEmpty {
+                Text(viewModel.post.attributes.content).font(.body)
+            }
+
+            // --- NEW: Media Grid Section ---
+            // The grid is only shown if the post has media attached.
+            if let media = viewModel.post.attributes.media?.data, !media.isEmpty {
+                PostMediaGridView(media: media)
+                    .padding(.top, 4)
+            }
+            // --------------------------------
 
             // Like button and count section
             HStack {
