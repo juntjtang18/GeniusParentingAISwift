@@ -53,8 +53,16 @@ class AddPostViewModel: ObservableObject {
         for item in selectedPhotoItems {
             if let data = try? await item.loadTransferable(type: Data.self) {
                 if let image = UIImage(data: data) {
-                    newImages.append(image)
-                    newMediaData.append(data)
+                    // --- FIX: Use the normalization function before processing ---
+                    let normalizedImage = image.normalized()
+                    newImages.append(normalizedImage)
+                    
+                    if let correctedData = normalizedImage.jpegData(compressionQuality: 0.8) {
+                        newMediaData.append(correctedData)
+                    } else {
+                        // Fallback to original data if compression fails
+                        newMediaData.append(data)
+                    }
                 }
             }
         }

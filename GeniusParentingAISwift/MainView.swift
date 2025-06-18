@@ -131,7 +131,20 @@ struct MainView: View {
             AIView()
                 .navigationTitle("AI Assistant")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar { menuToolbar }
+                .toolbar {
+                    // --- This is the new button to return to the Home tab ---
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(action: {
+                            selectedTab = 0
+                        }) {
+                            Image(systemName: "chevron.left")
+                            Text("Home")
+                        }
+                    }
+                    
+                    // Your existing side menu button
+                    menuToolbar
+                }
         }
     }
     

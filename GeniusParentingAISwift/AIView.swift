@@ -1,20 +1,18 @@
 import SwiftUI
-import Speech
+// import Speech // --- FIX: Removed Speech import ---
 
 struct AIView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var newMessage: String = ""
     @State private var isInputExpanded: Bool = false
     @State private var lines: Int = 1
-    @State private var isRecording = false
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-    @State private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    @State private var recognitionTask: SFSpeechRecognitionTask?
-    private let audioEngine = AVAudioEngine()
+    
+    // --- FIX: All speech recognition properties have been removed ---
+
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            // Chat messages area
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 16) {
@@ -22,15 +20,21 @@ struct AIView: View {
                             MessageView(message: message)
                                 .id(message.id)
                         }
+                        
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottomAnchor")
                     }
                     .padding()
                 }
-                .onChange(of: viewModel.messages) {
-                    if let lastMessage = viewModel.messages.last {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            withAnimation(.spring()) {
-                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                            }
+                // --- FIX 3: Add a tap gesture to dismiss the keyboard ---
+                .onTapGesture {
+                    isTextFieldFocused = false
+                }
+                .onReceive(viewModel.$messages) { _ in
+                    DispatchQueue.main.async {
+                        withAnimation(.spring()) {
+                            proxy.scrollTo("bottomAnchor", anchor: .bottom)
                         }
                     }
                 }
@@ -38,7 +42,6 @@ struct AIView: View {
 
             Spacer()
 
-            // --- INPUT PANEL: Updated Styling ---
             VStack(spacing: 0) {
                 Color.clear
                     .frame(height: 4)
@@ -46,6 +49,7 @@ struct AIView: View {
                 HStack(alignment: .bottom, spacing: 8) {
                     ZStack(alignment: .topTrailing) {
                         TextField("Ask a parenting question...", text: $newMessage, axis: .vertical)
+                            .focused($isTextFieldFocused)
                             .lineLimit(lines == 1 ? 1 : (lines == 2 ? 3 : 4), reservesSpace: true)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 12)
@@ -109,111 +113,39 @@ struct AIView: View {
                             .foregroundColor(.blue)
                     }
 
-                    Button(action: toggleRecording) {
-                        Image(systemName: isRecording ? "mic.slash.fill" : "mic.fill")
-                            .font(.title2)
-                            .foregroundColor(isRecording ? .red : .blue)
-                    }
-                    .disabled(speechRecognizer == nil)
+                    // --- FIX: The microphone button for voice recognition has been removed ---
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
             }
             .background(Color(UIColor.systemBackground))
         }
-        // Modifiers for title are removed, now handled by MainView
         .onAppear {
             if viewModel.messages.isEmpty {
                 let greeting = ChatMessage(content: "Hello! How can I help you with your parenting questions today?", isUser: false)
                 viewModel.messages.append(greeting)
             }
-            requestSpeechAuthorization()
+            // --- FIX: Removed call to requestSpeechAuthorization() ---
         }
     }
 
     private func sendMessage() {
-        viewModel.sendMessage(text: newMessage)
+        let trimmedMessage = newMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedMessage.isEmpty else { return }
+        
+        viewModel.sendMessage(text: trimmedMessage)
         newMessage = ""
         withAnimation {
             isInputExpanded = false
             lines = 1
         }
+        isTextFieldFocused = false
     }
-
-    private func requestSpeechAuthorization() {
-        SFSpeechRecognizer.requestAuthorization { authStatus in
-            DispatchQueue.main.async {
-                if authStatus == .authorized {
-                    speechRecognizer?.delegate = nil
-                }
-            }
-        }
-    }
-
-    private func toggleRecording() {
-        if isRecording {
-            audioEngine.stop()
-            recognitionRequest?.endAudio()
-            isRecording = false
-            recognitionTask?.cancel()
-            recognitionTask = nil
-            recognitionRequest = nil
-        } else {
-            startRecording()
-            isRecording = true
-        }
-    }
-
-    private func startRecording() {
-        if recognitionTask != nil {
-            recognitionTask?.cancel()
-            recognitionTask = nil
-        }
-
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Audio session setup failed: \(error)")
-        }
-
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        guard let recognitionRequest = recognitionRequest else { return }
-
-        recognitionRequest.shouldReportPartialResults = true
-
-        let inputNode = audioEngine.inputNode
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer, _) in
-            recognitionRequest.append(buffer)
-        }
-
-        audioEngine.prepare()
-        do {
-            try audioEngine.start()
-        } catch {
-            print("Audio engine start failed: \(error)")
-            return
-        }
-
-        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { result, error in
-            if let result = result {
-                newMessage = result.bestTranscription.formattedString
-            }
-
-            if error != nil || result?.isFinal == true {
-                audioEngine.stop()
-                inputNode.removeTap(onBus: 0)
-                recognitionRequest.endAudio()
-                isRecording = false
-                recognitionTask = nil
-            }
-        }
-    }
+    
+    // --- FIX: All functions related to speech recognition have been removed ---
 }
 
-// The MessageView subview corrected.
+// The MessageView and RoundedCorner extensions remain unchanged.
 struct MessageView: View {
     let message: ChatMessage
 
@@ -252,7 +184,6 @@ struct MessageView: View {
     }
 }
 
-// The RoundedCorner extension remains unchanged.
 extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
