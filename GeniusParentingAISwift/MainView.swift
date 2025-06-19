@@ -115,6 +115,7 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
         }
+        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
     }
     
     private var courseTab: some View {
@@ -124,6 +125,7 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
         }
+        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
     }
     
     private var aiTab: some View {
@@ -132,7 +134,7 @@ struct MainView: View {
                 .navigationTitle("AI Assistant")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    // --- This is the new button to return to the Home tab ---
+                    // FIX: Adds a custom back button to return to the Home tab
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: {
                             selectedTab = 0
@@ -141,11 +143,11 @@ struct MainView: View {
                             Text("Home")
                         }
                     }
-                    
                     // Your existing side menu button
                     menuToolbar
                 }
         }
+        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
     }
     
     private var communityTab: some View {

@@ -6,7 +6,7 @@ import SwiftUI
 // MARK: - Post Models
 struct Post: Codable, Identifiable {
     let id: Int
-    let attributes: PostAttributes // Reverted to let
+    let attributes: PostAttributes
 }
 
 struct PostAttributes: Codable {
@@ -14,30 +14,26 @@ struct PostAttributes: Codable {
     let create_time: String?
     let media: StrapiListResponse<Media>?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
-    let likes: LikesCount? // Reverted to let
+    let likes: LikesCount?
 
-    // This is now a simple getter again
     var likeCount: Int {
         likes?.data.attributes.count ?? 0
     }
 }
 
 // MARK: - Like Models
-
-// Structs to handle the JSON structure for a populated count.
 struct LikesCount: Codable {
-    let data: LikesCountData // Reverted to let
+    let data: LikesCountData
 }
 
 struct LikesCountData: Codable {
-    let attributes: LikesCountAttributes // Reverted to let
+    let attributes: LikesCountAttributes
 }
 
 struct LikesCountAttributes: Codable {
-    let count: Int // Reverted to let
+    let count: Int
 }
 
-// Updated Like model to decode which post a like belongs to.
 struct Like: Codable, Identifiable {
     let id: Int
     let attributes: LikeAttributes
@@ -129,13 +125,10 @@ struct Media: Codable, Hashable, Identifiable {
         let url: String
         let previewUrl: String?
         let provider: String
+        let providerMetadata: JSONValue?
+        let related: JSONValue?
         let createdAt: String
         let updatedAt: String
-        
-        private enum CodingKeys: String, CodingKey {
-            case name, alternativeText, caption, width, height, formats, hash, ext, mime, size, url, provider, createdAt, updatedAt
-            case previewUrl = "preview_url"
-        }
     }
 
     var urlString: String { attributes.url }
@@ -245,7 +238,7 @@ struct Content: Codable, Identifiable, Hashable {
     let thumbnail: StrapiRelation<Media>?
     let caption: String?
     let question: String?
-    let options: [String]?
+    let options: FailableDecodable<[String]>? // Use the wrapper here
     let correctAnswer: String?
     let backbutton: Bool?
     let nextbutton: Bool?

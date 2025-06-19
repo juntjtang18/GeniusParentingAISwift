@@ -1,5 +1,3 @@
-// CommunityView.swift
-
 import SwiftUI
 
 struct CommunityView: View {
@@ -59,6 +57,7 @@ struct CommunityView: View {
                 AddPostView(communityViewModel: viewModel)
             }
         }
+        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
     }
 }
 

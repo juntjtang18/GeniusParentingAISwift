@@ -1,3 +1,5 @@
+// ContentComponentView.swift
+
 import SwiftUI
 import AVKit
 import WebKit
@@ -86,16 +88,23 @@ struct ContentComponentView: View {
                     }
 
                     if let externalVideoUrlString = contentItem.externalUrl, !externalVideoUrlString.isEmpty {
-                        let finalVideoUrl = getEmbeddableVideoURL(from: externalVideoUrlString)
-
-                        if let urlToPlay = finalVideoUrl, urlToPlay.absoluteString.contains("youtube.com/embed") {
-                            VideoPlayerWebView(urlString: urlToPlay.absoluteString, webView: $webViewForExternalVideo)
+                        // REVISED: Added new logic to handle direct video files (.mp4, etc.)
+                        if let embedUrl = getEmbeddableVideoURL(from: externalVideoUrlString, autoPlay: false) {
+                            // Handle YouTube URLs
+                            VideoPlayerWebView(urlString: embedUrl.absoluteString, webView: $webViewForExternalVideo)
+                                .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
+                                .cornerRadius(10)
+                        } else if let directVideoUrl = URL(string: externalVideoUrlString), ["mp4", "mov", "m4v"].contains(directVideoUrl.pathExtension.lowercased()) {
+                            // Handle direct .mp4, .mov, .m4v video files
+                            VideoPlayer(player: AVPlayer(url: directVideoUrl))
                                 .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
                                 .cornerRadius(10)
                         } else if let directUrl = URL(string: externalVideoUrlString) {
+                            // Fallback for any other valid URL
                             Link("Watch Video: \(externalVideoUrlString.prefix(50))...", destination: directUrl)
                                 .font(.callout).padding(.top, 5)
                         } else {
+                            // Handle invalid URL strings
                             Text("External video URL is invalid.").foregroundColor(.red)
                         }
                     } else { Text("External video URL missing.").foregroundColor(.red) }
@@ -110,13 +119,13 @@ struct ContentComponentView: View {
                     if let questionText = contentItem.question, !questionText.isEmpty {
                         Text(questionText).font(.headline).padding(.bottom, 5)
                     }
-                    if let optionsArray = contentItem.options {
+                    if let optionsArray = contentItem.options?.value {
                         ForEach(optionsArray, id: \.self) { optionText in
                             Button(action: {
                                 if !isAnswerSubmitted {
                                     selectedOption = optionText
                                     isAnswerSubmitted = true
-                                }
+                                 }
                             }) {
                                 HStack {
                                     Text(optionText).foregroundColor(Color(UIColor.label))
@@ -180,8 +189,55 @@ struct ContentComponentView: View {
     private func frameAlignmentFor(_ textAlign: String?) -> Alignment {
         switch textAlign?.lowercased() { case "center": .center; case "right": .trailing; default: .leading }
     }
+    
     private func getEmbeddableVideoURL(from urlString: String, autoPlay: Bool = false) -> URL? {
-        guard URL(string: urlString) != nil else { return nil }
-        var videoID: String?; let patterns = [(pattern:#"youtube\.com/embed/([^?/\s]+)"#,idGroup:1,isEmbed:true),(pattern:#"youtube\.com/watch\?v=([^&/\s]+)"#,idGroup:1,isEmbed:false),(pattern:#"youtu\.be/([^?/\s]+)"#,idGroup:1,isEmbed:false),(pattern:#"youtube\.com/shorts/([^?/\s]+)"#,idGroup:1,isEmbed:false)]; for item in patterns { do { let regex = try NSRegularExpression(pattern: item.pattern, options: .caseInsensitive); let nsRange = NSRange(urlString.startIndex..<urlString.endIndex, in: urlString); if let match = regex.firstMatch(in: urlString, options: [], range: nsRange) { if match.numberOfRanges > item.idGroup { let idNSRange = match.range(at: item.idGroup); if idNSRange.location != NSNotFound, let swiftRange = Range(idNSRange, in: urlString) { let extractedID = String(urlString[swiftRange]); if !extractedID.isEmpty { videoID = extractedID; if item.isEmbed { var components = URLComponents(string: urlString)!; var queryItems = components.queryItems ?? []; let requiredParams: [String: String] = ["playsinline":"1","modestbranding":"1","controls":"1","fs":"0","rel":"0"]; requiredParams.forEach { key, value in if !queryItems.contains(where: { $0.name == key }) { queryItems.append(URLQueryItem(name: key, value: value)) } }; if autoPlay && !queryItems.contains(where: { $0.name == "autoplay" }) { queryItems.append(URLQueryItem(name: "autoplay", value: "1")) }; components.queryItems = queryItems.isEmpty ? nil : queryItems.filter { $0.value != nil }; return components.url }; break } } } } } catch { print("Regex error: \(error)") } }; guard let finalVideoID = videoID, !finalVideoID.isEmpty else { return URL(string: urlString) }; var components = URLComponents(string: "https://www.youtube.com/embed/\(finalVideoID)")!; var queryItems: [URLQueryItem] = [URLQueryItem(name: "playsinline", value: "1"), URLQueryItem(name: "modestbranding", value: "1"), URLQueryItem(name: "controls", value: "1"), URLQueryItem(name: "fs", value: "0"), URLQueryItem(name: "rel", value: "0")]; if autoPlay { queryItems.append(URLQueryItem(name: "autoplay", value: "1")) }; components.queryItems = queryItems.isEmpty ? nil : queryItems; return components.url
+        let patterns = [
+            #"v=([a-zA-Z0-9_-]{11})"#,
+            #"youtu\.be/([a-zA-Z0-9_-]{11})"#,
+            #"embed/([a-zA-Z0-9_-]{11})"#,
+            #"shorts/([a-zA-Z0-9_-]{11})"#
+        ]
+
+        var videoID: String?
+        for pattern in patterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern)
+                let range = NSRange(urlString.startIndex..., in: urlString)
+                if let match = regex.firstMatch(in: urlString, options: [], range: range) {
+                    if match.numberOfRanges > 1, let idRange = Range(match.range(at: 1), in: urlString) {
+                        videoID = String(urlString[idRange])
+                        break
+                    }
+                }
+            } catch {
+                print("Regex error: \(error.localizedDescription)")
+                continue
+            }
+        }
+
+        guard let finalVideoID = videoID else {
+            return nil
+        }
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "www.youtube.com"
+        components.path = "/embed/\(finalVideoID)"
+        
+        var queryItems = [
+            URLQueryItem(name: "playsinline", value: "1"),
+            URLQueryItem(name: "controls", value: "1"),
+            URLQueryItem(name: "modestbranding", value: "1"),
+            URLQueryItem(name: "fs", value: "0"),
+            URLQueryItem(name: "rel", value: "0")
+        ]
+        
+        if autoPlay {
+            queryItems.append(URLQueryItem(name: "autoplay", value: "1"))
+        }
+        
+        components.queryItems = queryItems
+        
+        return components.url
     }
 }

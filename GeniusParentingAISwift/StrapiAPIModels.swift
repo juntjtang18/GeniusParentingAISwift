@@ -2,9 +2,7 @@
 
 import Foundation
 
-
 // MARK: - New Model for Upload Response
-// This model matches the flat structure returned by the /api/upload endpoint.
 struct UploadResponseMedia: Codable, Identifiable {
     let id: Int
     let name: String
@@ -26,19 +24,16 @@ struct UploadResponseMedia: Codable, Identifiable {
 
 // MARK: - Strapi API Response Helper Structs
 
-// Generic Strapi response structure for a list of items
 struct StrapiListResponse<T: Codable>: Codable {
-    let data: [T]? // FIX: Made optional to handle cases where the data key is null
+    let data: [T]?
     let meta: StrapiMeta?
 }
 
-// Strapi response for a single item
 struct StrapiSingleResponse<T: Codable>: Codable {
     let data: T
     let meta: StrapiMeta?
 }
 
-// Strapi's typical metadata structure (for pagination, etc.)
 struct StrapiMeta: Codable {
     let pagination: StrapiPagination?
 }
@@ -50,7 +45,6 @@ struct StrapiPagination: Codable {
     let total: Int
 }
 
-// Strapi's typical error response structure
 struct StrapiErrorResponse: Codable {
     let data: JSONValue?
     let error: StrapiError
@@ -63,8 +57,6 @@ struct StrapiError: Codable {
     let details: JSONValue?
 }
 
-// Helper to decode flexible JSONValue for error details or other dynamic parts
-// From: https://stackoverflow.com/a/48233135/4898050
 public enum JSONValue: Codable, Hashable {
     case string(String)
     case int(Int)
@@ -107,5 +99,20 @@ public enum JSONValue: Codable, Hashable {
         case .array(let value): try container.encode(value)
         case .null: try container.encodeNil()
         }
+    }
+}
+
+// REVISED: This version now conforms to Codable and Hashable, which will fix the build errors.
+struct FailableDecodable<T: Codable & Hashable>: Codable, Hashable {
+    let value: T?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.value = try? container.decode(T.self)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.value)
     }
 }

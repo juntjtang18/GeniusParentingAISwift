@@ -1,5 +1,4 @@
 import SwiftUI
-// import Speech // --- FIX: Removed Speech import ---
 
 struct AIView: View {
     @StateObject private var viewModel = ChatViewModel()
@@ -7,8 +6,6 @@ struct AIView: View {
     @State private var isInputExpanded: Bool = false
     @State private var lines: Int = 1
     
-    // --- FIX: All speech recognition properties have been removed ---
-
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
@@ -27,7 +24,6 @@ struct AIView: View {
                     }
                     .padding()
                 }
-                // --- FIX 3: Add a tap gesture to dismiss the keyboard ---
                 .onTapGesture {
                     isTextFieldFocused = false
                 }
@@ -113,7 +109,6 @@ struct AIView: View {
                             .foregroundColor(.blue)
                     }
 
-                    // --- FIX: The microphone button for voice recognition has been removed ---
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
@@ -125,7 +120,6 @@ struct AIView: View {
                 let greeting = ChatMessage(content: "Hello! How can I help you with your parenting questions today?", isUser: false)
                 viewModel.messages.append(greeting)
             }
-            // --- FIX: Removed call to requestSpeechAuthorization() ---
         }
     }
 
@@ -141,8 +135,6 @@ struct AIView: View {
         }
         isTextFieldFocused = false
     }
-    
-    // --- FIX: All functions related to speech recognition have been removed ---
 }
 
 // The MessageView and RoundedCorner extensions remain unchanged.

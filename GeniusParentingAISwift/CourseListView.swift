@@ -1,3 +1,5 @@
+// CourseListView.swift
+
 import SwiftUI
 import KeychainAccess
 
@@ -6,9 +8,24 @@ import KeychainAccess
 struct CourseView: View {
     @ObservedObject var viewModel: CourseViewModel
     @Binding var selectedLanguage: String
+    
+    // --- FIX: State properties for backward-compatible navigation ---
+    @State private var navigatingToCourseId: Int? = nil
+    @State private var isNavigationActive = false
 
     var body: some View {
         VStack {
+            // This NavigationLink is hidden and controlled by our state variables
+            NavigationLink(
+                destination: ShowACourseView(
+                    selectedLanguage: $selectedLanguage,
+                    courseId: navigatingToCourseId ?? 0
+                ),
+                isActive: $isNavigationActive,
+                label: { EmptyView() }
+            )
+            .hidden()
+
             if viewModel.isLoading && viewModel.courses.isEmpty {
                 ProgressView("Loading Courses...")
             } else if let errorMessage = viewModel.errorMessage {
@@ -29,8 +46,11 @@ struct CourseView: View {
                     .foregroundColor(.gray)
             } else {
                 List(viewModel.courses) { course in
-                    let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                    NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: course.id)) {
+                    Button(action: {
+                        // Set the course to navigate to and activate the link
+                        self.navigatingToCourseId = course.id
+                        self.isNavigationActive = true
+                    }) {
                         HStack {
                             if let iconMedia = course.iconImageMedia {
                                 if let imageUrl = URL(string: iconMedia.attributes.url) {
@@ -49,19 +69,23 @@ struct CourseView: View {
                                 Image(systemName: "book.closed.circle").resizable().scaledToFit().frame(width: 40, height: 40).foregroundColor(.gray)
                             }
                             VStack(alignment: .leading) {
+                                let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
                                 Text(displayTitle).font(.subheadline)
                                 if let categoryName = course.category?.attributes.name {
                                     Text(categoryName).font(.caption).foregroundColor(.gray)
-                                }
+                                 }
                             }
                         }
+                        .foregroundColor(.primary)
                     }
                 }
             }
         }
         .onAppear {
-            Task {
-                await viewModel.fetchCourses()
+            if viewModel.courses.isEmpty {
+                Task {
+                    await viewModel.fetchCourses()
+                }
             }
         }
     }
@@ -93,7 +117,8 @@ class CourseViewModel: ObservableObject {
             errorMessage = "Authentication token not found."; isLoading = false; return
         }
         
-        let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][populate]=*&populate=translations"
+        // REVISED: Removed the inefficient `populate[content]` parameter.
+        let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate=translations"
         guard let url = URL(string: "\(strapiUrl)/courses?\(populateQuery)") else {
             errorMessage = "Internal error: Invalid URL."; isLoading = false; return
         }
@@ -112,12 +137,15 @@ class CourseViewModel: ObservableObject {
                 errorMessage = detailedError
                 isLoading = false; return
             }
+            // NOTE: No changes needed to the decoder itself. The custom decoding logic is handled inside the models.
             let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
             self.courses = decodedResponse.data ?? []
 
         } catch {
             if let decError = error as? DecodingError {
+                // For debugging, print the detailed decoding error
+                print("Decoding Error: \(decError)")
                 errorMessage = "Data parsing error: \(decError.localizedDescription)"
             } else {
                 errorMessage = "Fetch error: \(error.localizedDescription)"
