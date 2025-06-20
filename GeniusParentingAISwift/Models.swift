@@ -11,7 +11,7 @@ struct Post: Codable, Identifiable {
 
 struct PostAttributes: Codable {
     let content: String
-    let create_time: String?
+    // let create_time: String? // --- REMOVED ---
     let media: StrapiListResponse<Media>?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
     let likes: LikesCount?

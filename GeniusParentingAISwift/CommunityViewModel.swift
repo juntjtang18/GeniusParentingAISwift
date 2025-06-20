@@ -7,7 +7,7 @@ import UIKit // Needed for UIImage
 @MainActor
 class CommunityViewModel: ObservableObject {
     @Published var postRowViewModels: [PostRowViewModel] = []
-    @Published var isLoading: Bool = true
+    @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
     private var userLikes: [Int: Int] = [:]
@@ -17,13 +17,21 @@ class CommunityViewModel: ObservableObject {
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     func initialLoad() async {
-        isLoading = true
+        // Guard against starting a new fetch if one is already in progress.
+        guard !isLoading else { return }
+
+        self.isLoading = true
+        // Use a defer block to guarantee isLoading is set to false when this function exits.
+        defer { self.isLoading = false }
+        
+        // Clear any previous error messages before starting a new load.
+        self.errorMessage = nil
+
         await fetchCurrentUser()
         if self.currentUser != nil {
             await fetchUserLikes()
         }
         await fetchPostsAndCreateViewModels()
-        isLoading = false
     }
     
     private func fetchPostsAndCreateViewModels() async {
@@ -31,7 +39,10 @@ class CommunityViewModel: ObservableObject {
             errorMessage = "Authentication token not found."
             return
         }
-        let query = "sort[0]=create_time:desc&populate[users_permissions_user][populate][user_profile]=true&populate[media]=true&populate[likes][count]=true"
+        
+        // --- UPDATED: Use 'createdAt' for sorting ---
+        let query = "sort[0]=createdAt:desc&populate[users_permissions_user][populate][user_profile]=true&populate[media]=true&populate[likes][count]=true"
+        
         guard let url = URL(string: "\(strapiUrl)/posts?\(query)") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -50,7 +61,9 @@ class CommunityViewModel: ObservableObject {
                 )
             }
         } catch {
-            errorMessage = "Failed to fetch posts: \(error.localizedDescription)"
+            if (error as? URLError)?.code != .cancelled {
+                 errorMessage = "Failed to fetch posts: \(error.localizedDescription)"
+            }
         }
     }
 
