@@ -17,7 +17,7 @@ struct PostMediaGridView: View {
             LazyVGrid(columns: columns, spacing: spacing) {
                 ForEach(displayMedia) { mediaItem in
                     renderImage(for: mediaItem)
-                        // Make grid items square
+                        // Make grid items square, this will adapt to the column width
                         .aspectRatio(1, contentMode: .fill)
                 }
             }
@@ -25,12 +25,21 @@ struct PostMediaGridView: View {
     }
 
     /// Determines the number of columns for the grid.
-    /// Uses 2 columns for 2 or 4 images for a more balanced look.
-    /// Uses 3 columns for all other counts (3, 5, 6, 7, 8, 9).
     private func makeColumns(count: Int) -> [GridItem] {
-        let columnCount = (count == 2 || count == 4) ? 2 : 3
+        let columnCount: Int
+        switch count {
+        case 1:
+            columnCount = 1
+        case 2:
+            columnCount = 2
+        case 3:
+            columnCount = 3
+        default: // 4 or more images
+            columnCount = 3 // Or 2 if you prefer for a 2x2 grid for 4 images
+        }
         return Array(repeating: GridItem(.flexible(), spacing: spacing), count: columnCount)
     }
+
 
     /// Renders a single image using AsyncImage.
     /// It prefers smaller image formats for performance and provides placeholders.

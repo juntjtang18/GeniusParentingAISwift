@@ -15,13 +15,16 @@ class PostRowViewModel: ObservableObject, Identifiable {
     // A reference back to the main view model for network operations
     private weak var communityViewModel: CommunityViewModel?
     
-    var id: Int { post.id }
+    // By making `id` a non-isolated `let` constant, we resolve the warning.
+    // The `id` is initialized once and doesn't change, so it's safe to access from any context.
+    nonisolated let id: Int
 
     init(post: Post, isLiked: Bool, communityViewModel: CommunityViewModel) {
         self.post = post
         self.isLiked = isLiked
         self.likeCount = post.attributes.likeCount
         self.communityViewModel = communityViewModel
+        self.id = post.id // Initialize the id
     }
     
     func toggleLike() {

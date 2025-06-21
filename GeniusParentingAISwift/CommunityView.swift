@@ -8,10 +8,12 @@ struct CommunityView: View {
         NavigationView {
             ZStack {
                 VStack {
-                    if viewModel.isLoading {
+                    if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
                         ProgressView("Loading Community...")
                     } else if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage).foregroundColor(.red).padding()
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
                     } else {
                         List(viewModel.postRowViewModels) { rowViewModel in
                             PostView(viewModel: rowViewModel)
@@ -19,7 +21,9 @@ struct CommunityView: View {
                                 .padding(.vertical, 8)
                         }
                         .listStyle(PlainListStyle())
-                        .refreshable { await viewModel.initialLoad() }
+                        .refreshable {
+                            await viewModel.initialLoad()
+                        }
                     }
                 }
                 .navigationTitle("Community")
@@ -42,31 +46,29 @@ struct CommunityView: View {
                     }
                 }
             }
-            .onAppear {
+            .task {
                 if viewModel.postRowViewModels.isEmpty {
-                    Task { await viewModel.initialLoad() }
+                    await viewModel.initialLoad()
                 }
             }
             .sheet(isPresented: $isShowingAddPostView, onDismiss: {
-                // Refresh community view when sheet is dismissed
                 Task {
                     await viewModel.initialLoad()
                 }
             }) {
-                // Pass the CommunityViewModel to the AddPostView
                 AddPostView(communityViewModel: viewModel)
             }
         }
-        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
+        .navigationViewStyle(.stack)
     }
 }
 
+// PostView struct remains the same
 struct PostView: View {
     @ObservedObject var viewModel: PostRowViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Author section
             HStack {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.largeTitle).foregroundColor(.gray)
@@ -75,20 +77,15 @@ struct PostView: View {
                 Spacer()
             }
             
-            // Content text
             if !viewModel.post.attributes.content.isEmpty {
                 Text(viewModel.post.attributes.content).font(.body)
             }
 
-            // --- NEW: Media Grid Section ---
-            // The grid is only shown if the post has media attached.
             if let media = viewModel.post.attributes.media?.data, !media.isEmpty {
                 PostMediaGridView(media: media)
                     .padding(.top, 4)
             }
-            // --------------------------------
 
-            // Like button and count section
             HStack {
                 Button(action: { viewModel.toggleLike() }) {
                     Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")

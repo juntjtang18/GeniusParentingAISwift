@@ -1,8 +1,6 @@
-// CommunityViewModel.swift
-
 import Foundation
 import KeychainAccess
-import UIKit // Needed for UIImage
+import UIKit
 
 @MainActor
 class CommunityViewModel: ObservableObject {
@@ -17,14 +15,14 @@ class CommunityViewModel: ObservableObject {
     private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
     func initialLoad() async {
-        // Guard against starting a new fetch if one is already in progress.
-        guard !isLoading else { return }
-
+        guard !isLoading else {
+            // This correctly prevents multiple refreshes from running at the same time.
+            return
+        }
+        
         self.isLoading = true
-        // Use a defer block to guarantee isLoading is set to false when this function exits.
         defer { self.isLoading = false }
         
-        // Clear any previous error messages before starting a new load.
         self.errorMessage = nil
 
         await fetchCurrentUser()
@@ -40,33 +38,43 @@ class CommunityViewModel: ObservableObject {
             return
         }
         
-        // --- UPDATED: Use 'createdAt' for sorting ---
         let query = "sort[0]=createdAt:desc&populate[users_permissions_user][populate][user_profile]=true&populate[media]=true&populate[likes][count]=true"
-        
         guard let url = URL(string: "\(strapiUrl)/posts?\(query)") else { return }
+        
         var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
-            let posts = try JSONDecoder().decode(StrapiListResponse<Post>.self, from: data).data ?? []
+            let response = try JSONDecoder().decode(StrapiListResponse<Post>.self, from: data)
+            let posts = response.data ?? []
             
-            // Convert raw Post data into PostRowViewModels
-            self.postRowViewModels = posts.map { post in
+            // Clean log showing pagination info, which is useful for debugging.
+            if let pagination = response.meta?.pagination {
+                print("Fetched page \(pagination.page)/\(pagination.pageCount). Total posts: \(pagination.total).")
+            }
+            
+            let newViewModels = posts.map { post in
                 PostRowViewModel(
                     post: post,
                     isLiked: self.userLikes.keys.contains(post.id),
                     communityViewModel: self
                 )
             }
+            
+            self.postRowViewModels = newViewModels
+
         } catch {
             if (error as? URLError)?.code != .cancelled {
-                 errorMessage = "Failed to fetch posts: \(error.localizedDescription)"
+                 errorMessage = "Failed to refresh posts: \(error.localizedDescription)"
+                 print("Failed to fetch posts: \(error)")
             }
         }
     }
 
+    // ... The rest of your ViewModel methods remain unchanged ...
     func toggleLikeOnServer(postId: Int) async {
         guard let userId = currentUser?.id, let token = keychain["jwt"] else { return }
 
@@ -133,20 +141,16 @@ class CommunityViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Post Creation Logic (UPDATED)
-
     func createPost(content: String, mediaData: [Data]) async throws {
         guard let token = keychain["jwt"], let userId = currentUser?.id else {
             throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated."])
         }
 
-        // 1. Upload media if any exists
         var mediaIds: [Int] = []
         if !mediaData.isEmpty {
             mediaIds = try await uploadMedia(mediaData: mediaData, token: token)
         }
 
-        // 2. Create the post with uploaded media IDs
         guard let url = URL(string: "\(strapiUrl)/posts") else {
             throw NSError(domain: "URLError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL for creating post."])
         }
@@ -165,18 +169,7 @@ class CommunityViewModel: ObservableObject {
         let requestBody: [String: Any] = ["data": postData]
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        // --- DEBUG LOGGING ---
-        if let bodyForLog = request.httpBody {
-            print("➡️ [Debug] Create Post Request Body: \(String(data: bodyForLog, encoding: .utf8) ?? "Could not decode request body")")
-        }
-        // ---------------------
-        
         let (responseData, response) = try await URLSession.shared.data(for: request)
-        
-        // --- DEBUG LOGGING ---
-        print("⬅️ [Debug] Create Post Response: \(response)")
-        print("⬅️ [Debug] Create Post Response Data: \(String(data: responseData, encoding: .utf8) ?? "Could not decode response data")")
-        // ---------------------
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create post."])
@@ -216,13 +209,8 @@ class CommunityViewModel: ObservableObject {
                 throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to upload media."])
             }
             
-            // --- DEBUG LOGGING & FIX ---
-            print("✅ [Debug] Upload Response Data: \(String(data: responseData, encoding: .utf8) ?? "Could not decode response data")")
-            
-            // Use the new UploadResponseMedia model here
             let uploadedFiles = try JSONDecoder().decode([UploadResponseMedia].self, from: responseData)
             uploadedMediaIDs.append(contentsOf: uploadedFiles.map { $0.id })
-            // --------------------------
         }
         
         return uploadedMediaIDs
