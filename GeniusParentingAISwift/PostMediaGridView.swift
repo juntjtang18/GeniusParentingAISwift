@@ -1,5 +1,3 @@
-// PostMediaGridView.swift
-
 import SwiftUI
 
 struct PostMediaGridView: View {
@@ -12,13 +10,29 @@ struct PostMediaGridView: View {
 
         if displayMedia.isEmpty {
             EmptyView()
+        } else if displayMedia.count == 1 {
+            // --- 1. SPECIAL CASE: SINGLE IMAGE ---
+            // If there's only one image, we display it while preserving its original aspect ratio.
+            if let firstMedia = displayMedia.first {
+                renderImage(for: firstMedia)
+                    // Use width/height from the API to calculate the aspect ratio.
+                    // .fit ensures the entire image is visible without being cropped.
+                    .aspectRatio(calculateAspectRatio(for: firstMedia.attributes), contentMode: .fit)
+                    .cornerRadius(8)
+                    .clipped()
+            }
         } else {
+            // --- 2. DEFAULT CASE: MULTI-IMAGE GRID ---
+            // For 2 or more images, we create a uniform grid of square thumbnails.
             let columns = makeColumns(count: displayMedia.count)
             LazyVGrid(columns: columns, spacing: spacing) {
                 ForEach(displayMedia) { mediaItem in
                     renderImage(for: mediaItem)
-                        // Make grid items square, this will adapt to the column width
+                        // Forcing a 1:1 ratio makes the grid look neat and tidy.
+                        // .fill crops the image to fill the square space.
                         .aspectRatio(1, contentMode: .fill)
+                        .cornerRadius(8)
+                        .clipped()
                 }
             }
         }
@@ -26,27 +40,22 @@ struct PostMediaGridView: View {
 
     /// Determines the number of columns for the grid.
     private func makeColumns(count: Int) -> [GridItem] {
-        let columnCount: Int
-        switch count {
-        case 1:
-            columnCount = 1
-        case 2:
-            columnCount = 2
-        case 3:
-            columnCount = 3
-        default: // 4 or more images
-            columnCount = 3 // Or 2 if you prefer for a 2x2 grid for 4 images
-        }
+        let columnCount = (count == 2 || count == 4) ? 2 : 3
         return Array(repeating: GridItem(.flexible(), spacing: spacing), count: columnCount)
     }
 
+    /// Calculates the aspect ratio from media metadata to prevent UI layout shifts.
+    private func calculateAspectRatio(for attributes: Media.MediaAttributes) -> CGFloat? {
+        if let width = attributes.width, let height = attributes.height, height > 0 {
+            return CGFloat(width) / CGFloat(height)
+        }
+        // If metadata is missing, return nil so the view can adapt once the image loads.
+        return nil
+    }
 
-    /// Renders a single image using AsyncImage.
-    /// It prefers smaller image formats for performance and provides placeholders.
+    /// Renders a single image using AsyncImage with placeholders.
     @ViewBuilder
     private func renderImage(for mediaItem: Media) -> some View {
-        // Prioritize 'medium' or 'small' format for better performance in a list.
-        // Fall back to the original URL if other formats aren't available.
         let urlString = mediaItem.attributes.formats?.medium?.url
                      ?? mediaItem.attributes.formats?.small?.url
                      ?? mediaItem.attributes.url
@@ -58,21 +67,18 @@ struct PostMediaGridView: View {
                     image
                         .resizable()
                 case .failure:
-                    // Display a placeholder icon if the image fails to load
                     Image(systemName: "photo.on.rectangle.angled")
                         .font(.largeTitle)
+                        .foregroundColor(Color.gray)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color(.systemGray5))
                 case .empty:
-                    // Display a gray placeholder while the image is loading
                     Rectangle()
                         .foregroundColor(Color(.systemGray6))
                 @unknown default:
                     EmptyView()
                 }
             }
-            .clipped()
-            .cornerRadius(8)
         }
     }
 }
