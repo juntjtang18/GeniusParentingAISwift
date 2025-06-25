@@ -4,18 +4,29 @@ import KeychainAccess
 @main
 struct GeniusParentingAISwiftApp: App {
     @State private var isLoggedIn = false // Track login state
+    
+    // REVISED: Create one shared instance of SpeechManager for the entire app.
+    @StateObject private var speechManager = SpeechManager()
+
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    
     init() {
         // This will print the Strapi URL to the console on app launch.
-        print("🚀 Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")
+        print("Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")
     }
+    
     var body: some Scene {
         WindowGroup {
-            if isLoggedIn {
-                MainView(isLoggedIn: $isLoggedIn)
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn)
+            // The Group allows us to apply the modifier to the entire conditional content.
+            Group {
+                if isLoggedIn {
+                    MainView(isLoggedIn: $isLoggedIn)
+                } else {
+                    LoginView(isLoggedIn: $isLoggedIn)
+                }
             }
+            // REVISED: Inject the shared SpeechManager into the SwiftUI environment.
+            .environmentObject(speechManager)
         }
     }
 }

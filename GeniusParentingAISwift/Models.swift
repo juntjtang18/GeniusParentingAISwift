@@ -11,7 +11,6 @@ struct Post: Codable, Identifiable {
 
 struct PostAttributes: Codable {
     let content: String
-    // let create_time: String? // --- REMOVED ---
     let media: StrapiListResponse<Media>?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
     let likes: LikesCount?
@@ -192,7 +191,13 @@ struct CategoryData: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: CategoryAttributes
     struct CategoryAttributes: Codable, Hashable {
-        let name: String, description: String?, createdAt: String?, updatedAt: String?, publishedAt: String?
+        let name: String
+        let description: String?
+        let createdAt: String?
+        let updatedAt: String?
+        let publishedAt: String?
+        let order: Int?
+        let header_image: StrapiRelation<Media>? // This field was added
     }
 }
 
@@ -202,7 +207,7 @@ struct Course: Codable, Identifiable, Hashable {
 
     var title: String { attributes.title }
     var iconImageMedia: Media? { attributes.iconImage?.data }
-    var category: CategoryData? { attributes.category?.data }
+    var coursecategory: CategoryData? { attributes.coursecategory?.data }
     var content: [Content]? { attributes.content }
     var translations: [String: CourseTranslation]? { attributes.translations }
     var createdAt: String? { attributes.createdAt }
@@ -212,7 +217,7 @@ struct Course: Codable, Identifiable, Hashable {
     struct Attributes: Codable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
-        let category: StrapiRelation<CategoryData>?
+        let coursecategory: StrapiRelation<CategoryData>? // Note: This should match the field name in Strapi
         let content: [Content]?
         let translations: [String: CourseTranslation]?
         let createdAt: String?
@@ -238,7 +243,7 @@ struct Content: Codable, Identifiable, Hashable {
     let thumbnail: StrapiRelation<Media>?
     let caption: String?
     let question: String?
-    let options: FailableDecodable<[String]>? // Use the wrapper here
+    let options: FailableDecodable<[String]>?
     let correctAnswer: String?
     let backbutton: Bool?
     let nextbutton: Bool?

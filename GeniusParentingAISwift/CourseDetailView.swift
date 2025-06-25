@@ -174,20 +174,19 @@ class ShowACourseViewModel: ObservableObject {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
         
         if !isRefreshEnabled, let cachedCourse = CourseCache.shared.get(courseId: courseId) {
-            print("ShowACourseViewModel: Found course \(courseId) in cache.")
             self.course = cachedCourse
             self.isLoading = false
             return
         }
 
-        print("ShowACourseViewModel: Fetching course \(courseId) from network.")
         isLoading = true; errorMessage = nil
         
         guard let token = keychain["jwt"] else {
             errorMessage = "Authentication token not found."; isLoading = false; return
         }
         
-        let populateQuery = "populate[icon_image][populate]=*&populate[category]=*&populate[content][on][coursecontent.text][populate]=*&populate[content][on][coursecontent.image][populate]=*&populate[content][on][coursecontent.video][populate]=*&populate[content][on][coursecontent.quiz][populate]=*&populate[content][on][coursecontent.external-video][populate]=*&populate[content][on][coursecontent.pagebreaker][populate]=*&populate=translations"
+        // This is the simplified, maintainable query for fetching a single course with all its content.
+        let populateQuery = "populate[icon_image]=*&populate[translations]=*&populate[category]=*&populate[content][populate]=*"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
             errorMessage = "Internal error: Invalid URL."; isLoading = false; return
@@ -210,12 +209,13 @@ class ShowACourseViewModel: ObservableObject {
             let fetchedCourse = decodedResponse.data
             
             CourseCache.shared.set(course: fetchedCourse)
-            print("ShowACourseViewModel: Saved course \(fetchedCourse.id) to cache.")
-            
             self.course = fetchedCourse
             
         } catch {
-            if let decError = error as? DecodingError { errorMessage = "Data parsing error. Check if the Swift models match the JSON response." }
+            if let decError = error as? DecodingError {
+                print("Decoding Error in ShowACourseViewModel: \(decError)")
+                errorMessage = "Data parsing error. Check if the Swift models match the JSON response."
+            }
             else { errorMessage = "Fetch error: \(error.localizedDescription)" }
         }
         isLoading = false

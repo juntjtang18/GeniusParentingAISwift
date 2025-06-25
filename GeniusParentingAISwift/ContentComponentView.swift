@@ -9,7 +9,10 @@ import WebKit
 struct ContentComponentView: View {
     let contentItem: Content
     let language: String
-    @StateObject private var speechManager = SpeechManager()
+    
+    // FIXED: Access the shared SpeechManager from the environment to fix performance warnings.
+    @EnvironmentObject private var speechManager: SpeechManager
+    
     @State private var selectedOption: String? = nil
     @State private var isAnswerSubmitted = false
     @State private var webViewForExternalVideo: WKWebView? = nil
@@ -88,23 +91,18 @@ struct ContentComponentView: View {
                     }
 
                     if let externalVideoUrlString = contentItem.externalUrl, !externalVideoUrlString.isEmpty {
-                        // REVISED: Added new logic to handle direct video files (.mp4, etc.)
                         if let embedUrl = getEmbeddableVideoURL(from: externalVideoUrlString, autoPlay: false) {
-                            // Handle YouTube URLs
                             VideoPlayerWebView(urlString: embedUrl.absoluteString, webView: $webViewForExternalVideo)
                                 .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
                                 .cornerRadius(10)
                         } else if let directVideoUrl = URL(string: externalVideoUrlString), ["mp4", "mov", "m4v"].contains(directVideoUrl.pathExtension.lowercased()) {
-                            // Handle direct .mp4, .mov, .m4v video files
                             VideoPlayer(player: AVPlayer(url: directVideoUrl))
                                 .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
                                 .cornerRadius(10)
                         } else if let directUrl = URL(string: externalVideoUrlString) {
-                            // Fallback for any other valid URL
                             Link("Watch Video: \(externalVideoUrlString.prefix(50))...", destination: directUrl)
                                 .font(.callout).padding(.top, 5)
                         } else {
-                            // Handle invalid URL strings
                             Text("External video URL is invalid.").foregroundColor(.red)
                         }
                     } else { Text("External video URL missing.").foregroundColor(.red) }
@@ -221,7 +219,7 @@ struct ContentComponentView: View {
 
         var components = URLComponents()
         components.scheme = "https"
-        components.host = "www.youtube.com"
+        components.host = "www.youtube-nocookie.com"
         components.path = "/embed/\(finalVideoID)"
         
         var queryItems = [

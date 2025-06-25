@@ -15,7 +15,6 @@ struct MainView: View {
     @State private var isSideMenuShowing = false
 
     @StateObject private var homeViewModel = HomeViewModel()
-    @StateObject private var courseViewModel = CourseViewModel()
 
     let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
 
@@ -115,17 +114,17 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
         }
-        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
+        .navigationViewStyle(.stack)
     }
     
     private var courseTab: some View {
-        NavigationView {
-            CourseView(viewModel: courseViewModel, selectedLanguage: $selectedLanguage)
+        // REVISED: Replaced NavigationView with the modern NavigationStack
+        NavigationStack {
+            CourseView(selectedLanguage: $selectedLanguage)
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
         }
-        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
     }
     
     private var aiTab: some View {
@@ -134,7 +133,6 @@ struct MainView: View {
                 .navigationTitle("AI Assistant")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    // FIX: Adds a custom back button to return to the Home tab
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: {
                             selectedTab = 0
@@ -143,15 +141,13 @@ struct MainView: View {
                             Text("Home")
                         }
                     }
-                    // Your existing side menu button
                     menuToolbar
                 }
         }
-        .navigationViewStyle(.stack) // FIX: Ensures correct layout on iPad
+        .navigationViewStyle(.stack)
     }
     
     private var communityTab: some View {
-        // This view now calls the new CommunityView.
         CommunityView()
     }
 }
