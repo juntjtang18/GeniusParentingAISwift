@@ -148,6 +148,8 @@ struct CollapsibleCategoryView: View {
 struct CourseView: View {
     @StateObject private var viewModel = CourseViewModel()
     @Binding var selectedLanguage: String
+    // FIXED: Add the binding to receive the side menu state.
+    @Binding var isSideMenuShowing: Bool
 
     var body: some View {
         VStack {
@@ -183,7 +185,8 @@ struct CourseView: View {
             }
         }
         .navigationDestination(for: Int.self) { courseId in
-            ShowACourseView(selectedLanguage: $selectedLanguage, courseId: courseId)
+            // FIXED: Pass the binding down to the detail view.
+            ShowACourseView(selectedLanguage: $selectedLanguage, courseId: courseId, isSideMenuShowing: $isSideMenuShowing)
         }
         .onAppear {
             Task {

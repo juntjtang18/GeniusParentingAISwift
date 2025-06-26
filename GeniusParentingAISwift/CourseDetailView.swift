@@ -23,6 +23,9 @@ struct ShowACourseView: View {
     @Binding var selectedLanguage: String
     let courseId: Int
     @State private var currentPageIndex = 0
+    
+    // FIXED: Add a binding to control the side menu's visibility.
+    @Binding var isSideMenuShowing: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -97,17 +100,27 @@ struct ShowACourseView: View {
                  Text("Course data not found.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        // REVISED: The .navigationTitle modifier has been removed to avoid redundancy.
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // REVISED: The placement is changed from .navigationBarLeading to .navigationBarTrailing.
-            ToolbarItem(placement: .navigationBarTrailing) {
+            // FIXED: Use ToolbarItemGroup to show multiple buttons.
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // The original refresh button.
                 Button {
                     Task {
                         await viewModel.fetchCourse(courseId: courseId)
                     }
                 } label: {
                     Image(systemName: "arrow.clockwise")
+                }
+                
+                // The menu button to open the side menu.
+                Button(action: {
+                    withAnimation(.easeInOut) {
+                        isSideMenuShowing.toggle()
+                    }
+                }) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.title3)
                 }
             }
         }

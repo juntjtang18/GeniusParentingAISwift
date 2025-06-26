@@ -5,61 +5,58 @@ struct CommunityView: View {
     @State private var isShowingAddPostView = false
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                VStack {
-                    if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
-                        ProgressView("Loading Community...")
-                    } else if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    } else {
-                        List(viewModel.postRowViewModels) { rowViewModel in
-                            PostView(viewModel: rowViewModel)
-                                .listRowSeparator(.hidden)
-                                .padding(.vertical, 8)
-                        }
-                        .listStyle(PlainListStyle())
-                        .refreshable {
-                            await viewModel.initialLoad()
-                        }
-                    }
-                }
-                .navigationTitle("Community")
-                .navigationBarTitleDisplayMode(.inline)
-                
-                // Floating Action Button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            isShowingAddPostView = true
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 56))
-                                .foregroundColor(.accentColor)
-                                .shadow(radius: 5)
-                        }
+        // FIXED: Removed the redundant NavigationView wrapper.
+        ZStack {
+            VStack {
+                if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
+                    ProgressView("Loading Community...")
+                } else if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
                         .padding()
+                } else {
+                    List(viewModel.postRowViewModels) { rowViewModel in
+                        PostView(viewModel: rowViewModel)
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 8)
+                    }
+                    .listStyle(PlainListStyle())
+                    .refreshable {
+                        await viewModel.initialLoad()
                     }
                 }
             }
-            .task {
-                if viewModel.postRowViewModels.isEmpty {
-                    await viewModel.initialLoad()
+            // FIXED: Navigation properties are now set in MainView for consistency.
+            
+            // Floating Action Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        isShowingAddPostView = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 56))
+                            .foregroundColor(.accentColor)
+                            .shadow(radius: 5)
+                    }
+                    .padding()
                 }
-            }
-            .sheet(isPresented: $isShowingAddPostView, onDismiss: {
-                Task {
-                    await viewModel.initialLoad()
-                }
-            }) {
-                AddPostView(communityViewModel: viewModel)
             }
         }
-        .navigationViewStyle(.stack)
+        .task {
+            if viewModel.postRowViewModels.isEmpty {
+                await viewModel.initialLoad()
+            }
+        }
+        .sheet(isPresented: $isShowingAddPostView, onDismiss: {
+            Task {
+                await viewModel.initialLoad()
+            }
+        }) {
+            AddPostView(communityViewModel: viewModel)
+        }
     }
 }
 

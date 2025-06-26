@@ -109,7 +109,7 @@ struct MainView: View {
     
     private var homeTab: some View {
         NavigationView {
-            HomeContentView(viewModel: homeViewModel, selectedLanguage: $selectedLanguage)
+            HomeContentView(viewModel: homeViewModel, selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 .navigationTitle("Home")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
@@ -120,7 +120,8 @@ struct MainView: View {
     private var courseTab: some View {
         // REVISED: Replaced NavigationView with the modern NavigationStack
         NavigationStack {
-            CourseView(selectedLanguage: $selectedLanguage)
+            // Note: You would need to update CourseView to accept the isSideMenuShowing binding as well.
+            CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
@@ -148,13 +149,22 @@ struct MainView: View {
     }
     
     private var communityTab: some View {
-        CommunityView()
+        // FIXED: Wrap CommunityView in a NavigationView here to ensure it gets the standard toolbar.
+        NavigationView {
+            CommunityView()
+                .navigationTitle("Community")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { menuToolbar }
+        }
+        .navigationViewStyle(.stack)
     }
 }
 
 struct HomeContentView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Binding var selectedLanguage: String
+    // FIXED: Added binding to control the side menu from child views.
+    @Binding var isSideMenuShowing: Bool
 
     var body: some View {
         ScrollView {
@@ -192,7 +202,8 @@ struct HomeContentView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(viewModel.todaysLessons) { lesson in
-                                NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id)) {
+                                // FIXED: Pass the side menu binding to the detail view.
+                                NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id, isSideMenuShowing: $isSideMenuShowing)) {
                                     LessonCardView(lesson: lesson)
                                 }
                             }

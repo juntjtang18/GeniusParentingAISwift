@@ -169,7 +169,8 @@ class CommunityViewModel: ObservableObject {
         let requestBody: [String: Any] = ["data": postData]
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        let (responseData, response) = try await URLSession.shared.data(for: request)
+        // FIXED: Replaced 'responseData' with '_' to silence the "never used" warning.
+        let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create post."])
