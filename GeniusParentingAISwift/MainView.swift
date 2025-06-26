@@ -118,9 +118,7 @@ struct MainView: View {
     }
     
     private var courseTab: some View {
-        // REVISED: Replaced NavigationView with the modern NavigationStack
         NavigationStack {
-            // Note: You would need to update CourseView to accept the isSideMenuShowing binding as well.
             CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
@@ -149,7 +147,6 @@ struct MainView: View {
     }
     
     private var communityTab: some View {
-        // FIXED: Wrap CommunityView in a NavigationView here to ensure it gets the standard toolbar.
         NavigationView {
             CommunityView()
                 .navigationTitle("Community")
@@ -163,24 +160,38 @@ struct MainView: View {
 struct HomeContentView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Binding var selectedLanguage: String
-    // FIXED: Added binding to control the side menu from child views.
     @Binding var isSideMenuShowing: Bool
+    
+    // ** CHANGE 1 of 4: Add state to control the popup **
+    @State private var selectedTip: Tip? = nil
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 30) {
-                todaysLessonSection
-                hotTopicsSection
-                dailyTipsSection
-                Spacer()
+        // ** CHANGE 2 of 4: Wrap the content in a ZStack to layer the popup on top **
+        ZStack {
+            ScrollView {
+                VStack(spacing: 30) {
+                    todaysLessonSection
+                    hotTopicsSection
+                    dailyTipsSection
+                    Spacer()
+                }
+                .padding(.top)
             }
-            .padding(.top)
-        }
-        .onAppear {
-            Task {
-                await viewModel.fetchDailyLessons()
-                await viewModel.fetchHotTopics()
-                await viewModel.fetchDailyTips()
+            .onAppear {
+                Task {
+                    await viewModel.fetchDailyLessons()
+                    await viewModel.fetchHotTopics()
+                    await viewModel.fetchDailyTips()
+                }
+            }
+            
+            // ** CHANGE 3 of 4: Add the popup view layer. It only appears when a tip is selected. **
+            if let tip = selectedTip {
+                FairyTipPopupView(tip: tip, isPresented: Binding(
+                    get: { selectedTip != nil },
+                    set: { if !$0 { withAnimation(.spring()) { selectedTip = nil } } }
+                ))
+                .zIndex(1) // Ensure popup is on top
             }
         }
     }
@@ -202,7 +213,6 @@ struct HomeContentView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(viewModel.todaysLessons) { lesson in
-                                // FIXED: Pass the side menu binding to the detail view.
                                 NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id, isSideMenuShowing: $isSideMenuShowing)) {
                                     LessonCardView(lesson: lesson)
                                 }
@@ -262,6 +272,16 @@ struct HomeContentView: View {
                         HStack(spacing: 15) {
                             ForEach(viewModel.dailyTips) { tip in
                                 DailyTipCardView(tip: tip)
+                                    .contentShape(Rectangle()) // Ensure tappable area
+                                    .simultaneousGesture(
+                                        TapGesture()
+                                            .onEnded {
+                                                print("Tapped DailyTipCardView: \(tip.text)") // Debug log
+                                                withAnimation(.spring()) {
+                                                    self.selectedTip = tip
+                                                }
+                                            }
+                                    )
                             }
                         }
                         .padding(.horizontal)
@@ -270,6 +290,92 @@ struct HomeContentView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - New View for the Fairy Popup
+// This is the only new struct being added.
+struct FairyTipPopupView: View {
+    let tip: Tip
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            // REFINED: Changed the blur material for a different, less intense effect.
+            Rectangle()
+                .fill(.clear)
+                .background(.thinMaterial)
+                .ignoresSafeArea()
+                .onTapGesture { isPresented = false }
+
+            ZStack(alignment: .top) {
+                // The fairy image is now drawn first, so it appears behind the popup window.
+                Image("fairy01")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 220)
+                    // REFINED: Moved fairy up by 5 points.
+                    .offset(x: -180, y: -77)
+
+                // The main content box of the popup.
+                VStack(spacing: 0) {
+                    // This ZStack contains the image and is kept at a fixed height.
+                    ZStack {
+                        AsyncImage(url: URL(string: tip.iconImageMedia?.attributes.url ?? "")) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                            case .success(let image):
+                                image.resizable()
+                                     .scaledToFill()
+                            case .failure:
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.gray)
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    }
+                    .frame(height: 200) // Image container height remains unchanged.
+                    .clipped()
+
+                    // This ScrollView contains the text and can now expand.
+                    ScrollView {
+                        Text(tip.text)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            // REFINED: Text aligned to the left.
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                    }
+                    
+                    Spacer() // Pushes the button to the bottom.
+
+                    Button("Got it!") { isPresented = false }
+                        .font(.headline)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(red: 0.7, green: 0.9, blue: 0.3))
+                        .foregroundColor(.black.opacity(0.7))
+                }
+                // REFINED: Increased the total height of the popup window by 60.
+                .frame(width: 300, height: 420)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30)
+                        .stroke(Color(red: 0.4, green: 0.6, blue: 0.4), lineWidth: 10)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30)
+                        .stroke(Color.black.opacity(0.2), lineWidth: 1)
+                )
+            }
+            .padding(.horizontal, 40)
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 }
 

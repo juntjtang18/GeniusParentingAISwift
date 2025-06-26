@@ -19,7 +19,6 @@ struct DailyTipCardView: View {
                 .padding()
         }
         .frame(width: 250, height: 150)
-        // Background image
         .background(
             AsyncImage(url: URL(string: tip.iconImageMedia?.urlString ?? "")) { phase in
                 switch phase {
@@ -37,5 +36,7 @@ struct DailyTipCardView: View {
         .cornerRadius(12)
         .clipped() // Ensures the image respects the corner radius
         .shadow(radius: 5)
+        .padding(5) // Add padding to increase tappable area
+        .contentShape(Rectangle()) // Ensure the entire view, including padding, is tappable
     }
 }

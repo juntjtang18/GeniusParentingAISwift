@@ -3,9 +3,13 @@ import Foundation
 struct Config {
     static var strapiBaseUrl: String {
         #if DEBUG
-        return "http://localhost:8080" // Local development
+        #if USE_LOCAL_IP
+        return "http://192.168.1.66:8080" // Use your actual IP
         #else
-        return "https://strapi.geniusparentingai.ca" // Production
+        return "http://localhost:8080"
+        #endif
+        #else
+        return "https://strapi.geniusparentingai.ca"
         #endif
     }
 }
