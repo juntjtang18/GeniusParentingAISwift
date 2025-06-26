@@ -49,7 +49,8 @@ struct ShowACourseView: View {
                     } else { Image(systemName: "book.fill").resizable().scaledToFit().frame(width: 30, height: 30) }
                     Text(displayTitle).font(.headline).lineLimit(2).minimumScaleFactor(0.8)
                     Spacer()
-                }.padding([.horizontal, .top])
+                }
+                .padding()
 
                 let pages = groupContentIntoPages(content: course.content ?? [])
                 if !pages.isEmpty {
@@ -96,10 +97,11 @@ struct ShowACourseView: View {
                  Text("Course data not found.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle(viewModel.course?.translations?[selectedLanguage]?.title ?? viewModel.course?.title ?? "Course")
+        // REVISED: The .navigationTitle modifier has been removed to avoid redundancy.
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            // REVISED: The placement is changed from .navigationBarLeading to .navigationBarTrailing.
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     Task {
                         await viewModel.fetchCourse(courseId: courseId)
@@ -185,8 +187,6 @@ class ShowACourseViewModel: ObservableObject {
             errorMessage = "Authentication token not found."; isLoading = false; return
         }
         
-        // REVISED: Using a specific populate query based on your working curl command.
-        // This explicitly asks for the relational fields inside the 'content' dynamic zone.
         let populateQuery = "populate[icon_image]=*&populate[translations]=*&populate[coursecategory]=*&populate[content][populate]=image_file,video_file,thumbnail"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
