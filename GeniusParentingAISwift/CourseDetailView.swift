@@ -185,8 +185,9 @@ class ShowACourseViewModel: ObservableObject {
             errorMessage = "Authentication token not found."; isLoading = false; return
         }
         
-        // This is the simplified, maintainable query for fetching a single course with all its content.
-        let populateQuery = "populate[icon_image]=*&populate[translations]=*&populate[category]=*&populate[content][populate]=*"
+        // REVISED: Using a specific populate query based on your working curl command.
+        // This explicitly asks for the relational fields inside the 'content' dynamic zone.
+        let populateQuery = "populate[icon_image]=*&populate[translations]=*&populate[coursecategory]=*&populate[content][populate]=image_file,video_file,thumbnail"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
             errorMessage = "Internal error: Invalid URL."; isLoading = false; return
