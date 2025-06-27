@@ -55,7 +55,7 @@ struct CourseCardView: View {
                 Text(displayTitle).font(.headline).foregroundColor(.white).lineLimit(2).padding(8)
             }
         }
-        .aspectRatio(16/5.4, contentMode: .fit)
+        .aspectRatio(16/7, contentMode: .fit)
         .background(
             Group {
                 if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
@@ -248,33 +248,90 @@ class CourseViewModel: ObservableObject {
     }
 
     func fetchCourses(for categoryID: Int) async {
+        // 1. Guard against redundant fetches for the same category.
         guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else {
             return
         }
 
+        // 2. Set loading state and ensure it's removed on completion/exit.
         loadingCategoryIDs.insert(categoryID)
-        
-        let populateQuery = "populate=icon_image,translations"
-        let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
-        
-        guard let token = keychain["jwt"],
-              let url = URL(string: "\(strapiUrl)/courses?\(populateQuery)&\(filterQuery)") else {
-            loadingCategoryIDs.remove(categoryID)
+        defer { loadingCategoryIDs.remove(categoryID) }
+
+        // 3. Ensure authentication token is available.
+        guard let token = keychain["jwt"] else {
+            print("Authentication token not found for fetching courses.")
+            // Optionally, you could set an error message for the UI here.
+            // self.errorMessage = "Authentication required."
             return
         }
 
+        // 4. Initialize variables for pagination.
+        var allCourses: [Course] = []
+        var currentPage = 1
+        var totalPages = 1
+        let pageSize = 100 // Fetch up to 100 items per page for better performance.
+
         do {
-            var request = URLRequest(url: url)
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
-            self.coursesByCategoryID[categoryID] = decodedResponse.data ?? []
+            // 5. Loop until all pages for the category are fetched.
+            repeat {
+                let populateQuery = "populate=icon_image,translations"
+                let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
+                let paginationQuery = "pagination[page]=\(currentPage)&pagination[pageSize]=\(pageSize)"
+                
+                // 6. Safely construct the request URL.
+                var urlComponents = URLComponents(string: "\(strapiUrl)/courses")
+                urlComponents?.query = "\(populateQuery)&\(filterQuery)&\(paginationQuery)"
+
+                guard let url = urlComponents?.url else {
+                    print("Internal error: Invalid URL for fetching courses.")
+                    break // Exit the loop if URL is invalid.
+                }
+
+                var request = URLRequest(url: url)
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+                // 7. Perform the network request.
+                let (data, response) = try await URLSession.shared.data(for: request)
+
+                // 8. Validate the HTTP response.
+                guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                    print("Server error \(statusCode) while fetching courses for category \(categoryID) on page \(currentPage).")
+                    break // Exit loop on server error.
+                }
+                
+                // 9. Decode the JSON response.
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
+
+                // 10. Append the newly fetched courses to the master list.
+                if let newCourses = decodedResponse.data {
+                    allCourses.append(contentsOf: newCourses)
+                }
+
+                // 11. Get the total page count from the first successful response.
+                if let pagination = decodedResponse.meta?.pagination {
+                    totalPages = pagination.pageCount
+                }
+                
+                // 12. Move to the next page.
+                currentPage += 1
+
+            } while currentPage <= totalPages
+
+            // 13. Update the published dictionary with all fetched courses for the category.
+            self.coursesByCategoryID[categoryID] = allCourses
+
         } catch {
-            print("Failed to fetch courses for category \(categoryID): \(error.localizedDescription)")
+            // 14. Handle any errors during the fetch or decoding process.
+            print("Failed to fetch or decode courses for category \(categoryID): \(error.localizedDescription)")
+            if let decodingError = error as? DecodingError {
+                print("Decoding error details: \(decodingError)")
+            }
+            // Optionally, set a user-facing error message.
+            // self.errorMessage = "Failed to load courses for this category."
         }
-        
-        loadingCategoryIDs.remove(categoryID)
     }
 }
