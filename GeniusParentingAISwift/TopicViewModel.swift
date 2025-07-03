@@ -49,7 +49,7 @@ class TopicViewModel: ObservableObject {
                 return
             }
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Topic>.self, from: data)
             self.topic = decodedResponse.data
             

@@ -160,7 +160,7 @@ class HomeViewModel: ObservableObject {
             }
             
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiSingleResponse<DailyLessonPlan>.self, from: data)
 
             let today = Calendar.current.component(.weekday, from: Date())

@@ -218,7 +218,8 @@ class ShowACourseViewModel: ObservableObject {
                 if let errData = try? JSONDecoder().decode(StrapiErrorResponse.self, from: data) { detailedError = errData.error.message }
                 errorMessage = detailedError; isLoading = false; return
             }
-            let decoder = JSONDecoder(); decoder.keyDecodingStrategy = .convertFromSnakeCase
+            let decoder = JSONDecoder()
+            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
             let fetchedCourse = decodedResponse.data
             

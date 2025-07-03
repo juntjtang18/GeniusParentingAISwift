@@ -12,6 +12,10 @@ struct PopulatedUserAttributes: Codable {
     let username: String
     let email: String
     var user_profile: UserProfile?
+    
+    enum CodingKeys: String, CodingKey {
+        case username, email, user_profile
+    }
 }
 
 /// Represents the 'profile.child' component from Strapi.
@@ -27,6 +31,11 @@ struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
     let consentForEmailNotice: Bool
     let children: [Child]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, children
+        case consentForEmailNotice
+    }
 }
 
 /// Represents the main user object returned from the `/api/users/me` endpoint.
@@ -35,4 +44,9 @@ struct StrapiUser: Codable, Identifiable {
     let username: String
     let email: String
     var user_profile: UserProfile? // Changed to 'var' to allow modification after fetch
+    
+    enum CodingKeys: String, CodingKey {
+        case id, username, email
+        case user_profile
+    }
 }

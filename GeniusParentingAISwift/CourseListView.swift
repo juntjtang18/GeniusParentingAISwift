@@ -228,7 +228,7 @@ class CourseViewModel: ObservableObject {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, _) = try await URLSession.shared.data(for: request)
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiListResponse<CategoryData>.self, from: data)
             
             self.categories = decodedResponse.data ?? []
@@ -303,7 +303,7 @@ class CourseViewModel: ObservableObject {
                 
                 // 9. Decode the JSON response.
                 let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
 
                 // 10. Append the newly fetched courses to the master list.
