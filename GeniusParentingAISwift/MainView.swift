@@ -243,7 +243,10 @@ struct HomeContentView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(viewModel.hotTopics) { topic in
-                                HotTopicCardView(topic: topic)
+                                // MODIFICATION: Pass the isSideMenuShowing binding
+                                NavigationLink(destination: TopicView(selectedLanguage: $selectedLanguage, topicId: topic.id, isSideMenuShowing: $isSideMenuShowing)) {
+                                    HotTopicCardView(topic: topic)
+                                }
                             }
                         }
                         .padding(.horizontal)

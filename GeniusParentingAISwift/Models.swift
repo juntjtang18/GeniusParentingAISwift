@@ -54,14 +54,17 @@ struct Topic: Codable, Identifiable, Hashable {
 
     var title: String { attributes.title }
     var iconImageMedia: Media? { attributes.iconImage?.data }
+    var content: [Content]? { attributes.content } // ADD THIS LINE
 
     struct Attributes: Codable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
+        let content: [Content]? // ADD THIS LINE
 
         enum CodingKeys: String, CodingKey {
             case title
             case iconImage = "icon_image"
+            case content // ADD THIS LINE
         }
     }
 }
