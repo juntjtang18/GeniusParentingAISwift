@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/NetworkManager.swift
+
 import Foundation
 import KeychainAccess
 import os
@@ -25,6 +27,22 @@ class NetworkManager {
     }
 
     // MARK: - Public API Methods
+    
+    /// Authenticates a user and returns the auth token and user data.
+    func login(credentials: LoginCredentials) async throws -> AuthResponse {
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local") else {
+            throw URLError(.badURL)
+        }
+        return try await performRequest(url: url, method: "POST", body: credentials)
+    }
+
+    /// Registers a new user and returns the auth token and user data.
+    func signup(payload: RegistrationPayload) async throws -> AuthResponse {
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register") else {
+            throw URLError(.badURL)
+        }
+        return try await performRequest(url: url, method: "POST", body: payload)
+    }
 
     /// Fetches a list of items from an endpoint (e.g., /api/posts).
     /// The endpoint is expected to return a StrapiListResponse object.
@@ -74,10 +92,13 @@ class NetworkManager {
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        if let token = keychain["jwt"] {
+        // *** THIS IS THE FIX ***
+        // Only add the auth token if the request is NOT for authentication.
+        let isAuthRequest = url.absoluteString.contains("/api/auth/local")
+        if let token = keychain["jwt"], !isAuthRequest {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else if url.absoluteString.contains("/api/auth/local") == false {
-            // Log a warning if the token is missing for any request other than login/register.
+        } else if keychain["jwt"] == nil && !isAuthRequest {
+            // Log a warning if the token is missing for any non-auth request.
             logger.warning("JWT token not found. Request to \(url.lastPathComponent) will be unauthenticated.")
         }
         

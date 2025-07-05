@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/SignupView.swift
+
 import SwiftUI
 import KeychainAccess
 
@@ -59,7 +61,9 @@ struct SignupView: View {
             }
 
             Button(action: {
-                signup()
+                Task {
+                   await signup()
+                }
             }) {
                 Text("Sign Up")
                     .frame(maxWidth: .infinity)
@@ -82,7 +86,7 @@ struct SignupView: View {
         .padding()
     }
 
-    func signup() {
+    func signup() async {
         guard !isLoading else { return }
         
         errorMessage = ""
@@ -96,59 +100,19 @@ struct SignupView: View {
         }
 
         isLoading = true
+        
+        let payload = RegistrationPayload(username: email, email: email, password: password)
 
-        let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            let authResponse = try await NetworkManager.shared.signup(payload: payload)
+            keychain["jwt"] = authResponse.jwt
+            // Redirect to login view for the user to log in after successful signup
+            currentView = .login
+        } catch {
+            errorMessage = error.localizedDescription
+        }
 
-        let body = ["username": email, "email": email, "password": password]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                isLoading = false
-                
-                // Handle network-level errors
-                if let error = error {
-                    print("Network error: \(error.localizedDescription)")
-                    errorMessage = "Network error: Please check your connection and try again."
-                    return
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse, let data = data else {
-                    errorMessage = "Invalid response from server."
-                    return
-                }
-                
-                // Decode the response
-                do {
-                    // Successful registration (200 OK)
-                    if httpResponse.statusCode == 200 {
-                        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                        if let jwt = json?["jwt"] as? String {
-                            keychain["jwt"] = jwt
-                            // Optionally, you could decode the user object here too
-                            // For now, we just switch to the login view for simplicity
-                            currentView = .login
-                        } else {
-                            errorMessage = "Registration succeeded but no token was received."
-                        }
-                    } else {
-                        // Handle Strapi error responses (e.g., 400 Bad Request)
-                        let errorResponse = try JSONDecoder().decode(StrapiErrorResponse.self, from: data)
-                        errorMessage = errorResponse.error.message
-                        print("Signup failed with status \(httpResponse.statusCode): \(errorResponse.error.message)")
-                    }
-                } catch {
-                    // Fallback for unexpected JSON structure
-                    errorMessage = "An unexpected error occurred. Please try again."
-                    if let dataString = String(data: data, encoding: .utf8) {
-                        print("Failed to decode response: \(dataString)")
-                    }
-                }
-            }
-        }.resume()
+        isLoading = false
     }
 }
 
