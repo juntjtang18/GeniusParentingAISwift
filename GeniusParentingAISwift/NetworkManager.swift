@@ -31,6 +31,11 @@ class NetworkManager {
         return try await performRequest(url: url, method: "POST", body: credentials)
     }
 
+    func fetchUser() async throws -> StrapiUser {
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/users/me") else { throw URLError(.badURL) }
+        return try await performRequest(url: url, method: "GET")
+    }
+
     func signup(payload: RegistrationPayload) async throws -> AuthResponse {
         guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register") else { throw URLError(.badURL) }
         return try await performRequest(url: url, method: "POST", body: payload)
