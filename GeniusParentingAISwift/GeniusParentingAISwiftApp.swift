@@ -8,8 +8,8 @@ struct GeniusParentingAISwiftApp: App {
     // REVISED: Create one shared instance of SpeechManager for the entire app.
     @StateObject private var speechManager = SpeechManager()
 
-    let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
-    
+    private let keychain = Keychain(service: Config.keychainService)
+
     init() {
         // This will print the Strapi URL to the console on app launch.
         print("Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")

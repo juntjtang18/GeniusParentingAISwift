@@ -10,8 +10,8 @@ class TopicViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
-    
+    private let keychain = Keychain(service: Config.keychainService)
+
     func fetchTopic(topicId: Int) async {
         isLoading = true
         errorMessage = nil

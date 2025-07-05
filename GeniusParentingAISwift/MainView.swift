@@ -16,7 +16,7 @@ struct MainView: View {
 
     @StateObject private var homeViewModel = HomeViewModel()
 
-    let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
         ZStack {

@@ -25,7 +25,7 @@ class ProfileViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    private let keychain = Keychain(service: Config.keychainService)
 
     // Internal helper structs for updating the profile
     private struct ChildPayload: Codable {

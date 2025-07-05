@@ -18,7 +18,7 @@ class HomeViewModel: ObservableObject {
     @Published var dailyTipsErrorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    private let keychain = Keychain(service: Config.keychainService)
 
     func fetchDailyTips() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")

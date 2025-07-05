@@ -7,7 +7,7 @@ struct ProfileView: View {
     @State private var isShowingEditView = false
     @Environment(\.dismiss) var dismiss
 
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    private let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
         VStack {

@@ -183,7 +183,7 @@ class ShowACourseViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    private let keychain = Keychain(service: Config.keychainService)
 
     func fetchCourse(courseId: Int) async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")

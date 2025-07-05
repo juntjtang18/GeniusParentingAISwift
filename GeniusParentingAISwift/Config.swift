@@ -1,6 +1,7 @@
 import Foundation
 
 struct Config {
+    static let keychainService = "com.geniusparentingai.GeniusParentingAISwift"
     static var strapiBaseUrl: String {
         #if DEBUG
         #if USE_LOCAL_IP
@@ -10,6 +11,16 @@ struct Config {
         #endif
         #else
         return "https://strapi.geniusparentingai.ca"
+        #endif
+    }
+    // NEW: URL for the Subscription Subsystem
+    static var subscriptionSubsystemBaseUrl: String {
+        #if DEBUG
+        // For local development, both might run on different ports
+        // Or you might proxy them under the same IP. Adjust as needed.
+        return "http://localhost:1337"
+        #else
+        return "http://gpasubsys.geniusParentingAI.ca"
         #endif
     }
 }

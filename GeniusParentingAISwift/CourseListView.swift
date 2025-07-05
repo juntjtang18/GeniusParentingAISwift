@@ -206,7 +206,7 @@ class CourseViewModel: ObservableObject {
     var initialLoadCompleted = false
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    private let keychain = Keychain(service: Config.keychainService)
     private let lastViewedCategoryKey = "lastViewedCategoryID"
 
     func initialFetch() async {

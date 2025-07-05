@@ -8,7 +8,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var errorMessage = ""
 
-    let keychain = Keychain(service: "com.geniusparentingai.GeniusParentingAISwift")
+    let keychain = Keychain(service: Config.keychainService)
 
     enum ViewState {
         case login

@@ -1,9 +1,4 @@
-//
-//  ChatMessage.swift
-//  GeniusParentingAISwift
-//
-//  Created by James Tang on 2025/6/7.
-//
+// ChatMessage.swift
 
 import Foundation
 
@@ -14,7 +9,22 @@ struct ChatMessage: Identifiable, Equatable {
     let isUser: Bool
 }
 
-/// A Codable struct to decode the JSON response from the chatbot backend.
-struct BotResponse: Codable {
-    let answer: String
+// REMOVED: The old BotResponse struct is no longer needed.
+// struct BotResponse: Codable { ... }
+
+// MARK: - OpenAI Completion Response Models
+// Represents the top-level structure of the OpenAI chat completion response.
+struct OpenAICompletionResponse: Codable {
+    let choices: [Choice]
+}
+
+// Represents a single choice in the OpenAI response.
+struct Choice: Codable {
+    let message: ResponseMessage
+}
+
+// Represents the message object containing the assistant's reply.
+struct ResponseMessage: Codable {
+    let role: String
+    let content: String
 }
