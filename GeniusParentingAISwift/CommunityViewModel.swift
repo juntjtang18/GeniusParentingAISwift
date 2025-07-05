@@ -13,23 +13,49 @@ class CommunityViewModel: ObservableObject {
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: Config.keychainService)
+    
+    // Task to manage the fetch operation, allowing cancellation.
+    private var fetchTask: Task<Void, Error>?
 
     func initialLoad() async {
-        guard !isLoading else {
-            // This correctly prevents multiple refreshes from running at the same time.
-            return
-        }
-        
-        self.isLoading = true
-        defer { self.isLoading = false }
-        
-        self.errorMessage = nil
+        // Cancel the previous task if it's still running.
+        fetchTask?.cancel()
 
-        await fetchCurrentUser()
-        if self.currentUser != nil {
-            await fetchUserLikes()
+        // Create a new task to fetch posts.
+        fetchTask = Task {
+            // This ensures the code inside runs on the main actor.
+            await MainActor.run {
+                self.isLoading = true
+                self.errorMessage = nil
+            }
+
+            // Perform the fetch operations.
+            await fetchCurrentUser()
+            // We must check for cancellation after each async step.
+            try Task.checkCancellation()
+
+            if self.currentUser != nil {
+                await fetchUserLikes()
+            }
+            try Task.checkCancellation()
+
+            await fetchPostsAndCreateViewModels()
         }
-        await fetchPostsAndCreateViewModels()
+
+        do {
+            try await fetchTask?.value
+        } catch {
+            if !(error is CancellationError) {
+                // Only show an error if it's not a cancellation error.
+                await MainActor.run {
+                    errorMessage = "Failed to refresh posts: \(error.localizedDescription)"
+                }
+            }
+        }
+        
+        await MainActor.run {
+            self.isLoading = false
+        }
     }
     
     private func fetchPostsAndCreateViewModels() async {

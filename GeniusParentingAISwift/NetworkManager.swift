@@ -1,5 +1,3 @@
-// GeniusParentingAISwift/NetworkManager.swift
-
 import Foundation
 import KeychainAccess
 import os
@@ -28,78 +26,87 @@ class NetworkManager {
 
     // MARK: - Public API Methods
     
-    /// Authenticates a user and returns the auth token and user data.
     func login(credentials: LoginCredentials) async throws -> AuthResponse {
-        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local") else {
-            throw URLError(.badURL)
-        }
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local") else { throw URLError(.badURL) }
         return try await performRequest(url: url, method: "POST", body: credentials)
     }
 
-    /// Registers a new user and returns the auth token and user data.
     func signup(payload: RegistrationPayload) async throws -> AuthResponse {
-        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register") else {
-            throw URLError(.badURL)
-        }
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/local/register") else { throw URLError(.badURL) }
         return try await performRequest(url: url, method: "POST", body: payload)
     }
 
-    /// Fetches a list of items from an endpoint (e.g., /api/posts).
-    /// The endpoint is expected to return a StrapiListResponse object.
-    func fetchList<T: Codable>(from url: URL) async throws -> [T] {
-        let response: StrapiListResponse<T> = try await performRequest(url: url, method: "GET")
-        return response.data ?? []
+    /// Fetches a single page of items and returns the response shell, including pagination metadata.
+    func fetchPage<T: Codable>(baseURLComponents: URLComponents, page: Int, pageSize: Int = 25) async throws -> StrapiListResponse<T> {
+        var components = baseURLComponents
+        var queryItems = components.queryItems ?? []
+
+        queryItems.removeAll { $0.name == "pagination[page]" || $0.name == "pagination[pageSize]" }
+        queryItems.append(URLQueryItem(name: "pagination[page]", value: String(page)))
+        queryItems.append(URLQueryItem(name: "pagination[pageSize]", value: String(pageSize)))
+        components.queryItems = queryItems
+        
+        guard let url = components.url else { throw URLError(.badURL) }
+        
+        // **THE FIX IS HERE**: Explicitly specify the generic type for `performRequest`.
+        return try await performRequest(url: url, method: "GET")
     }
 
-    /// Fetches a single item from an endpoint (e.g., /api/daily-tip).
-    /// The endpoint is expected to return a StrapiSingleResponse object.
+    /// Fetches all pages for a given query by aggregating the results. Useful for background data sync.
+    func fetchAllPages<T: Codable>(baseURLComponents: URLComponents) async throws -> [T] {
+        var allItems: [T] = []
+        var currentPage = 1
+        var totalPages = 1
+        
+        repeat {
+            let response: StrapiListResponse<T> = try await fetchPage(baseURLComponents: baseURLComponents, page: currentPage, pageSize: 100)
+            
+            if let items = response.data {
+                allItems.append(contentsOf: items)
+            }
+            
+            if let pagination = response.meta?.pagination {
+                totalPages = pagination.pageCount
+            }
+            
+            currentPage += 1
+            
+        } while currentPage <= totalPages
+        
+        return allItems
+    }
+    
     func fetchSingle<T: Codable>(from url: URL) async throws -> T {
         let response: StrapiSingleResponse<T> = try await performRequest(url: url, method: "GET")
         return response.data
     }
 
-    /// Fetches a resource directly without a 'data' wrapper (e.g., /api/users/me).
     func fetchDirect<T: Decodable>(from url: URL) async throws -> T {
         return try await performRequest(url: url, method: "GET")
     }
 
-    /// Sends data to an endpoint and decodes the response.
     func post<RequestBody: Encodable, ResponseBody: Decodable>(to url: URL, body: RequestBody) async throws -> ResponseBody {
         return try await performRequest(url: url, method: "POST", body: body)
     }
     
-    /// Updates data at an endpoint and decodes the response.
     func put<RequestBody: Encodable, ResponseBody: Decodable>(to url: URL, body: RequestBody) async throws -> ResponseBody {
         return try await performRequest(url: url, method: "PUT", body: body)
     }
 
-    /// Sends a DELETE request to an endpoint.
     func delete(at url: URL) async throws {
-        // We don't need the response, but the request must be successful.
         let _: EmptyResponse = try await performRequest(url: url, method: "DELETE")
     }
 
     // MARK: - Private Core Request Function
 
-    /// The single, private function that handles all network requests.
-    private func performRequest<ResponseBody: Decodable, RequestBody: Encodable>(
-        url: URL,
-        method: String,
-        body: RequestBody? = nil
-    ) async throws -> ResponseBody {
-        
+    private func performRequest<ResponseBody: Decodable, RequestBody: Encodable>(url: URL, method: String, body: RequestBody? = nil) async throws -> ResponseBody {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // *** THIS IS THE FIX ***
-        // Only add the auth token if the request is NOT for authentication.
         let isAuthRequest = url.absoluteString.contains("/api/auth/local")
         if let token = keychain["jwt"], !isAuthRequest {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else if keychain["jwt"] == nil && !isAuthRequest {
-            // Log a warning if the token is missing for any non-auth request.
-            logger.warning("JWT token not found. Request to \(url.lastPathComponent) will be unauthenticated.")
         }
         
         if let body = body {
@@ -107,29 +114,19 @@ class NetworkManager {
         }
 
         let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid response from server for URL \(url). Not an HTTPURLResponse.")
-            throw URLError(.badServerResponse)
-        }
+        guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         
         guard (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "No response body"
             logger.error("HTTP Error: \(method) request to \(url) failed with status code \(httpResponse.statusCode). Body: \(errorBody)")
-            
-            // Try to decode a specific Strapi error message for better diagnostics.
             if let errorResponse = try? decoder.decode(StrapiErrorResponse.self, from: data) {
                 throw NSError(domain: "NetworkManager.StrapiError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error.message])
             }
-            
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Received status code \(httpResponse.statusCode)."])
         }
         
-        // Handle successful but empty responses (e.g., from a DELETE request).
         if data.isEmpty {
-            guard let empty = EmptyResponse() as? ResponseBody else {
-                 throw URLError(.cannotParseResponse)
-            }
+            guard let empty = EmptyResponse() as? ResponseBody else { throw URLError(.cannotParseResponse) }
             return empty
         }
 
@@ -138,20 +135,16 @@ class NetworkManager {
         } catch {
             logger.error("Decoding Error: Failed to decode \(ResponseBody.self). Error: \(error.localizedDescription)")
             logger.error("Decoding Error Details: \(error)")
-            if let jsonString = String(data: data, encoding: .utf8) {
-                logger.error("Raw JSON that failed to decode:\n--- START JSON ---\n\(jsonString)\n--- END JSON ---")
-            }
+            if let jsonString = String(data: data, encoding: .utf8) { logger.error("Raw JSON: \(jsonString)") }
             throw error
         }
     }
     
-    /// Overload for requests that don't have a request body (like GET and DELETE).
     private func performRequest<ResponseBody: Decodable>(url: URL, method: String) async throws -> ResponseBody {
         let emptyBody: EmptyPayload? = nil
         return try await performRequest(url: url, method: method, body: emptyBody)
     }
 }
 
-// MARK: - Helper Structs
 private struct EmptyResponse: Codable {}
 private struct EmptyPayload: Codable {}
