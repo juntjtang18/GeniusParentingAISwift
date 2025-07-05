@@ -116,3 +116,22 @@ struct FailableDecodable<T: Codable & Hashable>: Codable, Hashable {
         try container.encode(self.value)
     }
 }
+
+/// The data structure required for a login request.
+struct LoginCredentials: Codable {
+    let identifier: String
+    let password: String
+}
+
+/// The data structure required for a registration request.
+struct RegistrationPayload: Codable {
+    let username: String
+    let email: String
+    let password: String
+}
+
+/// The data structure returned by Strapi upon successful login or registration.
+struct AuthResponse: Codable {
+    let jwt: String
+    let user: StrapiUser
+}

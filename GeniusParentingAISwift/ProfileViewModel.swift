@@ -1,8 +1,7 @@
 // ProfileViewModel.swift
 import Foundation
-import KeychainAccess
 
-// Helper structs to decode the server response
+// Helper structs to decode the server response for fetching
 struct UserProfileAttributes: Codable {
     let consentForEmailNotice: Bool
     let children: [Child]?
@@ -25,7 +24,7 @@ class ProfileViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: Config.keychainService)
+    // The keychain property is no longer needed here.
 
     // Internal helper structs for updating the profile
     private struct ChildPayload: Codable {
@@ -43,42 +42,25 @@ class ProfileViewModel: ObservableObject {
     }
 
     func fetchUserProfile() async {
-        print("ProfileViewModel: Starting 2-step fetchUserProfile().")
-        // --- FIX: This guard statement is removed to prevent a deadlock when refreshing after an update. ---
-        // guard !isLoading else { return }
-
         self.isLoading = true
         self.errorMessage = nil
 
-        guard let token = keychain["jwt"] else {
-            errorMessage = "Authentication token not found."
-            isLoading = false
-            return
-        }
-
         do {
-            // STEP 1: Fetch the base user from /users/me
+            // STEP 1: Fetch the base user from /users/me using the NetworkManager
             guard let userUrl = URL(string: "\(strapiUrl)/users/me") else {
                 throw URLError(.badURL)
             }
-            var userRequest = URLRequest(url: userUrl)
-            userRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            
-            let (userData, _) = try await URLSession.shared.data(for: userRequest)
-            var baseUser = try JSONDecoder().decode(StrapiUser.self, from: userData)
+            var baseUser: StrapiUser = try await NetworkManager.shared.fetchDirect(from: userUrl)
 
-            // STEP 2: Fetch the user profile from your new /user-profiles/mine endpoint
+            // STEP 2: Fetch the user profile details from /user-profiles/mine
             guard let profileUrl = URL(string: "\(strapiUrl)/user-profiles/mine") else {
                 throw URLError(.badURL)
             }
-            var profileRequest = URLRequest(url: profileUrl)
-            profileRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             
-            let (profileData, profileResponse) = try await URLSession.shared.data(for: profileRequest)
-            
-            if let httpProfileResponse = profileResponse as? HTTPURLResponse, httpProfileResponse.statusCode == 200 {
-                
-                let apiResponse = try JSONDecoder().decode(UserProfileApiResponse.self, from: profileData)
+            // This fetch is in a separate try-catch because a new user might not have a profile yet (a 404 error is expected)
+            // We don't want that to prevent the base user details from loading.
+            do {
+                let apiResponse: UserProfileApiResponse = try await NetworkManager.shared.fetchDirect(from: profileUrl)
                 let decodedData = apiResponse.data
                 
                 let userProfile = UserProfile(
@@ -88,14 +70,15 @@ class ProfileViewModel: ObservableObject {
                 )
                 
                 baseUser.user_profile = userProfile
-                self.user = baseUser
-                
-            } else {
-                 self.user = baseUser
+            } catch {
+                // It's normal for a new user to not have a profile, so we just log this for debugging.
+                print("Could not fetch user profile details (this is expected for new users): \(error.localizedDescription)")
             }
+            
+            self.user = baseUser
 
         } catch {
-            errorMessage = "Failed to fetch profile: \(error.localizedDescription)"
+            errorMessage = "Failed to fetch your main profile: \(error.localizedDescription)"
             print("ProfileViewModel: An error occurred during profile fetch: \(error)")
         }
         
@@ -103,39 +86,22 @@ class ProfileViewModel: ObservableObject {
     }
 
     func updateUserProfile(profileId: Int, consent: Bool, children: [EditableChild]) async -> Bool {
-        print("ProfileViewModel: Starting updateUserProfile for profile ID \(profileId).")
         isLoading = true
         errorMessage = nil
-
-        guard let token = keychain["jwt"] else {
-            errorMessage = "Authentication token not found."; isLoading = false; return false
-        }
 
         do {
             guard let profileUrl = URL(string: "\(strapiUrl)/user-profiles/mine") else {
                 throw URLError(.badURL, userInfo: [NSLocalizedDescriptionKey: "Invalid URL for profile update."])
             }
             
-            var profileRequest = URLRequest(url: profileUrl)
-            profileRequest.httpMethod = "PUT"
-            profileRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-            
-            profileRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            profileRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            
+            // Prepare the payload to send to the server
             let childrenPayload = children.map { ChildPayload(id: $0.serverId, name: $0.name, age: $0.age, gender: $0.gender) }
             let profilePayload = ProfileUpdatePayload(consentForEmailNotice: consent, children: childrenPayload)
             let wrappedPayload = RequestWrapper(data: profilePayload)
-            profileRequest.httpBody = try JSONEncoder().encode(wrappedPayload)
-
-            let (_, profileResponse) = try await URLSession.shared.data(for: profileRequest)
             
-            guard let httpProfileResponse = profileResponse as? HTTPURLResponse, (200...299).contains(httpProfileResponse.statusCode) else {
-                let statusCode = (profileResponse as? HTTPURLResponse)?.statusCode ?? -1
-                self.errorMessage = "Failed to update profile details. Server error \(statusCode)."
-                isLoading = false
-                return false
-            }
+            // Use the generic 'put' method from the NetworkManager
+            // We expect the updated profile back, so we decode it.
+            let _: UserProfileApiResponse = try await NetworkManager.shared.put(to: profileUrl, body: wrappedPayload)
             
         } catch {
             errorMessage = "Failed to update profile details: \(error.localizedDescription)"
@@ -143,7 +109,7 @@ class ProfileViewModel: ObservableObject {
             return false
         }
 
-        print("ProfileViewModel: All updates successful. Refreshing profile.")
+        // If the update was successful, refresh the profile data to show the latest changes.
         await fetchUserProfile()
         return true
     }

@@ -1,5 +1,4 @@
 import SwiftUI
-import KeychainAccess
 import AVKit
 
 class CourseCache {
@@ -24,10 +23,10 @@ struct ShowACourseView: View {
     let courseId: Int
     @State private var currentPageIndex = 0
     
-    // FIXED: Add a binding to control the side menu's visibility.
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
+        // --- The View body remains unchanged ---
         VStack(spacing: 0) {
             if viewModel.isLoading {
                 ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -102,9 +101,7 @@ struct ShowACourseView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // FIXED: Use ToolbarItemGroup to show multiple buttons.
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                // The original refresh button.
                 Button {
                     Task {
                         await viewModel.fetchCourse(courseId: courseId)
@@ -113,7 +110,6 @@ struct ShowACourseView: View {
                     Image(systemName: "arrow.clockwise")
                 }
                 
-                // The menu button to open the side menu.
                 Button(action: {
                     withAnimation(.easeInOut) {
                         isSideMenuShowing.toggle()
@@ -128,7 +124,8 @@ struct ShowACourseView: View {
             await viewModel.fetchCourse(courseId: courseId)
         }
     }
-
+    
+    // --- Helper functions remain unchanged ---
     func groupContentIntoPages(content: [Content]) -> [[Content]] {
         var pages: [[Content]] = []
         var currentPage: [Content] = []
@@ -183,9 +180,10 @@ class ShowACourseViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    private let keychain = Keychain(service: Config.keychainService)
+    // The keychain property is no longer needed here.
 
     func fetchCourse(courseId: Int) async {
+        // Keep the existing caching logic.
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
         
         if !isRefreshEnabled, let cachedCourse = CourseCache.shared.get(courseId: courseId) {
@@ -194,44 +192,26 @@ class ShowACourseViewModel: ObservableObject {
             return
         }
 
-        isLoading = true; errorMessage = nil
-        
-        guard let token = keychain["jwt"] else {
-            errorMessage = "Authentication token not found."; isLoading = false; return
-        }
+        isLoading = true
+        errorMessage = nil
         
         let populateQuery = "populate[icon_image]=*&populate[translations]=*&populate[coursecategory]=*&populate[content][populate]=image_file,video_file,thumbnail"
         
         guard let url = URL(string: "\(strapiUrl)/courses/\(courseId)?\(populateQuery)") else {
-            errorMessage = "Internal error: Invalid URL."; isLoading = false; return
+            errorMessage = "Internal error: Invalid URL."
+            isLoading = false
+            return
         }
         
-        var request = URLRequest(url: url); request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                var detailedError = "Server error \(statusCode)."
-                if let errData = try? JSONDecoder().decode(StrapiErrorResponse.self, from: data) { detailedError = errData.error.message }
-                errorMessage = detailedError; isLoading = false; return
-            }
-            let decoder = JSONDecoder()
-            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let decodedResponse = try decoder.decode(StrapiSingleResponse<Course>.self, from: data)
-            let fetchedCourse = decodedResponse.data
+            // Replace the network logic with a single call to our manager.
+            let fetchedCourse: Course = try await NetworkManager.shared.fetchSingle(from: url)
             
             CourseCache.shared.set(course: fetchedCourse)
             self.course = fetchedCourse
             
         } catch {
-            if let decError = error as? DecodingError {
-                print("Decoding Error in ShowACourseViewModel: \(decError)")
-                errorMessage = "Data parsing error. Check if the Swift models match the JSON response."
-            }
-            else { errorMessage = "Fetch error: \(error.localizedDescription)" }
+            errorMessage = "Fetch error: \(error.localizedDescription)"
         }
         isLoading = false
     }
