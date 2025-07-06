@@ -90,6 +90,7 @@ struct LoginView: View {
         do {
             let authResponse = try await NetworkManager.shared.login(credentials: credentials)
             keychain["jwt"] = authResponse.jwt
+            SessionManager.shared.currentUser = authResponse.user
             isLoggedIn = true
         } catch {
             errorMessage = error.localizedDescription

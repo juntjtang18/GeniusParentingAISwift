@@ -133,15 +133,18 @@ class CommunityViewModel: ObservableObject {
     }
     
     private func fetchCurrentUser() async {
-        guard let token = keychain["jwt"] else { return }
-        guard let url = URL(string: "\(strapiUrl)/users/me") else { return }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        if let (data, _) = try? await URLSession.shared.data(for: request) {
-            self.currentUser = try? JSONDecoder().decode(StrapiUser.self, from: data)
+        if let user = SessionManager.shared.currentUser {
+            self.currentUser = user
+            return
+        }
+
+        do {
+            let user = try await NetworkManager.shared.fetchUser()
+            self.currentUser = user
+            SessionManager.shared.currentUser = user
+        } catch {
+            print("CommunityViewModel: Failed to fetch current user: \(error.localizedDescription)")
+            self.errorMessage = "Could not load user data."
         }
     }
 
