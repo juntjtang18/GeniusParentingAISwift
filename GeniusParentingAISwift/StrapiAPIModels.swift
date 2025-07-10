@@ -2,6 +2,62 @@
 
 import Foundation
 
+// MARK: - Subscription Plan Models
+// ADDED: The subscription models are now centralized in this file.
+
+/// A top-level response object that mirrors the structure of the `/api/v1/all-plans` endpoint.
+struct AllPlansResponse: Codable {
+    let data: [SubscriptionPlan]
+}
+
+/// Represents a single subscription plan with its details and features.
+struct SubscriptionPlan: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let description: String
+    let price: Double
+    let interval: String
+    let features: PlanFeatures
+    
+    /// Provides a consistent order for displaying features, as dictionary order is not guaranteed.
+    static let featureOrder: [PartialKeyPath<PlanFeatures>] = [
+        \.credits, \.exportLength, \.standardVoices, \.ultraRealisticVoices,
+        \.studioQualityVoices, \.aiVideoClips, \.brandKits, \.sceneLimits,
+        \.aiAvatar, \.voiceCloning, \.customVoices, \.templates, \.webResearch
+    ]
+}
+
+/// A detailed breakdown of all features included in a subscription plan.
+struct PlanFeatures: Codable {
+    let credits: String
+    let exportLength: String
+    let standardVoices: String
+    let ultraRealisticVoices: String
+    let studioQualityVoices: String
+    let aiVideoClips: String
+    let brandKits: String
+    let sceneLimits: String
+    let aiAvatar: String
+    let voiceCloning: String
+    let customVoices: String
+    let templates: String
+    let webResearch: String
+
+    /// MODIFIED: Maps the snake_case keys from the JSON response to camelCase properties explicitly.
+    enum CodingKeys: String, CodingKey {
+        case credits, templates, aiAvatar, brandKits, sceneLimits
+        case exportLength = "export_length"
+        case standardVoices = "standard_voices"
+        case ultraRealisticVoices = "ultra_realistic_voices"
+        case studioQualityVoices = "studio_quality_voices"
+        case aiVideoClips = "ai_video_clips"
+        case voiceCloning = "voice_cloning"
+        case customVoices = "custom_voices"
+        case webResearch = "web_research"
+    }
+}
+
+
 // MARK: - New Model for Upload Response
 struct UploadResponseMedia: Codable, Identifiable {
     let id: Int

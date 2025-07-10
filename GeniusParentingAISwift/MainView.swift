@@ -10,7 +10,8 @@ struct MainView: View {
     @State private var isShowingLanguageSheet = false
     @State private var isShowingProfileSheet = false
     @State private var isShowingSettingSheet = false
-    
+    @State private var isShowingThemeSheet = false // <-- ADD THIS
+
     // State for the side menu
     @State private var isSideMenuShowing = false
 
@@ -62,7 +63,11 @@ struct MainView: View {
                     SettingView()
                 }
             }
-            
+            .sheet(isPresented: $isShowingThemeSheet) {
+                // ✅ LOG 3: This will print right before the sheet appears.
+                let _ = print("LOG: MainView is attempting to present ThemeSelectView sheet.")
+                ThemeSelectView()
+            }
             // --- Side Menu Layer ---
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
@@ -81,7 +86,8 @@ struct MainView: View {
                     isShowing: $isSideMenuShowing,
                     isShowingProfileSheet: $isShowingProfileSheet,
                     isShowingLanguageSheet: $isShowingLanguageSheet,
-                    isShowingSettingSheet: $isShowingSettingSheet
+                    isShowingSettingSheet: $isShowingSettingSheet,
+                    isShowingThemeSheet: $isShowingThemeSheet // <-- PASS BINDING
                 )
                 .frame(width: UIScreen.main.bounds.width * 0.7)
                 .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)

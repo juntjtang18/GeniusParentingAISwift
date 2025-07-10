@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/ProfileEditView.swift
+
 import SwiftUI
 
 /// A local struct to manage the state of children in the edit view.
@@ -14,20 +16,21 @@ struct ProfileEditView: View {
     @ObservedObject var viewModel: ProfileViewModel
 
     // Local state for editable fields
+    @State private var editableUsername: String
     @State private var editableConsent: Bool
     @State private var editableChildren: [EditableChild] = []
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    // The username is now for display only
-    private let username: String
+    private let userId: Int
     private let userProfileId: Int
 
     init(isPresented: Binding<Bool>, viewModel: ProfileViewModel) {
         self._isPresented = isPresented
         self.viewModel = viewModel
         
-        self.username = viewModel.user?.username ?? "N/A"
+        self.userId = viewModel.user?.id ?? 0
+        self._editableUsername = State(initialValue: viewModel.user?.username ?? "")
         
         if let profile = viewModel.user?.user_profile {
             self.userProfileId = profile.id
@@ -45,14 +48,10 @@ struct ProfileEditView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Account Details")) {
-                    // Username is displayed but not editable
-                    HStack {
-                        Text("Username")
-                        Spacer()
-                        Text(username)
-                            .foregroundColor(.gray)
-                    }
+                Section(header: Text("User Name")) {
+                    TextField("Username", text: $editableUsername)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
                 }
 
                 Section(header: Text("Preferences")) {
@@ -119,7 +118,9 @@ struct ProfileEditView: View {
         isSaving = true
         self.errorMessage = nil
 
-        let success = await viewModel.updateUserProfile(
+        let success = await viewModel.updateUserAndProfile(
+            userId: self.userId,
+            username: self.editableUsername,
             profileId: self.userProfileId,
             consent: self.editableConsent,
             children: self.editableChildren

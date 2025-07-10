@@ -18,6 +18,7 @@ struct GeniusParentingAISwiftApp: App {
     @State private var isCheckingToken = true
     
     @StateObject private var speechManager = SpeechManager()
+    @StateObject private var themeManager = ThemeManager() // <-- ADD THIS
 
     private let keychain = Keychain(service: Config.keychainService)
 
@@ -37,6 +38,7 @@ struct GeniusParentingAISwiftApp: App {
                 }
             }
             .environmentObject(speechManager)
+            .environmentObject(themeManager) // <-- ADD THIS
             .onAppear(perform: checkLoginStatus)
         }
     }

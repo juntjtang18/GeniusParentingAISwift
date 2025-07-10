@@ -6,6 +6,7 @@ struct SideMenuView: View {
     @Binding var isShowingLanguageSheet: Bool
     // New binding to control the settings sheet
     @Binding var isShowingSettingSheet: Bool
+    @Binding var isShowingThemeSheet: Bool // <-- ADD THIS
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -38,6 +39,19 @@ struct SideMenuView: View {
                     }
                 }) {
                     Label("Language", systemImage: "globe")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+                
+                Divider()
+
+                Button(action: {
+                    // ✅ LOG 2: Confirm the button press.
+                    print("LOG: 'Change Theme' button tapped in SideMenuView.")
+                    handleMenuSelection {
+                        isShowingThemeSheet = true
+                    }
+                }) {
+                    Label("Change Theme", systemImage: "paintbrush.fill")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
@@ -87,7 +101,8 @@ struct SideMenuView_Previews: PreviewProvider {
             isShowing: .constant(true),
             isShowingProfileSheet: .constant(false),
             isShowingLanguageSheet: .constant(false),
-            isShowingSettingSheet: .constant(false)
+            isShowingSettingSheet: .constant(false),
+            isShowingThemeSheet: .constant(false)
         )
     }
 }
