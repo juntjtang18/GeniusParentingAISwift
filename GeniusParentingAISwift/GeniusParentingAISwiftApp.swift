@@ -38,7 +38,10 @@ struct GeniusParentingAISwiftApp: App {
                 }
             }
             .environmentObject(speechManager)
-            .environmentObject(themeManager) // <-- ADD THIS
+            // Inject the selected theme into the entire app's environment.
+            // When the user picks a new theme, this will automatically update everywhere.
+            .theme(themeManager.currentTheme) // <-- BROADCAST THE THEME HERE
+            .environmentObject(themeManager)  // Still needed for the theme selector view
             .onAppear(perform: checkLoginStatus)
         }
     }

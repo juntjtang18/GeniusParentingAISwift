@@ -7,10 +7,10 @@ import WebKit
 // MARK: - Content Component View
 
 struct ContentComponentView: View {
-    let contentItem: Content
+    let contentItem: CourseContentItem
     let language: String
     
-    // FIXED: Access the shared SpeechManager from the environment to fix performance warnings.
+    @Environment(\.theme) var theme: Theme
     @EnvironmentObject private var speechManager: SpeechManager
     
     @State private var selectedOption: String? = nil
@@ -26,7 +26,7 @@ struct ContentComponentView: View {
                         .font(.system(size: contentItem.style?.fontSize ?? 17,
                                       weight: .regular))
                         .italic(contentItem.style?.isItalic == true)
-                        .foregroundColor(Color(hex: contentItem.style?.fontColor ?? "#333333"))
+                        .foregroundColor(theme.text)
                         .lineSpacing(5)
                         .multilineTextAlignment(textAlignmentFor(contentItem.style?.textAlign))
                         .frame(maxWidth: .infinity, alignment: frameAlignmentFor(contentItem.style?.textAlign))
@@ -39,7 +39,7 @@ struct ContentComponentView: View {
                             }
                         }) {
                             Image(systemName: speechManager.isSpeaking ? "stop.circle.fill" : "play.circle.fill")
-                                .resizable().frame(width: 28, height: 28).foregroundColor(.accentColor)
+                                .resizable().frame(width: 28, height: 28).foregroundColor(theme.accent)
                         }
                     }.padding(.top, 2)
                 }
@@ -57,7 +57,7 @@ struct ContentComponentView: View {
                         }
                         .frame(maxWidth: .infinity)
                         if let caption = media.attributes.caption, !caption.isEmpty {
-                            Text(caption).font(.caption).foregroundColor(.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
+                            Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
                         }
                     } else { Text("Image URL is invalid.").foregroundColor(.red).padding() }
                 } else { Text("Image not available.").foregroundColor(.red).padding() }
@@ -69,7 +69,7 @@ struct ContentComponentView: View {
                             .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
                             .cornerRadius(10)
                         if let caption = media.attributes.caption, !caption.isEmpty {
-                            Text(caption).font(.caption).foregroundColor(.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
+                            Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
                         }
                    } else { Text("Uploaded video URL is invalid.").foregroundColor(.red).padding() }
                 } else { Text("Uploaded video not available.").foregroundColor(.red).padding() }
@@ -108,7 +108,7 @@ struct ContentComponentView: View {
                     } else { Text("External video URL missing.").foregroundColor(.red) }
 
                     if let caption = contentItem.caption, !caption.isEmpty {
-                        Text(caption).font(.caption).foregroundColor(.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
+                        Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
                     }
                 }
 
@@ -116,6 +116,7 @@ struct ContentComponentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if let questionText = contentItem.question, !questionText.isEmpty {
                         Text(questionText).font(.headline).padding(.bottom, 5)
+                            .foregroundColor(theme.text)
                     }
                     if let optionsArray = contentItem.options?.value {
                         ForEach(optionsArray, id: \.self) { optionText in
@@ -126,7 +127,7 @@ struct ContentComponentView: View {
                                  }
                             }) {
                                 HStack {
-                                    Text(optionText).foregroundColor(Color(UIColor.label))
+                                    Text(optionText).foregroundColor(theme.text)
                                     Spacer()
                                     
                                     if isAnswerSubmitted {
@@ -147,7 +148,7 @@ struct ContentComponentView: View {
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedOption == optionText ? Color.accentColor : Color.clear, lineWidth: 2)
+                                        .stroke(selectedOption == optionText ? theme.accent : Color.clear, lineWidth: 2)
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -160,7 +161,7 @@ struct ContentComponentView: View {
                             Image(systemName: "info.circle.fill").foregroundColor(.blue)
                             Text("The correct answer is: **\(contentItem.correctAnswer ?? "N/A")**")
                                 .font(.footnote)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(theme.secondary)
                         }
                         .padding(.top, 10)
                         .transition(.opacity.animation(.easeInOut))

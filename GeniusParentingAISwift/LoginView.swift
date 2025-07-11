@@ -4,13 +4,14 @@ import SwiftUI
 import KeychainAccess
 
 struct LoginView: View {
+    @Environment(\.theme) var theme: Theme
     @Binding var isLoggedIn: Bool
     @State private var currentView: ViewState = .login
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
     @State private var isLoading = false
-
+    
     let keychain = Keychain(service: Config.keychainService)
 
     enum ViewState {
@@ -21,60 +22,67 @@ struct LoginView: View {
     var body: some View {
         Group {
             if currentView == .login {
-                VStack(spacing: 20) {
-                    Text("Welcome to Genius Parenting AI")
-                        .font(.largeTitle)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                ZStack {
+                    theme.background.ignoresSafeArea()
+                    VStack(spacing: 20) {
+                        Text("Welcome to Genius Parenting AI")
+                            .font(.largeTitle)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                            .foregroundColor(theme.text)
 
-                    TextField("Email", text: $email)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                        .padding(.horizontal)
-                        .disabled(isLoading)
-
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                        .disabled(isLoading)
-
-                    if !errorMessage.isEmpty {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    }
-                    
-                    if isLoading {
-                        ProgressView()
-                            .padding()
-                    }
-
-                    Button(action: {
-                        Task {
-                           await login()
+                        TextField("Email", text: $email)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
+                            .padding(.horizontal)
+                            .disabled(isLoading)
+                        
+                        SecureField("Password", text: $password)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .padding(.horizontal)
+                            .disabled(isLoading)
+                        
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(theme.accent)
+                                .padding()
                         }
-                    }) {
-                        Text("Login")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(isLoading ? Color.gray : Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
-                    }
-                    .padding(.horizontal)
-                    .disabled(isLoading)
-
-
-                    Button(action: {
-                        currentView = .signup
-                    }) {
-                        Text("Don't have an account? Sign Up")
-                            .foregroundColor(.blue)
+                        
+                        if isLoading {
+                            ProgressView()
+                                .padding()
+                        }
+                        
+                        Button(action: {
+                            Task {
+                                await login()
+                            }
+                        }) {
+                            Text("Login")
+                                //.frame(maxWidth: .infinity)
+                                //.padding()
+                                //.background(isLoading ? .gray : .themePrimary)
+                                //.foregroundColor(.themeText)
+                                //.clipShape(Capsule())
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        .padding(.horizontal)
+                        .disabled(isLoading)
+                        
+                        
+                        Button(action: {
+                            currentView = .signup
+                        }) {
+                            Text("Don't have an account? Sign Up")
+                                //.foregroundColor(.themeSecondary)
+                        }
+                        .buttonStyle(LinkStyleButtonStyle())
+                        .padding()
                     }
                     .padding()
                 }
-                .padding()
+                .textFieldStyle(ThemedTextFieldStyle())
             } else if currentView == .signup {
                 SignupView(isLoggedIn: $isLoggedIn, currentView: $currentView)
             }

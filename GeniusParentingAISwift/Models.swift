@@ -59,12 +59,12 @@ struct Topic: Codable, Identifiable, Hashable {
 
     var title: String { attributes.title }
     var iconImageMedia: Media? { attributes.iconImage?.data }
-    var content: [Content]? { attributes.content }
+    var content: [CourseContentItem]? { attributes.content }
 
     struct Attributes: Codable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
-        let content: [Content]?
+        let content: [CourseContentItem]?
 
         enum CodingKeys: String, CodingKey {
             case title, content
@@ -227,7 +227,7 @@ struct Course: Codable, Identifiable, Hashable {
     var title: String { attributes.title }
     var iconImageMedia: Media? { attributes.iconImage?.data }
     var coursecategory: CategoryData? { attributes.coursecategory?.data }
-    var content: [Content]? { attributes.content }
+    var content: [CourseContentItem]? { attributes.content }
     var translations: [String: CourseTranslation]? { attributes.translations }
     var createdAt: String? { attributes.createdAt }
     var updatedAt: String? { attributes.updatedAt }
@@ -237,7 +237,7 @@ struct Course: Codable, Identifiable, Hashable {
         let title: String
         let iconImage: StrapiRelation<Media>?
         let coursecategory: StrapiRelation<CategoryData>?
-        let content: [Content]?
+        let content: [CourseContentItem]?
         let translations: [String: CourseTranslation]?
         let createdAt: String?
         let updatedAt: String?
@@ -255,7 +255,7 @@ struct Course: Codable, Identifiable, Hashable {
     }
 }
 
-struct Content: Codable, Identifiable, Hashable {
+struct CourseContentItem: Codable, Identifiable, Hashable {
     let id: Int?
     let __component: String
 

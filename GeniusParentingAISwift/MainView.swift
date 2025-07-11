@@ -2,6 +2,7 @@ import SwiftUI
 import KeychainAccess
 
 struct MainView: View {
+    @EnvironmentObject var themeManager: ThemeManager // 1. Get the theme manager
     @Binding var isLoggedIn: Bool
     @State private var selectedTab: Int = 0
     
@@ -50,6 +51,7 @@ struct MainView: View {
                     }
                     .tag(3)
             }
+            .accentColor(themeManager.currentTheme.accent)
             .sheet(isPresented: $isShowingLanguageSheet) {
                 LanguagePickerView(selectedLanguage: $selectedLanguage)
             }

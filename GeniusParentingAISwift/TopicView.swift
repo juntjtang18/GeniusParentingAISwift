@@ -115,9 +115,9 @@ struct TopicView: View {
         }
     }
 
-    func groupContentIntoPages(content: [Content]) -> [[Content]] {
-        var pages: [[Content]] = []
-        var currentPage: [Content] = []
+    func groupContentIntoPages(content: [CourseContentItem]) -> [[CourseContentItem]] {
+        var pages: [[CourseContentItem]] = []
+        var currentPage: [CourseContentItem] = []
         for item in content {
             if item.__component == "coursecontent.pagebreaker" {
                 if !currentPage.isEmpty { pages.append(currentPage) }
@@ -131,13 +131,13 @@ struct TopicView: View {
         return pages
     }
     
-    func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [Content]) -> (showBackButton: Bool, showNextButton: Bool) {
+    func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [CourseContentItem]) -> (showBackButton: Bool, showNextButton: Bool) {
         var canGoBack = true
         var canGoNext = true
         if pageIdx == 0 { canGoBack = false }
         else {
             var pageCounter = 0
-            var foundPageBreakerForBack: Content?
+            var foundPageBreakerForBack: CourseContentItem?
             for item in allContent {
                  if item.__component == "coursecontent.pagebreaker" {
                     if pageCounter == pageIdx - 1 { foundPageBreakerForBack = item; break }
@@ -149,7 +149,7 @@ struct TopicView: View {
         if pageIdx >= totalPages - 1 { canGoNext = false }
         else {
             var pageCounter = 0
-            var foundPageBreakerForNext: Content?
+            var foundPageBreakerForNext: CourseContentItem?
             for item in allContent {
                 if item.__component == "coursecontent.pagebreaker" {
                      if pageCounter == pageIdx { foundPageBreakerForNext = item; break }

@@ -4,6 +4,7 @@ import SwiftUI
 import KeychainAccess
 
 struct SignupView: View {
+    @Environment(\.theme) var theme: Theme
     @Binding var isLoggedIn: Bool
     @Binding var currentView: LoginView.ViewState
     @State private var email = ""
@@ -22,6 +23,7 @@ struct SignupView: View {
                 }) {
                     Image(systemName: "chevron.left")
                     Text("Back")
+                        .foregroundColor(theme.text)
                 }
                 .padding()
                 Spacer()
@@ -31,6 +33,7 @@ struct SignupView: View {
                 .font(.largeTitle)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .foregroundColor(theme.text)
 
             TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -38,6 +41,7 @@ struct SignupView: View {
                 .keyboardType(.emailAddress)
                 .padding(.horizontal)
                 .disabled(isLoading)
+            
 
             SecureField("Password", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -83,6 +87,7 @@ struct SignupView: View {
             }
             .padding()
         }
+        .textFieldStyle(ThemedTextFieldStyle())
         .padding()
     }
 

@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/CourseDetailView.swift
 import SwiftUI
 import AVKit
 
@@ -18,6 +19,7 @@ class CourseCache {
 
 
 struct ShowACourseView: View {
+    @Environment(\.theme) var theme: Theme
     @StateObject private var viewModel = ShowACourseViewModel()
     @Binding var selectedLanguage: String
     let courseId: Int
@@ -31,7 +33,9 @@ struct ShowACourseView: View {
             if viewModel.isLoading {
                 ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let errorMessage = viewModel.errorMessage {
-                 Text("Error: \(errorMessage)").foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                 Text("Error: \(errorMessage)")
+                    .style(.body)
+                    .foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let course = viewModel.course {
                 let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
                 HStack {
@@ -84,7 +88,8 @@ struct ShowACourseView: View {
                             Spacer().frame(width: 44)
                         }
                         Spacer()
-                        Text("Page \(currentPageIndex + 1) of \(pages.count)").font(.caption)
+                        Text("Page \(currentPageIndex + 1) of \(pages.count)")
+                            .style(.caption)
                         Spacer()
                         if pageBreakerSettings.showNextButton {
                             Button { withAnimation { currentPageIndex += 1 } } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
@@ -93,12 +98,17 @@ struct ShowACourseView: View {
                         }
                     }.padding()
                 } else {
-                    Text("No content for this course.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Text("No content for this course.")
+                        .style(.body)
+                        .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else if !viewModel.isLoading {
-                 Text("Course data not found.").foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                 Text("Course data not found.")
+                    .style(.body)
+                    .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .background(theme.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -126,9 +136,9 @@ struct ShowACourseView: View {
     }
     
     // --- Helper functions remain unchanged ---
-    func groupContentIntoPages(content: [Content]) -> [[Content]] {
-        var pages: [[Content]] = []
-        var currentPage: [Content] = []
+    func groupContentIntoPages(content: [CourseContentItem]) -> [[CourseContentItem]] {
+        var pages: [[CourseContentItem]] = []
+        var currentPage: [CourseContentItem] = []
         for item in content {
             if item.__component == "coursecontent.pagebreaker" {
                 if !currentPage.isEmpty { pages.append(currentPage) }
@@ -142,13 +152,13 @@ struct ShowACourseView: View {
         return pages
     }
     
-    func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [Content]) -> (showBackButton: Bool, showNextButton: Bool) {
+    func findPageBreakerSettings(forCurrentPage pageIdx: Int, totalPages: Int, allContent: [CourseContentItem]) -> (showBackButton: Bool, showNextButton: Bool) {
         var canGoBack = true
         var canGoNext = true
         if pageIdx == 0 { canGoBack = false }
         else {
             var pageCounter = 0
-            var foundPageBreakerForBack: Content?
+            var foundPageBreakerForBack: CourseContentItem?
             for item in allContent {
                  if item.__component == "coursecontent.pagebreaker" {
                     if pageCounter == pageIdx - 1 { foundPageBreakerForBack = item; break }
@@ -160,7 +170,7 @@ struct ShowACourseView: View {
         if pageIdx >= totalPages - 1 { canGoNext = false }
         else {
             var pageCounter = 0
-            var foundPageBreakerForNext: Content?
+            var foundPageBreakerForNext: CourseContentItem?
             for item in allContent {
                 if item.__component == "coursecontent.pagebreaker" {
                      if pageCounter == pageIdx { foundPageBreakerForNext = item; break }

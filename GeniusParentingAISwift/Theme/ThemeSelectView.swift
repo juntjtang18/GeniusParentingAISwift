@@ -5,17 +5,21 @@ struct ThemeSelectView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        // ✅ LOG 4: This is the most important log.
-        let _ = print("LOG: ThemeSelectView body is being evaluated. It found \(themeManager.themes.count) themes in the ThemeManager.")
-        
-        return NavigationView {
+        NavigationView {
+            // The VStack provides a clear layout container for the List
             VStack {
                 List {
+                    // The ForEach loop is now much simpler
                     ForEach(themeManager.themes, id: \.id) { theme in
                         Button(action: {
-                            themeManager.setTheme(id: theme.id)
+                            // Correctly pass the whole theme object
+                            themeManager.setTheme(theme)
                         }) {
-                            ThemeRowView(theme: theme, isSelected: theme.id == themeManager.currentTheme.id)
+                            // Use the new helper view and safely check the current theme
+                            ThemeRowView(
+                                theme: theme,
+                                isSelected: theme.id == themeManager.currentTheme.id
+                            )
                         }
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
@@ -24,6 +28,7 @@ struct ThemeSelectView: View {
                 }
                 .listStyle(PlainListStyle())
             }
+            // Use the theme from the environment for the background
             .background(themeManager.currentTheme.background.ignoresSafeArea())
             .navigationTitle("Select a Theme")
             .toolbar {

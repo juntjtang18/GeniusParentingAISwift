@@ -37,7 +37,10 @@
 		1A6281342DECC5FF00DD0D1C /* Exceptions for "GeniusParentingAISwift" folder in "GeniusParentingAISwift" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITests.swift,
+				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITestsLaunchTests.swift,
 				Info.plist,
+				"scripts/generate-color.py",
 			);
 			target = 1A6281052DECC52400DD0D1C /* GeniusParentingAISwift */;
 		};
@@ -52,6 +55,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
+				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITests.swift,
+				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITestsLaunchTests.swift,
 			);
 			target = 1A62811F2DECC52600DD0D1C /* GeniusParentingAISwiftUITests */;
 		};
@@ -71,11 +76,6 @@
 		1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = GeniusParentingAISwiftTests;
-			sourceTree = "<group>";
-		};
-		1A6281232DECC52600DD0D1C /* GeniusParentingAISwiftUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = GeniusParentingAISwiftUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -111,7 +111,6 @@
 			children = (
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
-				1A6281232DECC52600DD0D1C /* GeniusParentingAISwiftUITests */,
 				1A6281382DED033A00DD0D1C /* Frameworks */,
 				1A6281072DECC52400DD0D1C /* Products */,
 			);
@@ -195,9 +194,6 @@
 			);
 			dependencies = (
 				1A6281222DECC52600DD0D1C /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1A6281232DECC52600DD0D1C /* GeniusParentingAISwiftUITests */,
 			);
 			name = GeniusParentingAISwiftUITests;
 			packageProductDependencies = (
@@ -441,7 +437,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 123;
+				CURRENT_PROJECT_VERSION = 124;
 				DEVELOPMENT_ASSET_PATHS = "\"GeniusParentingAISwift/Preview Content\"";
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
@@ -482,7 +478,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 123;
+				CURRENT_PROJECT_VERSION = 124;
 				DEVELOPMENT_ASSET_PATHS = "\"GeniusParentingAISwift/Preview Content\"";
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
