@@ -2,7 +2,7 @@ import SwiftUI
 
 // 1. Define your style cases.
 enum ViewStyle {
-    case title, body, primaryButton, secondaryButton, themedTextField, caption
+    case title, body, caption, primaryButton, secondaryButton, themedTextField
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
@@ -24,7 +24,12 @@ struct StyleModifier: ViewModifier {
         case .body:
             content
                 .font(.body)
-                .foregroundColor(theme.secondary)
+                .foregroundColor(theme.text)
+        
+        case .caption:
+            content
+                .font(.caption)
+                .foregroundColor(theme.text.opacity(0.8))
 
         case .primaryButton:
             content
@@ -34,11 +39,6 @@ struct StyleModifier: ViewModifier {
                 .background(theme.primary)
                 .foregroundColor(theme.text)
                 .clipShape(Capsule())
-
-        case .caption:
-            content
-                .font(.caption)
-                .foregroundColor(theme.secondary)
 
         case .secondaryButton:
             content

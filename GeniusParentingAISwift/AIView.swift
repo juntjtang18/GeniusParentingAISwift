@@ -5,6 +5,7 @@ struct AIView: View {
     @State private var newMessage: String = ""
     @State private var isInputExpanded: Bool = false
     @State private var lines: Int = 1
+    @Environment(\.theme) var theme: Theme
     
     @FocusState private var isTextFieldFocused: Bool
 
@@ -44,18 +45,29 @@ struct AIView: View {
 
                 HStack(alignment: .bottom, spacing: 8) {
                     ZStack(alignment: .topTrailing) {
-                        TextField("Ask a parenting question...", text: $newMessage, axis: .vertical)
-                            .focused($isTextFieldFocused)
-                            .lineLimit(lines == 1 ? 1 : (lines == 2 ? 3 : 4), reservesSpace: true)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 12)
-                            .background(Color(UIColor.systemBackground))
-                            .cornerRadius(18)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(Color(UIColor.systemGray4), lineWidth: 0.5)
-                            )
-                            .submitLabel(.done)
+                        ZStack(alignment: .topLeading) {
+                            if newMessage.isEmpty {
+                                Text("Ask a parenting question...")
+                                    .foregroundColor(theme.text.opacity(0.6))
+                                    .padding(.horizontal, 16.5)
+                                    .padding(.vertical, 10)
+                                    .allowsHitTesting(false)
+                            }
+                            
+                            TextField("", text: $newMessage, axis: .vertical)
+                                .foregroundColor(theme.text)
+                                .focused($isTextFieldFocused)
+                                .submitLabel(.done)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 12)
+                        }
+                        .lineLimit(lines == 1 ? 1 : (lines == 2 ? 3 : 4), reservesSpace: true)
+                        .background(theme.background)
+                        .cornerRadius(18)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color(UIColor.systemGray4), lineWidth: 0.5)
+                        )
 
                         if !isInputExpanded {
                             Button(action: {
@@ -95,7 +107,7 @@ struct AIView: View {
                     Button(action: sendMessage) {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title)
-                            .foregroundColor(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                            .foregroundColor(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : theme.accent)
                     }
                     .disabled(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isAwaitingResponse)
 
@@ -106,14 +118,14 @@ struct AIView: View {
                     }) {
                         Image(systemName: "globe")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.accent)
                     }
 
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
             }
-            .background(Color(UIColor.systemBackground))
+            .background(Color(UIColor.systemGroupedBackground))
         }
         .onAppear {
             if viewModel.messages.isEmpty {

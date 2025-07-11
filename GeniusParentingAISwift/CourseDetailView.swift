@@ -117,7 +117,7 @@ struct ShowACourseView: View {
                         await viewModel.fetchCourse(courseId: courseId)
                     }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Image(systemName: "arrow.clockwise").foregroundColor(theme.accent)
                 }
                 
                 Button(action: {
@@ -125,8 +125,8 @@ struct ShowACourseView: View {
                         isSideMenuShowing.toggle()
                     }
                 }) {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title3)
+                    Image(systemName: "line.3.horizontal").font(.title3)
+                        .foregroundColor(theme.accent)
                 }
             }
         }

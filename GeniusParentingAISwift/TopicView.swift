@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct TopicView: View {
+    @Environment(\.theme) var theme: Theme
     @StateObject private var viewModel = TopicViewModel()
     @Binding var selectedLanguage: String
     let topicId: Int
@@ -96,7 +97,7 @@ struct TopicView: View {
                         await viewModel.refreshTopic(topicId: topicId)
                     }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Image(systemName: "arrow.clockwise").foregroundColor(theme.accent)
                 }
                 
                 // Side Menu Button
@@ -105,8 +106,8 @@ struct TopicView: View {
                         isSideMenuShowing.toggle()
                     }
                 }) {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title3)
+                    Image(systemName: "line.3.horizontal").font(.title3)
+                        .foregroundColor(theme.accent)
                 }
             }
         }

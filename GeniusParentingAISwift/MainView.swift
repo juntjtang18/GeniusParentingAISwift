@@ -52,6 +52,12 @@ struct MainView: View {
                     .tag(3)
             }
             .accentColor(themeManager.currentTheme.accent)
+            .onAppear {
+                updateUnselectedTabItemColor()
+            }
+            .onChange(of: themeManager.currentTheme.id) { _ in
+                updateUnselectedTabItemColor()
+            }
             .sheet(isPresented: $isShowingLanguageSheet) {
                 LanguagePickerView(selectedLanguage: $selectedLanguage)
             }
@@ -97,7 +103,13 @@ struct MainView: View {
             .ignoresSafeArea()
         }
     }
-    
+    private func updateUnselectedTabItemColor() {
+        let theme = themeManager.currentTheme
+        // Construct the dynamic name for the color asset from your theme.
+        let colorName = "ColorSchemes/\(theme.id)/\(theme.id)Text"
+        // Use UIKit's appearance proxy to set the color for unselected items.
+        UITabBar.appearance().unselectedItemTintColor = UIColor(named: colorName)
+    }
     // MARK: - Toolbar Content
     
     private var menuToolbar: some ToolbarContent {
