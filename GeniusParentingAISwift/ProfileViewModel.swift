@@ -5,6 +5,7 @@ import Foundation
 
 // Helper structs to decode the server response for fetching
 struct UserProfileAttributes: Codable {
+    let locale: String?
     let consentForEmailNotice: Bool
     let children: [Child]?
 }
@@ -66,6 +67,7 @@ class ProfileViewModel: ObservableObject {
                 
                 let userProfile = UserProfile(
                     id: decodedData.id,
+                    locale: decodedData.attributes.locale,
                     consentForEmailNotice: decodedData.attributes.consentForEmailNotice,
                     children: decodedData.attributes.children
                 )

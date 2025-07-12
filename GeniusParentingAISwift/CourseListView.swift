@@ -276,11 +276,12 @@ class CourseViewModel: ObservableObject {
             repeat {
                 let populateQuery = "populate=icon_image,translations"
                 let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
+                let sortQuery = "sort=order:asc"
                 let paginationQuery = "pagination[page]=\(currentPage)&pagination[pageSize]=\(pageSize)"
                 
                 // 6. Safely construct the request URL.
                 var urlComponents = URLComponents(string: "\(strapiUrl)/courses")
-                urlComponents?.query = "\(populateQuery)&\(filterQuery)&\(paginationQuery)"
+                urlComponents?.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)&\(paginationQuery)"
 
                 guard let url = urlComponents?.url else {
                     print("Internal error: Invalid URL for fetching courses.")

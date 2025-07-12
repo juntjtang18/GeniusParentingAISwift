@@ -129,6 +129,11 @@ class NetworkManager {
             }
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Received status code \(httpResponse.statusCode)."])
         }
+        // Log the raw JSON string for debugging purposes.
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📦 Raw JSON Response from \(url):")
+            print(jsonString)
+        }
         
         if data.isEmpty {
             guard let empty = EmptyResponse() as? ResponseBody else { throw URLError(.cannotParseResponse) }

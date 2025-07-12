@@ -50,7 +50,8 @@ struct GeniusParentingAISwiftApp: App {
         Task {
             if keychain["jwt"] != nil {
                 do {
-                    let user = try await NetworkManager.shared.fetchUser()
+                    // Use the new StrapiService to fetch the user profile.
+                    let user = try await StrapiService.shared.fetchCurrentUser()
                     SessionManager.shared.currentUser = user
                     isLoggedIn = true
                 } catch {

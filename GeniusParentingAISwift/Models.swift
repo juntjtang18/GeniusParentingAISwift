@@ -1,7 +1,18 @@
 // Models.swift
-
 import Foundation
 import SwiftUI
+
+// MARK: - User Models (for embedding in other responses)
+// This definition is required by PostAttributes below.
+struct PopulatedUser: Codable, Identifiable {
+    let id: Int
+    let attributes: PopulatedUserAttributes
+}
+
+struct PopulatedUserAttributes: Codable {
+    let username: String
+    let email: String
+}
 
 // MARK: - Post Models
 struct Post: Codable, Identifiable {
@@ -18,7 +29,7 @@ struct PostAttributes: Codable {
     var likeCount: Int {
         likes?.data.attributes.count ?? 0
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case content, media, likes
         case users_permissions_user
@@ -135,7 +146,7 @@ struct Media: Codable, Hashable, Identifiable {
         let related: JSONValue?
         let createdAt: String
         let updatedAt: String
-        
+
         enum CodingKeys: String, CodingKey {
             case name, caption, width, height, formats, hash, ext, mime, size, url, provider, related, createdAt, updatedAt
             case alternativeText
@@ -204,7 +215,7 @@ struct DailyLessonPlan: Codable, Identifiable {
 struct CategoryData: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: CategoryAttributes
-    
+
     struct CategoryAttributes: Codable, Hashable {
         let name: String
         let description: String?
@@ -213,7 +224,7 @@ struct CategoryData: Codable, Identifiable, Hashable {
         let publishedAt: String?
         let order: Int?
         let header_image: StrapiRelation<Media>?
-        
+
         enum CodingKeys: String, CodingKey {
             case name, description, createdAt, updatedAt, publishedAt, order, header_image
         }
@@ -243,9 +254,10 @@ struct Course: Codable, Identifiable, Hashable {
         let updatedAt: String?
         let publishedAt: String?
         let locale: String?
-        
+        let order: Int?
+
         enum CodingKeys: String, CodingKey {
-            case title, content, translations, createdAt, updatedAt, publishedAt, locale, coursecategory
+            case title, content, translations, createdAt, updatedAt, publishedAt, locale, coursecategory, order
             case iconImage = "icon_image"
         }
     }
@@ -276,7 +288,7 @@ struct CourseContentItem: Codable, Identifiable, Hashable {
         if let id = id { return "\(id)-\(__component)" }
         else { return "\(UUID().uuidString)-\(__component)" }
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id, data, style, externalUrl, thumbnail, caption, question, options, backbutton, nextbutton
         case __component
@@ -287,7 +299,7 @@ struct CourseContentItem: Codable, Identifiable, Hashable {
 
     struct Styles: Codable, Hashable {
         let fontSize: CGFloat?, fontColor: String?, isBold: Bool?, isItalic: Bool?, textAlign: String?
-        
+
         enum CodingKeys: String, CodingKey {
             case fontSize, fontColor, isBold, isItalic, textAlign
         }
