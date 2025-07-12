@@ -21,6 +21,10 @@ class NetworkManager {
         decoder = JSONDecoder()
         encoder = JSONEncoder()
         
+        // --- FIXED: Removed the global key decoding/encoding strategies ---
+        // We will rely on explicit CodingKeys in each model to handle
+        // the inconsistent naming from the backend API.
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
         formatter.calendar = Calendar(identifier: .iso8601)

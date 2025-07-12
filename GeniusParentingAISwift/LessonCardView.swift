@@ -18,7 +18,7 @@ struct LessonCardView: View {
         }
         .background(
             AsyncImage(
-                url: URL(string: lesson.attributes.iconImage?.data?.attributes.url ?? ""),
+                url: URL(string: lesson.attributes.icon_image?.data?.attributes.url ?? ""),
                 content: { image in
                     image
                         .resizable()

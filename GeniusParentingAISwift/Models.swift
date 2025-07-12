@@ -25,14 +25,11 @@ struct PostAttributes: Codable {
     let media: StrapiListResponse<Media>?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
     let likes: LikesCount?
+    // Note: Strapi provides this as 'createdAt', which is already camelCase.
+    let createdAt: String
 
     var likeCount: Int {
         likes?.data.attributes.count ?? 0
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case content, media, likes
-        case users_permissions_user
     }
 }
 
@@ -56,6 +53,7 @@ struct Like: Codable, Identifiable {
 
 struct LikeAttributes: Codable {
     let post: StrapiRelation<LikedPost>?
+    let users_permissions_user: StrapiRelation<PopulatedUser>?
 }
 
 struct LikedPost: Codable, Identifiable {
@@ -69,18 +67,13 @@ struct Topic: Codable, Identifiable, Hashable {
     let attributes: Attributes
 
     var title: String { attributes.title }
-    var iconImageMedia: Media? { attributes.iconImage?.data }
+    var iconImageMedia: Media? { attributes.icon_image?.data }
     var content: [CourseContentItem]? { attributes.content }
 
     struct Attributes: Codable, Hashable {
         let title: String
-        let iconImage: StrapiRelation<Media>?
+        let icon_image: StrapiRelation<Media>?
         let content: [CourseContentItem]?
-
-        enum CodingKeys: String, CodingKey {
-            case title, content
-            case iconImage = "icon_image"
-        }
     }
 }
 
@@ -99,16 +92,11 @@ struct Tip: Codable, Identifiable, Hashable {
     let attributes: Attributes
 
     var text: String { attributes.text }
-    var iconImageMedia: Media? { attributes.iconImage?.data }
+    var iconImageMedia: Media? { attributes.icon_image?.data }
 
     struct Attributes: Codable, Hashable {
         let text: String
-        let iconImage: StrapiRelation<Media>?
-
-        enum CodingKeys: String, CodingKey {
-            case text
-            case iconImage = "icon_image"
-        }
+        let icon_image: StrapiRelation<Media>?
     }
 }
 
@@ -142,17 +130,10 @@ struct Media: Codable, Hashable, Identifiable {
         let url: String
         let previewUrl: String?
         let provider: String
-        let providerMetadata: JSONValue?
+        let provider_metadata: JSONValue?
         let related: JSONValue?
         let createdAt: String
         let updatedAt: String
-
-        enum CodingKeys: String, CodingKey {
-            case name, caption, width, height, formats, hash, ext, mime, size, url, provider, related, createdAt, updatedAt
-            case alternativeText
-            case previewUrl
-            case providerMetadata = "provider_metadata"
-        }
     }
 
     var urlString: String { attributes.url }
@@ -224,10 +205,6 @@ struct CategoryData: Codable, Identifiable, Hashable {
         let publishedAt: String?
         let order: Int?
         let header_image: StrapiRelation<Media>?
-
-        enum CodingKeys: String, CodingKey {
-            case name, description, createdAt, updatedAt, publishedAt, order, header_image
-        }
     }
 }
 
@@ -236,7 +213,7 @@ struct Course: Codable, Identifiable, Hashable {
     let attributes: Attributes
 
     var title: String { attributes.title }
-    var iconImageMedia: Media? { attributes.iconImage?.data }
+    var iconImageMedia: Media? { attributes.icon_image?.data }
     var coursecategory: CategoryData? { attributes.coursecategory?.data }
     var content: [CourseContentItem]? { attributes.content }
     var translations: [String: CourseTranslation]? { attributes.translations }
@@ -246,7 +223,7 @@ struct Course: Codable, Identifiable, Hashable {
 
     struct Attributes: Codable, Hashable {
         let title: String
-        let iconImage: StrapiRelation<Media>?
+        let icon_image: StrapiRelation<Media>?
         let coursecategory: StrapiRelation<CategoryData>?
         let content: [CourseContentItem]?
         let translations: [String: CourseTranslation]?
@@ -255,11 +232,6 @@ struct Course: Codable, Identifiable, Hashable {
         let publishedAt: String?
         let locale: String?
         let order: Int?
-
-        enum CodingKeys: String, CodingKey {
-            case title, content, translations, createdAt, updatedAt, publishedAt, locale, coursecategory, order
-            case iconImage = "icon_image"
-        }
     }
 
     struct CourseTranslation: Codable, Hashable {
@@ -273,9 +245,10 @@ struct CourseContentItem: Codable, Identifiable, Hashable {
 
     let data: String?
     let style: Styles?
-    let imageFile: StrapiRelation<Media>?
-    let videoFile: StrapiRelation<Media>?
-    let externalUrl: String?
+    let image_file: StrapiRelation<Media>?
+    let video_file: StrapiRelation<Media>?
+    let external_url: String?
+    let videoId: String?
     let thumbnail: StrapiRelation<Media>?
     let caption: String?
     let question: String?
@@ -289,19 +262,7 @@ struct CourseContentItem: Codable, Identifiable, Hashable {
         else { return "\(UUID().uuidString)-\(__component)" }
     }
 
-    enum CodingKeys: String, CodingKey {
-        case id, data, style, externalUrl, thumbnail, caption, question, options, backbutton, nextbutton
-        case __component
-        case imageFile = "image_file"
-        case videoFile = "video_file"
-        case correctAnswer
-    }
-
     struct Styles: Codable, Hashable {
         let fontSize: CGFloat?, fontColor: String?, isBold: Bool?, isItalic: Bool?, textAlign: String?
-
-        enum CodingKeys: String, CodingKey {
-            case fontSize, fontColor, isBold, isItalic, textAlign
-        }
     }
 }

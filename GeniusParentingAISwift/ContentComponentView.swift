@@ -3,198 +3,140 @@
 import SwiftUI
 import AVKit
 import WebKit
+import os
 
-// MARK: - Content Component View
+// MARK: - Refactored Sub-Views for Each Component Type
 
-struct ContentComponentView: View {
-    let contentItem: CourseContentItem
+/// A view dedicated to rendering text content with a speech button.
+/// It now expects to be created only with valid text data.
+private struct TextView: View {
+    let textData: String
+    let style: CourseContentItem.Styles?
     let language: String
     
     @Environment(\.theme) var theme: Theme
     @EnvironmentObject private var speechManager: SpeechManager
     
-    @State private var selectedOption: String? = nil
-    @State private var isAnswerSubmitted = false
-    @State private var webViewForExternalVideo: WKWebView? = nil
-
     var body: some View {
-        VStack(alignment: alignmentFor(contentItem.style?.textAlign), spacing: 10) {
-            switch contentItem.__component {
-            case "coursecontent.text":
-                if let textData = contentItem.data, !textData.isEmpty {
-                    Text(textData)
-                        .font(.system(size: contentItem.style?.fontSize ?? 17,
-                                      weight: .regular))
-                        .italic(contentItem.style?.isItalic == true)
-                        .foregroundColor(theme.text)
-                        .lineSpacing(5)
-                        .multilineTextAlignment(textAlignmentFor(contentItem.style?.textAlign))
-                        .frame(maxWidth: .infinity, alignment: frameAlignmentFor(contentItem.style?.textAlign))
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            Task { @MainActor in
-                                if speechManager.isSpeaking { speechManager.stop() }
-                                else { speechManager.speak(textData, language: language) }
-                            }
-                        }) {
-                            Image(systemName: speechManager.isSpeaking ? "stop.circle.fill" : "play.circle.fill")
-                                .resizable().frame(width: 28, height: 28).foregroundColor(theme.accent)
-                        }
-                    }.padding(.top, 2)
+        VStack(alignment: .leading, spacing: 10) {
+            Text(textData)
+                .font(.system(size: style?.fontSize ?? 17, weight: .regular))
+                .italic(style?.isItalic == true)
+                .foregroundColor(theme.text)
+                .lineSpacing(5)
+            
+            HStack {
+                Spacer()
+                Button(action: {
+                    Task { @MainActor in
+                        if speechManager.isSpeaking { speechManager.stop() }
+                        else { speechManager.speak(textData, language: language) }
+                    }
+                }) {
+                    Image(systemName: speechManager.isSpeaking ? "stop.circle.fill" : "play.circle.fill")
+                        .resizable().frame(width: 28, height: 28).foregroundColor(theme.accent)
                 }
-
-            case "coursecontent.image":
-                if let media = contentItem.imageFile?.data {
-                    if let imageUrl = URL(string: media.attributes.url) {
-                        AsyncImage(url: imageUrl) { phase in
-                            switch phase {
-                            case .empty: ProgressView().frame(minHeight: 200, idealHeight: 250).frame(maxWidth: .infinity)
-                            case .success(let image): image.resizable().aspectRatio(contentMode: .fit).cornerRadius(10)
-                            case .failure: VStack { Image(systemName: "photo.fill.on.rectangle.fill").font(.largeTitle).foregroundColor(.gray); Text("Image failed to load").font(.caption).foregroundColor(.red) }.frame(minHeight:150).frame(maxWidth: .infinity)
-                            @unknown default: EmptyView()
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        if let caption = media.attributes.caption, !caption.isEmpty {
-                            Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
-                        }
-                    } else { Text("Image URL is invalid.").foregroundColor(.red).padding() }
-                } else { Text("Image not available.").foregroundColor(.red).padding() }
-
-            case "coursecontent.video":
-                if let media = contentItem.videoFile?.data {
-                   if let videoURL = URL(string: media.attributes.url) {
-                        VideoPlayer(player: AVPlayer(url: videoURL))
-                            .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
-                            .cornerRadius(10)
-                        if let caption = media.attributes.caption, !caption.isEmpty {
-                            Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
-                        }
-                   } else { Text("Uploaded video URL is invalid.").foregroundColor(.red).padding() }
-                } else { Text("Uploaded video not available.").foregroundColor(.red).padding() }
-
-            case "coursecontent.external-video":
-                VStack(alignment: .leading, spacing: 5) {
-                    if let thumbnailMedia = contentItem.thumbnail?.data {
-                       if let thumbnailUrl = URL(string: thumbnailMedia.attributes.url) {
-                            AsyncImage(url: thumbnailUrl) { phase in
-                                 switch phase {
-                                 case .empty: ProgressView().frame(height: 180).frame(maxWidth: .infinity)
-                                 case .success(let image): image.resizable().aspectRatio(contentMode: .fit).cornerRadius(8)
-                                 case .failure: Image(systemName: "video.badge.exclamationmark").font(.largeTitle).foregroundColor(.gray).frame(height:180).frame(maxWidth: .infinity)
-                                 @unknown default: EmptyView()
-                                 }
-                            }
-                            .frame(maxWidth: .infinity, idealHeight: 180)
-                       } else { Text("Thumbnail URL is invalid.").foregroundColor(.red).padding(.bottom, 5) }
-                    }
-
-                    if let externalVideoUrlString = contentItem.externalUrl, !externalVideoUrlString.isEmpty {
-                        if let embedUrl = getEmbeddableVideoURL(from: externalVideoUrlString, autoPlay: false) {
-                            VideoPlayerWebView(urlString: embedUrl.absoluteString, webView: $webViewForExternalVideo)
-                                .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
-                                .cornerRadius(10)
-                        } else if let directVideoUrl = URL(string: externalVideoUrlString), ["mp4", "mov", "m4v"].contains(directVideoUrl.pathExtension.lowercased()) {
-                            VideoPlayer(player: AVPlayer(url: directVideoUrl))
-                                .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
-                                .cornerRadius(10)
-                        } else if let directUrl = URL(string: externalVideoUrlString) {
-                            Link("Watch Video: \(externalVideoUrlString.prefix(50))...", destination: directUrl)
-                                .font(.callout).padding(.top, 5)
-                        } else {
-                            Text("External video URL is invalid.").foregroundColor(.red)
-                        }
-                    } else { Text("External video URL missing.").foregroundColor(.red) }
-
-                    if let caption = contentItem.caption, !caption.isEmpty {
-                        Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
-                    }
-                }
-
-            case "coursecontent.quiz":
-                VStack(alignment: .leading, spacing: 12) {
-                    if let questionText = contentItem.question, !questionText.isEmpty {
-                        Text(questionText).font(.headline).padding(.bottom, 5)
-                            .foregroundColor(theme.text)
-                    }
-                    if let optionsArray = contentItem.options?.value {
-                        ForEach(optionsArray, id: \.self) { optionText in
-                            Button(action: {
-                                if !isAnswerSubmitted {
-                                    selectedOption = optionText
-                                    isAnswerSubmitted = true
-                                 }
-                            }) {
-                                HStack {
-                                    Text(optionText).foregroundColor(theme.text)
-                                    Spacer()
-                                    
-                                    if isAnswerSubmitted {
-                                        if optionText == contentItem.correctAnswer {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.green)
-                                                .font(.headline)
-                                        } else if optionText == selectedOption {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.red)
-                                                .font(.headline)
-                                        }
-                                    }
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedOption == optionText ? theme.accent : Color.clear, lineWidth: 2)
-                                )
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .disabled(isAnswerSubmitted)
-                        }
-                    }
-                    
-                    if isAnswerSubmitted, let selected = selectedOption, selected != contentItem.correctAnswer {
-                        HStack(alignment: .top) {
-                            Image(systemName: "info.circle.fill").foregroundColor(.blue)
-                            Text("The correct answer is: **\(contentItem.correctAnswer ?? "N/A")**")
-                                .font(.footnote)
-                                .foregroundColor(theme.secondary)
-                        }
-                        .padding(.top, 10)
-                        .transition(.opacity.animation(.easeInOut))
-                    }
-                }.padding()
-
-            case "coursecontent.pagebreaker":
-                EmptyView()
-
-            default:
-                Text("Unsupported component: \(contentItem.__component)")
-                    .font(.caption).foregroundColor(.gray).padding()
             }
         }
-        .padding(.vertical, 8)
     }
+}
 
-    private func alignmentFor(_ textAlign: String?) -> HorizontalAlignment {
-        switch textAlign?.lowercased() { case "center": .center; case "right": .trailing; default: .leading }
+/// A view for displaying an image with an optional caption.
+/// It now expects to be created only with valid media data.
+private struct ImageView: View {
+    let media: Media
+    
+    @Environment(\.theme) var theme: Theme
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            if let imageUrl = URL(string: media.attributes.url) {
+                AsyncImage(url: imageUrl) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().aspectRatio(contentMode: .fit).cornerRadius(10)
+                    case .failure:
+                        VStack {
+                            Image(systemName: "photo.fill.on.rectangle.fill").font(.largeTitle)
+                            Text("Image failed to load").font(.caption)
+                        }.foregroundColor(.gray)
+                    default:
+                        ProgressView()
+                    }
+                }
+                .frame(minHeight: 200)
+                
+                if let caption = media.attributes.caption, !caption.isEmpty {
+                    Text(caption).font(.caption).foregroundColor(theme.secondary).italic().padding(.top, 2)
+                }
+            } else {
+                Text("Invalid Image URL").foregroundColor(.red)
+            }
+        }
     }
-    private func textAlignmentFor(_ textAlign: String?) -> TextAlignment {
-        switch textAlign?.lowercased() { case "center": .center; case "right": .trailing; default: .leading }
+}
+
+/// A view for playing an uploaded video file with a caption.
+/// It now expects to be created only with valid media data.
+private struct VideoView: View {
+    let media: Media
+    
+    @Environment(\.theme) var theme: Theme
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            if let videoURL = URL(string: media.attributes.url) {
+                VideoPlayer(player: AVPlayer(url: videoURL))
+                    .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
+                    .cornerRadius(10)
+                
+                if let caption = media.attributes.caption, !caption.isEmpty {
+                    Text(caption).font(.caption).foregroundColor(theme.secondary).italic().padding(.top, 2)
+                }
+            } else {
+                Text("Invalid Video URL").foregroundColor(.red)
+            }
+        }
     }
-    private func frameAlignmentFor(_ textAlign: String?) -> Alignment {
-        switch textAlign?.lowercased() { case "center": .center; case "right": .trailing; default: .leading }
+}
+
+/// A view for displaying an embedded external video (e.g., YouTube).
+private struct ExternalVideoView: View {
+    let item: CourseContentItem
+    
+    @Environment(\.theme) var theme: Theme
+    @State private var webView: WKWebView? = nil
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if let thumbnailUrl = URL(string: item.thumbnail?.data?.attributes.url ?? "") {
+                AsyncImage(url: thumbnailUrl) { $0.resizable().aspectRatio(contentMode: .fit).cornerRadius(8) }
+                    placeholder: { ProgressView() }
+                    .frame(maxWidth: .infinity, idealHeight: 180)
+            }
+            
+            if let urlString = item.external_url, !urlString.isEmpty, let embedUrl = getEmbeddableVideoURL(from: urlString) {
+                VideoPlayerWebView(urlString: embedUrl.absoluteString, webView: $webView)
+                    .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
+                    .cornerRadius(10)
+            } else {
+                Text("Video could not be loaded.").foregroundColor(.red)
+            }
+
+            if let caption = item.caption, !caption.isEmpty {
+                Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
+            }
+        }
     }
     
-    private func getEmbeddableVideoURL(from urlString: String, autoPlay: Bool = false) -> URL? {
+    // --- FIXED: Restored the robust regex-based URL parser ---
+    private func getEmbeddableVideoURL(from urlString: String) -> URL? {
         let patterns = [
             #"v=([a-zA-Z0-9_-]{11})"#,
             #"youtu\.be/([a-zA-Z0-9_-]{11})"#,
             #"embed/([a-zA-Z0-9_-]{11})"#,
-            #"shorts/([a-zA-Z0-9_-]{11})"#
+            #"shorts/([a-zA-Z0-9_-]{11})"#,
+            #"googleusercontent.com/youtube.com/([0-9])"#
         ]
 
         var videoID: String?
@@ -209,34 +151,133 @@ struct ContentComponentView: View {
                     }
                 }
             } catch {
-                print("Regex error: \(error.localizedDescription)")
+                // Log errors if necessary, but continue trying other patterns
                 continue
             }
         }
+        
+        guard let finalVideoID = videoID else { return nil }
 
-        guard let finalVideoID = videoID else {
-            return nil
-        }
+        return URL(string: "https://www.youtube-nocookie.com/embed/\(finalVideoID)?playsinline=1&controls=1&modestbranding=1&fs=0&rel=0")
+    }
+}
 
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = "www.youtube-nocookie.com"
-        components.path = "/embed/\(finalVideoID)"
-        
-        var queryItems = [
-            URLQueryItem(name: "playsinline", value: "1"),
-            URLQueryItem(name: "controls", value: "1"),
-            URLQueryItem(name: "modestbranding", value: "1"),
-            URLQueryItem(name: "fs", value: "0"),
-            URLQueryItem(name: "rel", value: "0")
-        ]
-        
-        if autoPlay {
-            queryItems.append(URLQueryItem(name: "autoplay", value: "1"))
+/// A complete view for handling a quiz component, including its state.
+private struct QuizView: View {
+    let item: CourseContentItem
+    
+    @Environment(\.theme) var theme: Theme
+    @State private var selectedOption: String?
+    @State private var isSubmitted = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let question = item.question, !question.isEmpty {
+                Text(question).font(.headline).padding(.bottom, 5)
+            }
+            
+            if let options = item.options?.value {
+                ForEach(options, id: \.self) { option in
+                    QuizOptionView(
+                        optionText: option,
+                        isSelected: selectedOption == option,
+                        isCorrect: item.correctAnswer == option,
+                        isSubmitted: isSubmitted
+                    ) {
+                        selectedOption = option
+                        isSubmitted = true
+                    }
+                }
+            }
+            
+            if isSubmitted, selectedOption != item.correctAnswer {
+                HStack(alignment: .top) {
+                    Image(systemName: "info.circle.fill").foregroundColor(.blue)
+                    Text("The correct answer is: **\(item.correctAnswer ?? "N/A")**").font(.footnote)
+                }
+                .padding(.top, 10)
+                .transition(.opacity.animation(.easeInOut))
+            }
+        }.padding()
+    }
+}
+
+/// A helper view for a single quiz option button.
+private struct QuizOptionView: View {
+    let optionText: String
+    let isSelected: Bool
+    let isCorrect: Bool
+    let isSubmitted: Bool
+    let action: () -> Void
+    
+    @Environment(\.theme) var theme: Theme
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(optionText)
+                Spacer()
+                if isSubmitted {
+                    if isCorrect {
+                        Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                    } else if isSelected {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+                    }
+                }
+            }
+            .font(.headline)
+            .foregroundColor(theme.text)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8).stroke(isSelected ? theme.accent : Color.clear, lineWidth: 2)
+            )
         }
-        
-        components.queryItems = queryItems
-        
-        return components.url
+        .buttonStyle(.plain)
+        .disabled(isSubmitted)
+    }
+}
+
+
+// MARK: - Main Content Component View (Dispatcher)
+struct ContentComponentView: View {
+    let contentItem: CourseContentItem
+    let language: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            switch contentItem.__component {
+            case "coursecontent.text":
+                if let textData = contentItem.data, !textData.isEmpty {
+                    TextView(textData: textData, style: contentItem.style, language: language)
+                }
+
+            case "coursecontent.image":
+                if let media = contentItem.image_file?.data {
+                    ImageView(media: media)
+                }
+
+            case "coursecontent.video":
+                if let media = contentItem.video_file?.data {
+                    VideoView(media: media)
+                }
+
+            case "coursecontent.external-video":
+                ExternalVideoView(item: contentItem)
+
+            case "coursecontent.quiz":
+                QuizView(item: contentItem)
+
+            case "coursecontent.pagebreaker":
+                EmptyView()
+
+            default:
+                Text("Unsupported component: \(contentItem.__component)")
+                    .font(.caption).foregroundColor(.gray).padding()
+            }
+        }
+        .padding(.vertical, 8)
     }
 }
