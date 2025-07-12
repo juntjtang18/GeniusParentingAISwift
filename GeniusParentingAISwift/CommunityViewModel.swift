@@ -171,9 +171,19 @@ class CommunityViewModel: ObservableObject {
     }
 
     func createPost(content: String, mediaData: [Data]) async throws {
+        // --- ADDED LOGGING ---
+        if currentUser == nil {
+            print("⚠️ createPost called but currentUser is nil. Attempting to fetch user...")
+            await fetchCurrentUser()
+        }
+        
         guard let token = keychain["jwt"], let userId = currentUser?.id else {
+            print("❌ createPost failed: User not authenticated.")
             throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated."])
         }
+
+        // --- ADDED LOGGING ---
+        print("✅ Creating post for User ID: \(userId)")
 
         var mediaIds: [Int] = []
         if !mediaData.isEmpty {
@@ -196,6 +206,10 @@ class CommunityViewModel: ObservableObject {
         ]
         
         let requestBody: [String: Any] = ["data": postData]
+        
+        // --- ADDED LOGGING ---
+        print("📤 Sending createPost request with payload: \(requestBody)")
+        
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
         // FIXED: Replaced 'responseData' with '_' to silence the "never used" warning.

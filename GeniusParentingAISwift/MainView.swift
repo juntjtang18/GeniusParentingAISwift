@@ -11,7 +11,9 @@ struct MainView: View {
     @State private var isShowingLanguageSheet = false
     @State private var isShowingProfileSheet = false
     @State private var isShowingSettingSheet = false
-    @State private var isShowingThemeSheet = false // <-- ADD THIS
+    @State private var isShowingThemeSheet = false
+    @State private var isShowingPrivacySheet = false
+    @State private var isShowingTermsSheet = false
 
     // State for the side menu
     @State private var isSideMenuShowing = false
@@ -58,24 +60,7 @@ struct MainView: View {
             .onChange(of: themeManager.currentTheme.id) { _ in
                 updateUnselectedTabItemColor()
             }
-            .sheet(isPresented: $isShowingLanguageSheet) {
-                LanguagePickerView(selectedLanguage: $selectedLanguage)
-            }
-            .sheet(isPresented: $isShowingProfileSheet) {
-                NavigationView {
-                    ProfileView(isLoggedIn: $isLoggedIn)
-                }
-            }
-            .sheet(isPresented: $isShowingSettingSheet) {
-                NavigationView {
-                    SettingView()
-                }
-            }
-            .sheet(isPresented: $isShowingThemeSheet) {
-                // ✅ LOG 3: This will print right before the sheet appears.
-                let _ = print("LOG: MainView is attempting to present ThemeSelectView sheet.")
-                ThemeSelectView()
-            }
+            
             // --- Side Menu Layer ---
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
@@ -86,23 +71,72 @@ struct MainView: View {
                         }
                     }
                     .transition(.opacity)
+                    .zIndex(1)
             }
 
-            HStack {
-                Spacer()
-                SideMenuView(
-                    isShowing: $isSideMenuShowing,
-                    isShowingProfileSheet: $isShowingProfileSheet,
-                    isShowingLanguageSheet: $isShowingLanguageSheet,
-                    isShowingSettingSheet: $isShowingSettingSheet,
-                    isShowingThemeSheet: $isShowingThemeSheet // <-- PASS BINDING
-                )
-                .frame(width: UIScreen.main.bounds.width * 0.7)
-                .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)
-            }
+            // --- REVISED: Position Side Menu without HStack/Spacer ---
+            SideMenuView(
+                isShowing: $isSideMenuShowing,
+                isShowingProfileSheet: $isShowingProfileSheet,
+                isShowingLanguageSheet: $isShowingLanguageSheet,
+                isShowingSettingSheet: $isShowingSettingSheet,
+                isShowingThemeSheet: $isShowingThemeSheet,
+                isLoggedIn: $isLoggedIn,
+                isShowingPrivacySheet: $isShowingPrivacySheet,
+                isShowingTermsSheet: $isShowingTermsSheet
+            )
+            .frame(width: UIScreen.main.bounds.width * 0.7)
+            .frame(maxWidth: .infinity, alignment: .trailing) // Align to the right
+            .offset(x: isSideMenuShowing ? 0 : UIScreen.main.bounds.width)
             .ignoresSafeArea()
+            .zIndex(2)
+            
+            // --- Custom "Fly from Left" Views ---
+            if isShowingProfileSheet {
+                ProfileView(isLoggedIn: $isLoggedIn, isPresented: $isShowingProfileSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
+            
+            if isShowingLanguageSheet {
+                LanguagePickerView(selectedLanguage: $selectedLanguage, isPresented: $isShowingLanguageSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
+            
+            if isShowingSettingSheet {
+                SettingView(isPresented: $isShowingSettingSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
+
+            if isShowingThemeSheet {
+                ThemeSelectView(isPresented: $isShowingThemeSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
+
+            if isShowingPrivacySheet {
+                PrivacyPolicyView(isPresented: $isShowingPrivacySheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
+            
+            if isShowingTermsSheet {
+                TermsOfServiceView(isPresented: $isShowingTermsSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
         }
+        .animation(.easeInOut, value: isSideMenuShowing) // Animate the side menu itself
+        .animation(.easeInOut, value: isShowingProfileSheet)
+        .animation(.easeInOut, value: isShowingLanguageSheet)
+        .animation(.easeInOut, value: isShowingSettingSheet)
+        .animation(.easeInOut, value: isShowingThemeSheet)
+        .animation(.easeInOut, value: isShowingPrivacySheet)
+        .animation(.easeInOut, value: isShowingTermsSheet)
     }
+    
     private func updateUnselectedTabItemColor() {
         let theme = themeManager.currentTheme
         // Construct the dynamic name for the color asset from your theme.
@@ -406,18 +440,18 @@ struct FairyTipPopupView: View {
 // Language Picker View
 struct LanguagePickerView: View {
     @Binding var selectedLanguage: String
-    @Environment(\.dismiss) var dismiss
+    @Binding var isPresented: Bool
 
     var body: some View {
         NavigationView {
             List {
-                Button("English") { selectedLanguage = "en"; dismiss() }
-                Button("Spanish") { selectedLanguage = "es"; dismiss() }
+                Button("English") { selectedLanguage = "en"; isPresented = false }
+                Button("Spanish") { selectedLanguage = "es"; isPresented = false }
             }
             .navigationTitle("Select Language")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { isPresented = false }
                 }
             }
         }

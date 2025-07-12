@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ThemeSelectView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.dismiss) var dismiss
+    @Binding var isPresented: Bool
 
     var body: some View {
         NavigationView {
@@ -33,7 +33,7 @@ struct ThemeSelectView: View {
             .navigationTitle("Select a Theme")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { isPresented = false }
                         .foregroundColor(themeManager.currentTheme.accent)
                 }
             }

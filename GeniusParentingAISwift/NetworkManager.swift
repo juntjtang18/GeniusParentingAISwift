@@ -1,6 +1,13 @@
+// GeniusParentingAISwift/NetworkManager.swift
+
 import Foundation
 import KeychainAccess
 import os
+
+// ADD THIS: A global constant for the notification name.
+extension Notification.Name {
+    static let didInvalidateSession = Notification.Name("didInvalidateSession")
+}
 
 /// A centralized, generic manager for handling all network requests.
 class NetworkManager {
@@ -53,7 +60,6 @@ class NetworkManager {
         
         guard let url = components.url else { throw URLError(.badURL) }
         
-        // **THE FIX IS HERE**: Explicitly specify the generic type for `performRequest`.
         return try await performRequest(url: url, method: "GET")
     }
 
@@ -120,6 +126,20 @@ class NetworkManager {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        
+        // --- FIX: CENTRALIZED SESSION HANDLING ---
+        // If the token is expired or invalid, handle it here globally.
+        if httpResponse.statusCode == 401 {
+            // 1. Clear the bad session data.
+            keychain["jwt"] = nil
+            await MainActor.run { SessionManager.shared.currentUser = nil }
+            
+            // 2. Broadcast a notification that the session was invalidated.
+            NotificationCenter.default.post(name: .didInvalidateSession, object: nil)
+            
+            // 3. Throw a specific error so the original caller knows what happened.
+            throw URLError(.userAuthenticationRequired)
+        }
         
         guard (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "No response body"

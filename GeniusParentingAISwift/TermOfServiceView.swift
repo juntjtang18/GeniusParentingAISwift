@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct TermsOfServiceView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool
 
     var body: some View {
         NavigationView {
@@ -44,7 +44,7 @@ struct TermsOfServiceView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        dismiss()
+                        isPresented = false
                     }
                 }
             }

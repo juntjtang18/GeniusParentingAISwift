@@ -1,3 +1,5 @@
+// GeniusParentingAISwiftApp.swift
+
 import SwiftUI
 import KeychainAccess
 
@@ -18,7 +20,7 @@ struct GeniusParentingAISwiftApp: App {
     @State private var isCheckingToken = true
     
     @StateObject private var speechManager = SpeechManager()
-    @StateObject private var themeManager = ThemeManager() // <-- ADD THIS
+    @StateObject private var themeManager = ThemeManager()
 
     private let keychain = Keychain(service: Config.keychainService)
 
@@ -38,11 +40,14 @@ struct GeniusParentingAISwiftApp: App {
                 }
             }
             .environmentObject(speechManager)
-            // Inject the selected theme into the entire app's environment.
-            // When the user picks a new theme, this will automatically update everywhere.
-            .theme(themeManager.currentTheme) // <-- BROADCAST THE THEME HERE
-            .environmentObject(themeManager)  // Still needed for the theme selector view
+            .theme(themeManager.currentTheme)
+            .environmentObject(themeManager)
             .onAppear(perform: checkLoginStatus)
+            // --- FIX: LISTEN FOR THE GLOBAL NOTIFICATION ---
+            .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
+                // When the notification is received, force a logout.
+                isLoggedIn = false
+            }
         }
     }
 
@@ -50,7 +55,6 @@ struct GeniusParentingAISwiftApp: App {
         Task {
             if keychain["jwt"] != nil {
                 do {
-                    // Use the new StrapiService to fetch the user profile.
                     let user = try await StrapiService.shared.fetchCurrentUser()
                     SessionManager.shared.currentUser = user
                     isLoggedIn = true

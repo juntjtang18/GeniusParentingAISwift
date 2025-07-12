@@ -1,12 +1,17 @@
 import SwiftUI
+import KeychainAccess
 
 struct SideMenuView: View {
     @Binding var isShowing: Bool
     @Binding var isShowingProfileSheet: Bool
     @Binding var isShowingLanguageSheet: Bool
-    // New binding to control the settings sheet
     @Binding var isShowingSettingSheet: Bool
-    @Binding var isShowingThemeSheet: Bool // <-- ADD THIS
+    @Binding var isShowingThemeSheet: Bool
+    @Binding var isLoggedIn: Bool
+    @Binding var isShowingPrivacySheet: Bool
+    @Binding var isShowingTermsSheet: Bool
+    
+    private let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -22,53 +27,62 @@ struct SideMenuView: View {
 
             // 2. Menu Items
             VStack(alignment: .leading, spacing: 1) {
-                Button(action: {
-                    handleMenuSelection {
-                        isShowingProfileSheet = true
-                    }
-                }) {
+                Button(action: { handleMenuSelection { isShowingProfileSheet = true } }) {
                     Label("Profile", systemImage: "person.fill")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
 
                 Divider()
 
-                Button(action: {
-                    handleMenuSelection {
-                        isShowingLanguageSheet = true
-                    }
-                }) {
+                Button(action: { handleMenuSelection { isShowingLanguageSheet = true } }) {
                     Label("Language", systemImage: "globe")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
 
-                Button(action: {
-                    // ✅ LOG 2: Confirm the button press.
-                    print("LOG: 'Change Theme' button tapped in SideMenuView.")
-                    handleMenuSelection {
-                        isShowingThemeSheet = true
-                    }
-                }) {
+                Button(action: { handleMenuSelection { isShowingThemeSheet = true } }) {
                     Label("Change Theme", systemImage: "paintbrush.fill")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
 
-                // New "Setting" menu item
-                Button(action: {
-                    handleMenuSelection {
-                        isShowingSettingSheet = true
-                    }
-                }) {
+                Button(action: { handleMenuSelection { isShowingSettingSheet = true } }) {
                     Label("Setting", systemImage: "gear")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+                
+                Divider()
+                
+                Button(action: { handleMenuSelection { isShowingTermsSheet = true } }) {
+                    Label("Terms of Service", systemImage: "doc.text.fill")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+
+                Divider()
+
+                Button(action: { handleMenuSelection { isShowingPrivacySheet = true } }) {
+                    Label("Privacy Policy", systemImage: "shield.lefthalf.filled")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
             }
 
             Spacer()
+            
+            // 3. Logout Button
+            Button(action: {
+                keychain["jwt"] = nil
+                SessionManager.shared.currentUser = nil
+                withAnimation {
+                    isLoggedIn = false
+                }
+            }) {
+                Label("Logout", systemImage: "arrow.right.to.line")
+                    .foregroundColor(.red)
+            }
+            .buttonStyle(SideMenuItemButtonStyle())
+            .padding(.bottom)
         }
         .background(Color(UIColor.systemGroupedBackground))
     }
@@ -102,7 +116,10 @@ struct SideMenuView_Previews: PreviewProvider {
             isShowingProfileSheet: .constant(false),
             isShowingLanguageSheet: .constant(false),
             isShowingSettingSheet: .constant(false),
-            isShowingThemeSheet: .constant(false)
+            isShowingThemeSheet: .constant(false),
+            isLoggedIn: .constant(true),
+            isShowingPrivacySheet: .constant(false),
+            isShowingTermsSheet: .constant(false)
         )
     }
 }

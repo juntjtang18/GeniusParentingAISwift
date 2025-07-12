@@ -75,7 +75,7 @@ struct LoginView: View {
                                 .font(.caption)
                                 .foregroundColor(theme.text)
                                 .sheet(isPresented: $showingTermsOfService) {
-                                    TermsOfServiceView()
+                                    TermsOfServiceView(isPresented: $showingTermsOfService)
                                 }
                                 
                                 // Privacy Policy Checkbox
@@ -92,7 +92,7 @@ struct LoginView: View {
                                 .font(.caption)
                                 .foregroundColor(theme.text)
                                 .sheet(isPresented: $showingPrivacyPolicy) {
-                                    PrivacyPolicyView()
+                                    PrivacyPolicyView(isPresented: $showingPrivacyPolicy)
                                 }
                             }
                             
