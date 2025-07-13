@@ -10,7 +10,6 @@ struct CommentPostPayload: Codable {
 struct CommentPostData: Codable {
     let message: String
     let post: Int
-    let author: Int
 }
 
 
@@ -48,11 +47,38 @@ class StrapiService {
         guard var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/getposts") else {
             throw URLError(.badURL)
         }
-        // Ensure sorting is always applied
+        // Ensure sorting is always applied, and add the flat pagination parameters
+        // that the custom controller expects.
         components.queryItems = [
-            URLQueryItem(name: "sort[0]", value: "createdAt:desc")
+            URLQueryItem(name: "sort", value: "createdAt:desc"),
+            URLQueryItem(name: "pagination[page]", value: String(page)),
+            URLQueryItem(name: "pagination[pageSize]", value: String(pageSize))
         ]
-        return try await NetworkManager.shared.fetchPage(baseURLComponents: components, page: page, pageSize: pageSize)
+        
+        // Since we are manually adding pagination params, we call fetchDirect, not fetchPage.
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        return try await NetworkManager.shared.fetchDirect(from: url)
+    }
+    
+    /// Fetches a single post with all its details using the custom findOne endpoint.
+    /// - Parameter postId: The ID of the post to fetch.
+    /// - Returns: A `Post` object.
+    func fetchPostDetails(postId: Int, page: Int, pageSize: Int) async throws -> StrapiSingleResponse<Post> {
+        logger.debug("StrapiService: Fetching details for post ID \(postId).")
+        guard var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/posts/\(postId)") else {
+            throw URLError(.badURL)
+        }
+        components.queryItems = [
+            URLQueryItem(name: "pagination[page]", value: String(page)),
+            URLQueryItem(name: "pagination[pageSize]", value: String(pageSize))
+        ]
+        
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        return try await NetworkManager.shared.fetchDirect(from: url)
     }
 
 
@@ -94,9 +120,17 @@ class StrapiService {
         }
         
         // Add the postId as a query parameter for the custom route
-        components.queryItems = [URLQueryItem(name: "postId", value: String(postId))]
+        components.queryItems = [
+            URLQueryItem(name: "postId", value: String(postId)),
+            URLQueryItem(name: "pagination[page]", value: String(page)),
+            URLQueryItem(name: "pagination[pageSize]", value: String(pageSize))
+        ]
 
-        return try await NetworkManager.shared.fetchPage(baseURLComponents: components, page: page, pageSize: pageSize)
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        
+        return try await NetworkManager.shared.fetchDirect(from: url)
     }
 
 

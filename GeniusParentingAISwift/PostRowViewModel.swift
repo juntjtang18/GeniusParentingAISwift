@@ -12,6 +12,13 @@ class PostRowViewModel: ObservableObject, Identifiable {
     @Published var likeCount: Int
     @Published var isAnimating: Bool = false
     
+    // State for inline comment loading
+    @Published var comments: [Comment]
+    @Published var isLoadingMoreComments = false
+    private var commentCurrentPage: Int = 1
+    private var commentTotalPages: Int
+    let totalCommentCount: Int
+
     // A reference back to the main view model for network operations
     private weak var communityViewModel: CommunityViewModel?
     
@@ -25,6 +32,12 @@ class PostRowViewModel: ObservableObject, Identifiable {
         self.likeCount = post.attributes.likeCount
         self.communityViewModel = communityViewModel
         self.id = post.id // Initialize the id
+        
+        // Initialize comment-related properties from the new structure
+        self.comments = post.attributes.comments?.data ?? []
+        let pagination = post.attributes.comments?.meta?.pagination
+        self.commentTotalPages = pagination?.pageCount ?? 1
+        self.totalCommentCount = pagination?.total ?? (post.attributes.comments?.data?.count ?? 0)
     }
     
     func toggleLike() {
@@ -47,5 +60,31 @@ class PostRowViewModel: ObservableObject, Identifiable {
         Task {
             await communityViewModel?.toggleLikeOnServer(postId: post.id)
         }
+    }
+    
+    func loadMoreComments() async {
+        guard !isLoadingMoreComments, commentCurrentPage < commentTotalPages else { return }
+
+        isLoadingMoreComments = true
+        commentCurrentPage += 1
+        
+        do {
+            // The number of comments to fetch per page (matches the initial preview count)
+            let commentsPerPage = 3
+            let response = try await StrapiService.shared.fetchCommentsForPost(postId: self.id, page: commentCurrentPage, pageSize: commentsPerPage)
+            
+            if let newComments = response.data {
+                self.comments.append(contentsOf: newComments)
+            }
+            // Update total pages in case it has changed
+            self.commentTotalPages = response.meta?.pagination?.pageCount ?? self.commentTotalPages
+            
+        } catch {
+            print("Error loading more comments for post \(self.id): \(error.localizedDescription)")
+            // Revert page number on failure so user can retry
+            commentCurrentPage -= 1
+        }
+        
+        isLoadingMoreComments = false
     }
 }
