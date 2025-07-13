@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/PostMediaGridView.swift
 import SwiftUI
 
 struct PostMediaGridView: View {
@@ -61,24 +62,7 @@ struct PostMediaGridView: View {
                      ?? mediaItem.attributes.url
         
         if let url = URL(string: urlString) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                case .failure:
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .font(.largeTitle)
-                        .foregroundColor(Color.gray)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(.systemGray5))
-                case .empty:
-                    Rectangle()
-                        .foregroundColor(Color(.systemGray6))
-                @unknown default:
-                    EmptyView()
-                }
-            }
+            CachedAsyncImage(url: url)
         }
     }
 }
