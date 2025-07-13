@@ -11,7 +11,7 @@ struct PopulatedUser: Codable, Identifiable {
 
 struct PopulatedUserAttributes: Codable {
     let username: String
-    let email: String
+    let email: String?
 }
 
 // MARK: - Post Models
@@ -25,8 +25,8 @@ struct PostAttributes: Codable {
     let media: StrapiListResponse<Media>?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
     let likes: LikesCount?
-    // Note: Strapi provides this as 'createdAt', which is already camelCase.
     let createdAt: String
+    let comments: StrapiListResponse<Comment>?
 
     var likeCount: Int {
         likes?.data.attributes.count ?? 0
@@ -264,5 +264,44 @@ struct CourseContentItem: Codable, Identifiable, Hashable {
 
     struct Styles: Codable, Hashable {
         let fontSize: CGFloat?, fontColor: String?, isBold: Bool?, isItalic: Bool?, textAlign: String?
+    }
+}
+
+// MARK: - Comment Models
+class Comment: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: CommentAttributes
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: Comment, rhs: Comment) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+class CommentAttributes: Codable, Hashable {
+    let message: String
+    let author: StrapiRelation<PopulatedUser>?
+    let post: StrapiRelation<Post>?
+    let parent_comment: StrapiRelation<Comment>?
+    let replies: StrapiListResponse<Comment>?
+    let createdAt: String
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(message)
+        hasher.combine(createdAt)
+        hasher.combine(author)
+        hasher.combine(post)
+        hasher.combine(parent_comment)
+    }
+
+    static func == (lhs: CommentAttributes, rhs: CommentAttributes) -> Bool {
+        return lhs.message == rhs.message &&
+            lhs.createdAt == rhs.createdAt &&
+            lhs.author == rhs.author &&
+            lhs.post == rhs.post &&
+            lhs.parent_comment == rhs.parent_comment
     }
 }

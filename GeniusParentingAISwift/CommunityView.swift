@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/CommunityView.swift
 import SwiftUI
 
 struct CommunityView: View {
@@ -15,10 +16,20 @@ struct CommunityView: View {
                         .foregroundColor(.red)
                         .padding()
                 } else {
-                    List(viewModel.postRowViewModels) { rowViewModel in
-                        PostView(viewModel: rowViewModel)
-                            .listRowSeparator(.hidden)
-                            .padding(.vertical, 8)
+                    List {
+                        ForEach(viewModel.postRowViewModels) { rowViewModel in
+                            PostView(viewModel: rowViewModel)
+                                .listRowSeparator(.hidden)
+                                .padding(.vertical, 8)
+                                .onAppear {
+                                    viewModel.fetchMorePostsIfNeeded(currentItem: rowViewModel)
+                                }
+                        }
+                        if viewModel.isLoadingMore {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .listRowSeparator(.hidden)
+                        }
                     }
                     .listStyle(PlainListStyle())
                     .refreshable {

@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/CommunityViewModel.swift
 import Foundation
 import KeychainAccess
 import UIKit
@@ -7,6 +8,9 @@ class CommunityViewModel: ObservableObject {
     @Published var postRowViewModels: [PostRowViewModel] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+    @Published var isLoadingMore = false
+    private var currentPage = 1
+    private var totalPages = 1
     
     private var userLikes: [Int: Int] = [:]
     private var currentUser: StrapiUser?
@@ -27,6 +31,8 @@ class CommunityViewModel: ObservableObject {
             await MainActor.run {
                 self.isLoading = true
                 self.errorMessage = nil
+                self.currentPage = 1
+                self.totalPages = 1
             }
 
             // Perform the fetch operations.
@@ -39,7 +45,7 @@ class CommunityViewModel: ObservableObject {
             }
             try Task.checkCancellation()
 
-            await fetchPostsAndCreateViewModels()
+            await fetchPostsAndCreateViewModels(isInitialLoad: true)
         }
 
         do {
@@ -57,29 +63,38 @@ class CommunityViewModel: ObservableObject {
             self.isLoading = false
         }
     }
-    
-    private func fetchPostsAndCreateViewModels() async {
-        guard let token = keychain["jwt"] else {
-            errorMessage = "Authentication token not found."
+
+    func fetchMorePostsIfNeeded(currentItem item: PostRowViewModel?) {
+        guard let item = item, !isLoadingMore, currentPage < totalPages else {
             return
         }
-        
-        let query = "sort[0]=createdAt:desc&populate[users_permissions_user][populate][user_profile]=true&populate[media]=true&populate[likes][count]=true"
-        guard let url = URL(string: "\(strapiUrl)/posts?\(query)") else { return }
-        
-        var request = URLRequest(url: url)
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
+
+        let thresholdIndex = postRowViewModels.index(postRowViewModels.endIndex, offsetBy: -5)
+        if postRowViewModels.firstIndex(where: { $0.id == item.id }) == thresholdIndex {
+            Task {
+                await fetchPostsAndCreateViewModels()
+            }
+        }
+    }
+    
+    private func fetchPostsAndCreateViewModels(isInitialLoad: Bool = false) async {
+        if isInitialLoad {
+            currentPage = 1
+        } else {
+            guard currentPage < totalPages else { return }
+            currentPage += 1
+            isLoadingMore = true
+        }
+
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let response = try JSONDecoder().decode(StrapiListResponse<Post>.self, from: data)
+            // A single, clean call to the StrapiService.
+            let response = try await StrapiService.shared.fetchPosts(page: currentPage, pageSize: 25)
             let posts = response.data ?? []
             
             // Clean log showing pagination info, which is useful for debugging.
             if let pagination = response.meta?.pagination {
                 print("Fetched page \(pagination.page)/\(pagination.pageCount). Total posts: \(pagination.total).")
+                self.totalPages = pagination.pageCount
             }
             
             let newViewModels = posts.map { post in
@@ -90,7 +105,11 @@ class CommunityViewModel: ObservableObject {
                 )
             }
             
-            self.postRowViewModels = newViewModels
+            if isInitialLoad {
+                self.postRowViewModels = newViewModels
+            } else {
+                self.postRowViewModels.append(contentsOf: newViewModels)
+            }
 
         } catch {
             if (error as? URLError)?.code != .cancelled {
@@ -98,6 +117,7 @@ class CommunityViewModel: ObservableObject {
                  print("Failed to fetch posts: \(error)")
             }
         }
+        isLoadingMore = false
     }
 
     // ... The rest of your ViewModel methods remain unchanged ...
