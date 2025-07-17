@@ -14,6 +14,7 @@ struct MainView: View {
     @State private var isShowingThemeSheet = false
     @State private var isShowingPrivacySheet = false
     @State private var isShowingTermsSheet = false
+    @State private var isShowingSubscriptionSheet = false // ADDED: State for the new view
 
     // State for the side menu
     @State private var isSideMenuShowing = false
@@ -83,7 +84,9 @@ struct MainView: View {
                 isShowingThemeSheet: $isShowingThemeSheet,
                 isLoggedIn: $isLoggedIn,
                 isShowingPrivacySheet: $isShowingPrivacySheet,
-                isShowingTermsSheet: $isShowingTermsSheet
+                isShowingTermsSheet: $isShowingTermsSheet,
+                isShowingSubscriptionSheet: $isShowingSubscriptionSheet // ADDED: Pass the binding
+
             )
             .frame(width: UIScreen.main.bounds.width * 0.7)
             .frame(maxWidth: .infinity, alignment: .trailing) // Align to the right
@@ -127,6 +130,11 @@ struct MainView: View {
                     .transition(.move(edge: .leading))
                     .zIndex(3)
             }
+            if isShowingSubscriptionSheet {
+                SubscriptionView(isPresented: $isShowingSubscriptionSheet)
+                    .transition(.move(edge: .leading))
+                    .zIndex(3)
+            }
         }
         .animation(.easeInOut, value: isSideMenuShowing) // Animate the side menu itself
         .animation(.easeInOut, value: isShowingProfileSheet)
@@ -135,6 +143,8 @@ struct MainView: View {
         .animation(.easeInOut, value: isShowingThemeSheet)
         .animation(.easeInOut, value: isShowingPrivacySheet)
         .animation(.easeInOut, value: isShowingTermsSheet)
+        .animation(.easeInOut, value: isShowingSubscriptionSheet) // ADDED: Animation for new view
+
     }
     
     private func updateUnselectedTabItemColor() {

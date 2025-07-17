@@ -4,7 +4,7 @@ import SwiftUI
 
 struct SubscriptionView: View {
     @StateObject private var viewModel = SubscriptionViewModel()
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool // MODIFIED: Changed from @Environment to @Binding
 
     var body: some View {
         NavigationView {
@@ -37,7 +37,7 @@ struct SubscriptionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Close") { isPresented = false }
                 }
             }
             .task {

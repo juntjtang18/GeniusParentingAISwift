@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/SideMenuView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -10,7 +11,8 @@ struct SideMenuView: View {
     @Binding var isLoggedIn: Bool
     @Binding var isShowingPrivacySheet: Bool
     @Binding var isShowingTermsSheet: Bool
-    
+    @Binding var isShowingSubscriptionSheet: Bool
+
     private let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
@@ -33,7 +35,14 @@ struct SideMenuView: View {
                 .buttonStyle(SideMenuItemButtonStyle())
 
                 Divider()
-
+                
+                Button(action: { handleMenuSelection { isShowingSubscriptionSheet = true } }) {
+                    Label("Subscription Plans", systemImage: "creditcard.fill")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+                
+                Divider()
+                
                 Button(action: { handleMenuSelection { isShowingLanguageSheet = true } }) {
                     Label("Language", systemImage: "globe")
                 }
@@ -88,12 +97,11 @@ struct SideMenuView: View {
     }
 
     private func handleMenuSelection(action: @escaping () -> Void) {
+        // MODIFIED: Removed the delay for more reliable state updates
         withAnimation(.easeInOut) {
             isShowing = false
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            action()
-        }
+        action()
     }
 }
 
@@ -119,7 +127,8 @@ struct SideMenuView_Previews: PreviewProvider {
             isShowingThemeSheet: .constant(false),
             isLoggedIn: .constant(true),
             isShowingPrivacySheet: .constant(false),
-            isShowingTermsSheet: .constant(false)
+            isShowingTermsSheet: .constant(false),
+            isShowingSubscriptionSheet: .constant(false)
         )
     }
 }
