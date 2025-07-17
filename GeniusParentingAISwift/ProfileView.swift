@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/ProfileView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -51,7 +52,8 @@ struct ProfileView: View {
                             }
                             
                             Section(header: Text("Preferences")) {
-                                Toggle(isOn: .constant(profile.consentForEmailNotice)) {
+                                // MODIFIED: Provide a default value of 'false' for the optional Bool.
+                                Toggle(isOn: .constant(profile.consentForEmailNotice ?? false)) {
                                     Text("Email Notifications")
                                 }
                                 .disabled(true)

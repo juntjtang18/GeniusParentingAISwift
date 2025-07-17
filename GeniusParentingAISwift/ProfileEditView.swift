@@ -34,7 +34,8 @@ struct ProfileEditView: View {
         
         if let profile = viewModel.user?.user_profile {
             self.userProfileId = profile.id
-            self._editableConsent = State(initialValue: profile.consentForEmailNotice)
+            // MODIFIED: Provide a default value of 'false' for the optional Bool.
+            self._editableConsent = State(initialValue: profile.consentForEmailNotice ?? false)
             _editableChildren = State(initialValue: (profile.children ?? []).map { child in
                 EditableChild(serverId: child.id, name: child.name, age: child.age, gender: child.gender)
             })

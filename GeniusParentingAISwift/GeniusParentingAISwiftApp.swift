@@ -43,9 +43,7 @@ struct GeniusParentingAISwiftApp: App {
             .theme(themeManager.currentTheme)
             .environmentObject(themeManager)
             .onAppear(perform: checkLoginStatus)
-            // --- FIX: LISTEN FOR THE GLOBAL NOTIFICATION ---
             .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
-                // When the notification is received, force a logout.
                 isLoggedIn = false
             }
         }
@@ -53,18 +51,27 @@ struct GeniusParentingAISwiftApp: App {
 
     private func checkLoginStatus() {
         Task {
+            // Check if a JWT token exists in the keychain.
             if keychain["jwt"] != nil {
                 do {
+                    // Attempt to fetch the current user's profile using the token.
                     let user = try await StrapiService.shared.fetchCurrentUser()
+                    
+                    // If successful, update the session and set the logged-in state to true.
                     SessionManager.shared.currentUser = user
                     isLoggedIn = true
                 } catch {
+                    // If the fetch fails (e.g., token is expired), clear the invalid token
+                    // and ensure the logged-in state is false.
                     keychain["jwt"] = nil
                     isLoggedIn = false
                 }
             } else {
+                // If no token is found, the user is not logged in.
                 isLoggedIn = false
             }
+            
+            // Hide the loading indicator once the check is complete.
             isCheckingToken = false
         }
     }

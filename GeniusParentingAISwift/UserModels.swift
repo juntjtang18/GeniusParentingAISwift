@@ -17,7 +17,8 @@ struct StrapiUser: Codable, Identifiable {
 struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
     let locale: String?
-    let consentForEmailNotice: Bool
+    // MODIFIED: This is now optional to handle cases where it's not included in the initial user fetch.
+    let consentForEmailNotice: Bool?
     let children: [Child]?
 
     enum CodingKeys: String, CodingKey {
