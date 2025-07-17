@@ -144,4 +144,15 @@ class StrapiService {
         }
         return try await NetworkManager.shared.post(to: url, body: payload)
     }
+    /// Fetches the available subscription plans from the main Strapi server.
+    /// - Returns: A `StrapiListResponse` containing the plans.
+    func fetchPlans() async throws -> StrapiListResponse<Plan> {
+        logger.debug("StrapiService: Fetching subscription plans.")
+        guard let url = URL(string: "\(Config.strapiBaseUrl)/api/plans") else {
+            throw URLError(.badURL)
+        }
+        // Use fetchDirect since the response is a direct object, not wrapped in another "data" key.
+        return try await NetworkManager.shared.fetchDirect(from: url)
+    }
+    
 }

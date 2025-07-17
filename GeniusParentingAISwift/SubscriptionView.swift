@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/SubscriptionView.swift
+
 import SwiftUI
 
 struct SubscriptionView: View {
@@ -7,7 +9,6 @@ struct SubscriptionView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Set a background color for the entire view
                 Color(UIColor.systemGroupedBackground).ignoresSafeArea()
                 
                 VStack {
@@ -18,10 +19,10 @@ struct SubscriptionView: View {
                             .foregroundColor(.red)
                             .padding()
                     } else {
-                        // A TabView provides the horizontal, paged scrolling for plan cards.
                         TabView {
                             ForEach(viewModel.plans) { plan in
                                  ScrollView {
+                                     // MODIFIED: Pass the new Plan object
                                      SubscriptionCardView(plan: plan)
                                          .padding()
                                  }
@@ -46,18 +47,9 @@ struct SubscriptionView: View {
     }
 }
 
-// MARK: - Subscription Card View
+// MARK: - Subscription Card View (Refactored)
 private struct SubscriptionCardView: View {
-    let plan: SubscriptionPlan
-    
-    // Maps feature keypaths to their display-friendly names.
-    private let featureDisplayNames: [PartialKeyPath<PlanFeatures>: String] = [
-        \.credits: "Credits", \.exportLength: "Export length", \.standardVoices: "Standard voices",
-        \.ultraRealisticVoices: "Ultra-Realistic voices", \.studioQualityVoices: "Studio-Quality voices",
-        \.aiVideoClips: "AI Video clips", \.brandKits: "Brand kits", \.sceneLimits: "Scene limits",
-        \.aiAvatar: "AI Avatar", \.voiceCloning: "Voice cloning", \.customVoices: "Custom voices",
-        \.templates: "Templates", \.webResearch: "Web research"
-    ]
+    let plan: Plan // MODIFIED: Use the Plan model
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -71,52 +63,30 @@ private struct SubscriptionCardView: View {
         .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
-        .frame(maxWidth: 400) // Constrain width for a better layout on larger screens
+        .frame(maxWidth: 400)
     }
     
     private var header: some View {
-        // This mimics the toggle from the reference image.
-        HStack(spacing: 0) {
-            Text("Monthly")
-                .font(.headline)
-                .padding(.horizontal, 16).padding(.vertical, 8)
-                .foregroundColor(Color.blue.opacity(0.6))
-                .background(Color.blue.opacity(0.2))
-                .cornerRadius(20)
-
-            Text("Yearly ⚡️50% off")
-                .font(.subheadline)
-                .padding(.horizontal, 16).padding(.vertical, 8)
-                .foregroundColor(.white)
-                .background(Color.blue)
-                .clipShape(Capsule())
-                .offset(x: -15) // Overlap the views slightly
-        }
+        Text(plan.attributes.name)
+            .font(.headline)
+            .padding(.horizontal, 16).padding(.vertical, 8)
+            .foregroundColor(.white)
+            .background(Color.blue)
+            .clipShape(Capsule())
     }
     
     private var planInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(plan.name)
+            Text(plan.attributes.name)
                 .font(.largeTitle.bold())
             
-            Text(plan.description)
+            Text("Product ID: \(plan.attributes.productId)")
                 .foregroundColor(.secondary)
-            
-            HStack(alignment: .firstTextBaseline) {
-                Text("$\(Int(plan.price))")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(Color.pink)
-                Text("per \(plan.interval)")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-            }
         }
     }
     
     private var subscribeButton: some View {
-        Button(action: {
-            // Subscription logic will be handled here in the future.
-        }) {
+        Button(action: {}) {
             Label("Subscribe now", systemImage: "arrow.right")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -128,30 +98,59 @@ private struct SubscriptionCardView: View {
     }
     
     private var featuresList: some View {
-        VStack(spacing: 16) {
-            ForEach(SubscriptionPlan.featureOrder, id: \.self) { keyPath in
-                // Safely access feature values using their keypath
-                if let value = plan.features[keyPath: keyPath] as? String {
-                     FeatureRow(name: featureDisplayNames[keyPath] ?? "Unknown", value: value)
+        VStack(alignment: .leading, spacing: 16) {
+            // MODIFIED: Iterate through features from the new model
+            if let features = plan.attributes.features.data {
+                Text("Features:")
+                    .font(.headline)
+                ForEach(features) { feature in
+                    FeatureRow(name: feature.attributes.name)
+                }
+            }
+            
+            // MODIFIED: Iterate through entitlements
+            if let entitlements = plan.attributes.entitlements.data, !entitlements.isEmpty {
+                Text("Entitlements:")
+                    .font(.headline)
+                    .padding(.top)
+                ForEach(entitlements) { entitlement in
+                    EntitlementRow(entitlement: entitlement.attributes)
                 }
             }
         }
     }
 }
 
-// MARK: - Feature Row View
+// MARK: - Feature & Entitlement Row Views (Refactored)
 private struct FeatureRow: View {
     let name: String
-    let value: String
 
     var body: some View {
         HStack {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
             Text(name)
-            Image(systemName: "info.circle")
-                .foregroundColor(.secondary)
             Spacer()
-            Text(value)
-                .fontWeight(.medium)
+        }
+    }
+}
+
+private struct EntitlementRow: View {
+    let entitlement: EntitlementAttributes
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "key.fill")
+                .foregroundColor(.orange)
+            VStack(alignment: .leading) {
+                Text(entitlement.name).fontWeight(.medium)
+                if entitlement.isMetered == true, let limit = entitlement.limit, let period = entitlement.resetPeriod {
+                    Text("\(limit) per \(period)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            Spacer()
         }
     }
 }

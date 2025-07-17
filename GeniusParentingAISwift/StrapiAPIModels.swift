@@ -191,3 +191,5 @@ struct AuthResponse: Codable {
     let jwt: String
     let user: StrapiUser
 }
+
+
