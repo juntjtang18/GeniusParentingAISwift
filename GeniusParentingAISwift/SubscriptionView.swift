@@ -2,7 +2,6 @@
 
 import SwiftUI
 
-// ADDED: Enum to rank the plans
 enum PlanTier: Int, Comparable {
     case free = 0
     case basic = 1
@@ -11,9 +10,9 @@ enum PlanTier: Int, Comparable {
 
     init(planName: String) {
         switch planName.lowercased() {
-        case "free plan": self = .free
-        case "basic plan": self = .basic
-        case "premium plan": self = .premium
+        case let name where name.contains("free"): self = .free
+        case let name where name.contains("basic"): self = .basic
+        case let name where name.contains("premium"): self = .premium
         default: self = .unknown
         }
     }
@@ -26,8 +25,10 @@ enum PlanTier: Int, Comparable {
 struct SubscriptionView: View {
     @StateObject private var viewModel = SubscriptionViewModel()
     @Binding var isPresented: Bool
+    
+    // ADDED: State to control the currently displayed page in the TabView.
+    @State private var selectedPlanIndex: Int = 0
 
-    // ADDED: Get the current user's plan and tier
     private var currentUserPlanName: String? {
         SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.name
     }
@@ -48,13 +49,15 @@ struct SubscriptionView: View {
                             .foregroundColor(.red)
                             .padding()
                     } else {
-                        TabView {
-                            ForEach(viewModel.plans) { plan in
+                        // MODIFIED: The TabView's selection is now bound to the state variable.
+                        TabView(selection: $selectedPlanIndex) {
+                            // MODIFIED: Iterate over indices to tag each page view.
+                            ForEach(viewModel.plans.indices, id: \.self) { index in
+                                let plan = viewModel.plans[index]
                                 let planTier = PlanTier(planName: plan.attributes.name)
                                 let isCurrentUserPlan = plan.attributes.name == currentUserPlanName
                                 let isDisabled = planTier < currentUserPlanTier
 
-                                // MODIFIED: Pass state to the card view
                                 SubscriptionCardView(
                                     plan: plan,
                                     isCurrentUserPlan: isCurrentUserPlan,
@@ -63,6 +66,7 @@ struct SubscriptionView: View {
                                 .padding([.horizontal, .top])
                                 .padding(.bottom, 50)
                                 .frame(maxHeight: .infinity)
+                                .tag(index) // Tag the view with its corresponding index.
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
@@ -78,13 +82,25 @@ struct SubscriptionView: View {
                 }
             }
             .task {
+                // This task still fetches the plans as before.
                 await viewModel.fetchPlans()
+            }
+            // ADDED: This new task runs whenever viewModel.plans changes.
+            .task(id: viewModel.plans) {
+                // We run this check only after the plans have been loaded.
+                guard !viewModel.plans.isEmpty, let userPlanName = currentUserPlanName else { return }
+
+                // Find the index of the user's current plan.
+                if let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
+                    // Update the state variable to scroll the TabView to the correct page.
+                    selectedPlanIndex = index
+                }
             }
         }
     }
 }
 
-// MARK: - Subscription Card View (Refactored)
+// MARK: - Subscription Card View (The rest of the file remains unchanged)
 private struct SubscriptionCardView: View {
     let plan: Plan
     let isCurrentUserPlan: Bool
@@ -145,7 +161,7 @@ private struct SubscriptionCardView: View {
 
     private var featuresList: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if let features = plan.attributes.features.data, !features.isEmpty {
+            if let featureResponse = plan.attributes.features, let features = featureResponse.data, !features.isEmpty {
                 Text("Features:")
                     .font(.headline)
                 ForEach(features) { feature in

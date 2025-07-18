@@ -17,7 +17,6 @@ struct StrapiUser: Codable, Identifiable {
 struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
     let locale: String?
-    // MODIFIED: This is now optional to handle cases where it's not included in the initial user fetch.
     let consentForEmailNotice: Bool?
     let children: [Child]?
 
@@ -57,35 +56,65 @@ struct SubscriptionAttributes: Codable {
     let plan: Plan
 }
 
-/// Represents the simplified plan object.
-struct Plan: Codable, Identifiable {
+struct Sale: Codable, Hashable {
+    let productId: String?
+    let startDate: String?
+    let endDate: String?
+}
+
+// MODIFIED: Changed back to a class to handle recursion.
+class Plan: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: PlanAttributes
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: Plan, rhs: Plan) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
-struct PlanAttributes: Codable {
+// MODIFIED: Properties that are not present in the nested 'inherit_from' plan are now optional.
+class PlanAttributes: Codable, Hashable {
     let name: String
     let productId: String
-    let features: StrapiListResponse<Feature>
-    let entitlements: StrapiListResponse<Entitlement>
+    let order: Int?
+    let sale: Sale?
+    // These properties are now optional to handle the simplified nested plan structure.
+    let features: StrapiListResponse<Feature>?
+    let entitlements: StrapiListResponse<Entitlement>?
+    let inherit_from: StrapiRelation<Plan>?
+    let childPlans: StrapiListResponse<Plan>?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(productId)
+    }
+    
+    static func == (lhs: PlanAttributes, rhs: PlanAttributes) -> Bool {
+        return lhs.name == rhs.name && lhs.productId == rhs.productId
+    }
 }
 
-struct Feature: Codable, Identifiable {
+
+struct Feature: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: FeatureAttributes
 }
 
-struct FeatureAttributes: Codable {
+struct FeatureAttributes: Codable, Hashable {
     let name: String
     let order: Int
 }
 
-struct Entitlement: Codable, Identifiable {
+struct Entitlement: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: EntitlementAttributes
 }
 
-struct EntitlementAttributes: Codable {
+struct EntitlementAttributes: Codable, Hashable {
     let name: String
     let slug: String
     let isMetered: Bool?
