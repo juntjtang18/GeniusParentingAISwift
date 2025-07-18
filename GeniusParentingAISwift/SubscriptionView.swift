@@ -38,42 +38,39 @@ struct SubscriptionView: View {
 
     var body: some View {
         NavigationView {
-            ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+            VStack {
+                if viewModel.isLoading {
+                    ProgressView("Loading Plans...")
+                } else if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                } else {
+                    // MODIFIED: The TabView's selection is now bound to the state variable.
+                    TabView(selection: $selectedPlanIndex) {
+                        // MODIFIED: Iterate over indices to tag each page view.
+                        ForEach(viewModel.plans.indices, id: \.self) { index in
+                            let plan = viewModel.plans[index]
+                            let planTier = PlanTier(planName: plan.attributes.name)
+                            let isCurrentUserPlan = plan.attributes.name == currentUserPlanName
+                            let isDisabled = planTier < currentUserPlanTier
 
-                VStack {
-                    if viewModel.isLoading {
-                        ProgressView("Loading Plans...")
-                    } else if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    } else {
-                        // MODIFIED: The TabView's selection is now bound to the state variable.
-                        TabView(selection: $selectedPlanIndex) {
-                            // MODIFIED: Iterate over indices to tag each page view.
-                            ForEach(viewModel.plans.indices, id: \.self) { index in
-                                let plan = viewModel.plans[index]
-                                let planTier = PlanTier(planName: plan.attributes.name)
-                                let isCurrentUserPlan = plan.attributes.name == currentUserPlanName
-                                let isDisabled = planTier < currentUserPlanTier
-
-                                SubscriptionCardView(
-                                    plan: plan,
-                                    isCurrentUserPlan: isCurrentUserPlan,
-                                    isDisabled: isDisabled
-                                )
-                                .padding([.horizontal, .top])
-                                .padding(.bottom, 50)
-                                .frame(maxHeight: .infinity)
-                                .tag(index) // Tag the view with its corresponding index.
-                            }
+                            SubscriptionCardView(
+                                plan: plan,
+                                isCurrentUserPlan: isCurrentUserPlan,
+                                isDisabled: isDisabled
+                            )
+                            .padding([.horizontal, .top])
+                            .padding(.bottom, 50)
+                            .frame(maxHeight: .infinity)
+                            .tag(index) // Tag the view with its corresponding index.
                         }
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        .indexViewStyle(.page(backgroundDisplayMode: .always))
                     }
+                    .tabViewStyle(.page(indexDisplayMode: .automatic))
+                    .indexViewStyle(.page(backgroundDisplayMode: .always))
                 }
             }
+            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Subscription Plans")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -102,6 +99,7 @@ struct SubscriptionView: View {
 
 // MARK: - Subscription Card View (The rest of the file remains unchanged)
 private struct SubscriptionCardView: View {
+    @Environment(\.theme) var theme: Theme
     let plan: Plan
     let isCurrentUserPlan: Bool
     let isDisabled: Bool
@@ -114,21 +112,12 @@ private struct SubscriptionCardView: View {
             featuresList
             Spacer()
         }
-        .padding(25)
-        .background(isCurrentUserPlan || isDisabled ? Color(UIColor.systemGray6) : Color(UIColor.systemBackground))
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .subscriptionCardStyle(isHighlighted: isCurrentUserPlan || isDisabled)
         .frame(maxWidth: 400)
         .overlay(
             isCurrentUserPlan ?
                 Text("Current Plan")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
+                    .style(.subscriptionPlanBadge)
                     .padding(.top, 10)
                 : nil
             , alignment: .topTrailing
@@ -140,21 +129,18 @@ private struct SubscriptionCardView: View {
     private var planInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(plan.attributes.name)
-                .font(.largeTitle.bold())
-            
-            Text("Product ID: \(plan.attributes.productId)")
-                .foregroundColor(.secondary)
+                .style(.subscriptionCardTitle)
         }
     }
 
     private var subscribeButton: some View {
         Button(action: {}) {
             Label("Subscribe now", systemImage: "arrow.right")
-                .font(.headline)
+                .style(.subscriptionCardButton)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(isCurrentUserPlan || isDisabled ? Color.gray : Color.pink)
+                .background(isCurrentUserPlan || isDisabled ? Color.gray : theme.accent)
                 .cornerRadius(12)
         }
     }
@@ -163,9 +149,13 @@ private struct SubscriptionCardView: View {
         VStack(alignment: .leading, spacing: 16) {
             if let featureResponse = plan.attributes.features, let features = featureResponse.data, !features.isEmpty {
                 Text("Features:")
-                    .font(.headline)
-                ForEach(features) { feature in
-                    FeatureRow(name: feature.attributes.name, isDisabled: isCurrentUserPlan || isDisabled)
+                    .style(.subscriptionCardFeatureTitle)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(features) { feature in
+                            FeatureRow(name: feature.attributes.name, isDisabled: isCurrentUserPlan || isDisabled)
+                        }
+                    }
                 }
             }
         }
@@ -174,14 +164,16 @@ private struct SubscriptionCardView: View {
 
 // MARK: - Feature Row View
 private struct FeatureRow: View {
+    @Environment(\.theme) var theme: Theme
     let name: String
     let isDisabled: Bool
 
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(isDisabled ? .gray : .green)
+                .foregroundColor(isDisabled ? .gray : theme.secondary)
             Text(name)
+                .style(.subscriptionCardFeatureItem)
             Spacer()
         }
     }

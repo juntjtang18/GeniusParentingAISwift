@@ -1,42 +1,36 @@
+// GeniusParentingAISwift/DailyTipCardView.swift
 import SwiftUI
 
 struct DailyTipCardView: View {
+    @Environment(\.theme) var theme: Theme
     let tip: Tip
+    private let cardHeight: CGFloat = 250
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Gradient overlay for text readability
-            LinearGradient(
-                gradient: Gradient(colors: [.clear, .black.opacity(0.8)]),
-                startPoint: .center,
-                endPoint: .bottom
-            )
-
-            // Tip text
-            Text(tip.text)
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-        }
-        .frame(width: 250, height: 150)
-        .background(
-            AsyncImage(url: URL(string: tip.iconImageMedia?.urlString ?? "")) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable()
-                         .aspectRatio(contentMode: .fill)
-                case .failure, .empty:
-                    // Gray placeholder on failure or while loading
-                    Rectangle().foregroundColor(.gray.opacity(0.5))
-                @unknown default:
-                    EmptyView()
+        VStack(alignment: .leading, spacing: 0) {
+            // Top part: Image
+            Group {
+                if let iconMedia = tip.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
+                    CachedAsyncImage(url: imageUrl)
+                } else {
+                    theme.cardBackground
+                        .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                 }
             }
-        )
+            .frame(height: cardHeight * 3 / 5)
+            .frame(maxWidth: .infinity)
+            .clipped()
+
+            // Bottom part: Title
+            Text(tip.text)
+                .lineLimit(3) // Allow more lines for tips
+                .multilineTextAlignment(.leading)
+                .frame(height: cardHeight * 2 / 5)
+                .style(.courseCard)
+        }
+        .frame(width: 300, height: cardHeight)
         .cornerRadius(12)
-        .clipped() // Ensures the image respects the corner radius
-        .shadow(radius: 5)
-        .padding(5) // Add padding to increase tappable area
-        .contentShape(Rectangle()) // Ensure the entire view, including padding, is tappable
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .clipped()
     }
 }

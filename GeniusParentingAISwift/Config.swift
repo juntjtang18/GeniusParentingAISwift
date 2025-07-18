@@ -19,6 +19,7 @@ struct Config {
         // For local development, both might run on different ports
         // Or you might proxy them under the same IP. Adjust as needed.
         return "http://localhost:1337"
+        //return "http://gpasubsys.geniusParentingAI.ca"
         #else
         return "http://gpasubsys.geniusParentingAI.ca"
         #endif

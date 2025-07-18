@@ -3,7 +3,9 @@ import SwiftUI
 
 // 1. Define your style cases.
 enum ViewStyle {
-    case title, body, caption, primaryButton, secondaryButton, themedTextField, courseCard
+    case title, body, caption, primaryButton, secondaryButton, themedTextField, courseCard, homeSectionTitle,
+         subscriptionCardTitle, subscriptionCardButton, subscriptionCardFeatureTitle, subscriptionCardFeatureItem,
+         subscriptionPlanBadge
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
@@ -58,7 +60,38 @@ struct StyleModifier: ViewModifier {
                 .foregroundColor(theme.text)
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading) // Set alignment for the container
-                .background(theme.cardBackground)
+                .background(theme.cardBackground.opacity(0.6))
+                
+        case .homeSectionTitle:
+            content
+                .font(.title2.bold())
+                .foregroundColor(theme.text)
+                .padding(.horizontal)
+        
+        case .subscriptionCardTitle:
+            content
+                .font(.title3.bold())
+
+        case .subscriptionCardButton:
+            content
+                .font(.subheadline)
+        
+        case .subscriptionCardFeatureTitle:
+            content
+                .font(.subheadline)
+
+        case .subscriptionCardFeatureItem:
+            content
+                .font(.callout)
+        
+        case .subscriptionPlanBadge:
+            content
+                .font(.caption.bold())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(theme.secondary)
+                .foregroundColor(.white)
+                .clipShape(Capsule())
         }
     }
 }
@@ -67,5 +100,24 @@ struct StyleModifier: ViewModifier {
 extension View {
     func style(_ style: ViewStyle) -> some View {
         self.modifier(StyleModifier(style: style))
+    }
+}
+
+// A new, dedicated modifier for the subscription card's container style.
+struct SubscriptionCardStyle: ViewModifier {
+    let isHighlighted: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .padding(25)
+            .background(isHighlighted ? Color(UIColor.systemGray6) : Color(UIColor.systemBackground))
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+    }
+}
+
+extension View {
+    func subscriptionCardStyle(isHighlighted: Bool) -> some View {
+        self.modifier(SubscriptionCardStyle(isHighlighted: isHighlighted))
     }
 }

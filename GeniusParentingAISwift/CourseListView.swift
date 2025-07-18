@@ -138,6 +138,7 @@ struct CourseView: View {
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
+        // The ZStack has been removed and the background is now a modifier.
         VStack {
             if !viewModel.initialLoadCompleted && viewModel.categories.isEmpty {
                 ProgressView("Loading Categories...")
@@ -154,7 +155,9 @@ struct CourseView: View {
                     .buttonStyle(.borderedProminent)
                 }
             } else if viewModel.categories.isEmpty {
-                Text("No courses available.").foregroundColor(.gray)
+                Text("No courses available.")
+                    .foregroundColor(.white)
+                    .shadow(radius: 2)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 25) {
@@ -170,7 +173,13 @@ struct CourseView: View {
                 }
             }
         }
-        .background(theme.background.ignoresSafeArea())
+        .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensures the VStack fills the area for the background.
+        .background(
+            Image("background1")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .ignoresSafeArea()
+        )
         .navigationDestination(for: Int.self) { courseId in
             ShowACourseView(selectedLanguage: $selectedLanguage, courseId: courseId, isSideMenuShowing: $isSideMenuShowing)
         }

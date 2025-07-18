@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/MainView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -226,36 +227,37 @@ struct HomeContentView: View {
     @Binding var selectedLanguage: String
     @Binding var isSideMenuShowing: Bool
     
-    // ** CHANGE 1 of 4: Add state to control the popup **
     @State private var selectedTip: Tip? = nil
 
     var body: some View {
-        // ** CHANGE 2 of 4: Wrap the content in a ZStack to layer the popup on top **
-        ZStack {
-            ScrollView {
-                VStack(spacing: 30) {
-                    todaysLessonSection
-                    hotTopicsSection
-                    dailyTipsSection
-                    Spacer()
-                }
-                .padding(.top)
+        ScrollView {
+            VStack(spacing: 30) {
+                todaysLessonSection
+                hotTopicsSection
+                dailyTipsSection
+                Spacer()
             }
-            .onAppear {
-                Task {
-                    await viewModel.fetchDailyLessons()
-                    await viewModel.fetchHotTopics()
-                    await viewModel.fetchDailyTips()
-                }
-            }
-            
-            // ** CHANGE 3 of 4: Add the popup view layer. It only appears when a tip is selected. **
+            .padding(.vertical)
+        }
+        .background(
+            Image("background1")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .ignoresSafeArea()
+        )
+        .overlay {
             if let tip = selectedTip {
                 FairyTipPopupView(tip: tip, isPresented: Binding(
                     get: { selectedTip != nil },
                     set: { if !$0 { withAnimation(.spring()) { selectedTip = nil } } }
                 ))
-                .zIndex(1) // Ensure popup is on top
+            }
+        }
+        .onAppear {
+            Task {
+                await viewModel.fetchDailyLessons()
+                await viewModel.fetchHotTopics()
+                await viewModel.fetchDailyTips()
             }
         }
     }
@@ -263,16 +265,15 @@ struct HomeContentView: View {
     private var todaysLessonSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Today's Lesson")
-                .font(.title2)
-                .padding(.horizontal)
+                .style(.homeSectionTitle)
 
             Group {
                 if viewModel.isLoading {
-                    ProgressView().frame(height: 150)
+                    ProgressView().frame(height: 250)
                 } else if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 250)
                 } else if viewModel.todaysLessons.isEmpty {
-                     Text("No lessons scheduled for today.").foregroundColor(.gray).padding().frame(height: 150)
+                     Text("No lessons scheduled for today.").foregroundColor(.gray).padding().frame(height: 250)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
@@ -284,7 +285,7 @@ struct HomeContentView: View {
                         }
                         .padding(.horizontal)
                     }
-                    .frame(height: 150)
+                    .frame(height: 250)
                 }
             }
         }
@@ -293,21 +294,19 @@ struct HomeContentView: View {
     private var hotTopicsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Hot Topics")
-                .font(.title2)
-                .padding(.horizontal)
+                .style(.homeSectionTitle)
             
             Group {
                 if viewModel.isLoadingHotTopics {
-                    ProgressView().frame(height: 150)
+                    ProgressView().frame(height: 250)
                 } else if let errorMessage = viewModel.hotTopicsErrorMessage {
-                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 250)
                 } else if viewModel.hotTopics.isEmpty {
-                    Text("No hot topics available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                    Text("No hot topics available right now.").foregroundColor(.gray).padding().frame(height: 250)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(viewModel.hotTopics) { topic in
-                                // MODIFICATION: Pass the isSideMenuShowing binding
                                 NavigationLink(destination: TopicView(selectedLanguage: $selectedLanguage, topicId: topic.id, isSideMenuShowing: $isSideMenuShowing)) {
                                     HotTopicCardView(topic: topic)
                                 }
@@ -315,7 +314,7 @@ struct HomeContentView: View {
                         }
                         .padding(.horizontal)
                     }
-                    .frame(height: 150)
+                    .frame(height: 250)
                 }
             }
         }
@@ -324,26 +323,25 @@ struct HomeContentView: View {
     private var dailyTipsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Daily Tips")
-                .font(.title2)
-                .padding(.horizontal)
+                .style(.homeSectionTitle)
 
             Group {
                 if viewModel.isLoadingDailyTips {
-                    ProgressView().frame(height: 150)
+                    ProgressView().frame(height: 250)
                 } else if let errorMessage = viewModel.dailyTipsErrorMessage {
-                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 150)
+                    Text(errorMessage).foregroundColor(.red).padding().frame(height: 250)
                 } else if viewModel.dailyTips.isEmpty {
-                    Text("No daily tips available right now.").foregroundColor(.gray).padding().frame(height: 150)
+                    Text("No daily tips available right now.").foregroundColor(.gray).padding().frame(height: 250)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(viewModel.dailyTips) { tip in
                                 DailyTipCardView(tip: tip)
-                                    .contentShape(Rectangle()) // Ensure tappable area
+                                    .contentShape(Rectangle())
                                     .simultaneousGesture(
                                         TapGesture()
                                             .onEnded {
-                                                print("Tapped DailyTipCardView: \(tip.text)") // Debug log
+                                                print("Tapped DailyTipCardView: \(tip.text)")
                                                 withAnimation(.spring()) {
                                                     self.selectedTip = tip
                                                 }
@@ -353,7 +351,7 @@ struct HomeContentView: View {
                         }
                         .padding(.horizontal)
                     }
-                    .frame(height: 150)
+                    .frame(height: 250)
                 }
             }
         }
@@ -361,14 +359,12 @@ struct HomeContentView: View {
 }
 
 // MARK: - New View for the Fairy Popup
-// This is the only new struct being added.
 struct FairyTipPopupView: View {
     let tip: Tip
     @Binding var isPresented: Bool
 
     var body: some View {
         ZStack {
-            // REFINED: Changed the blur material for a different, less intense effect.
             Rectangle()
                 .fill(.clear)
                 .background(.thinMaterial)
@@ -376,17 +372,13 @@ struct FairyTipPopupView: View {
                 .onTapGesture { isPresented = false }
 
             ZStack(alignment: .top) {
-                // The fairy image is now drawn first, so it appears behind the popup window.
                 Image("fairy01")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 220)
-                    // REFINED: Moved fairy up by 5 points.
                     .offset(x: -180, y: -77)
 
-                // The main content box of the popup.
                 VStack(spacing: 0) {
-                    // This ZStack contains the image and is kept at a fixed height.
                     ZStack {
                         AsyncImage(url: URL(string: tip.iconImageMedia?.attributes.url ?? "")) { phase in
                             switch phase {
@@ -404,21 +396,19 @@ struct FairyTipPopupView: View {
                             }
                         }
                     }
-                    .frame(height: 200) // Image container height remains unchanged.
+                    .frame(height: 200)
                     .clipped()
 
-                    // This ScrollView contains the text and can now expand.
                     ScrollView {
                         Text(tip.text)
                             .font(.body)
                             .foregroundColor(.secondary)
-                            // REFINED: Text aligned to the left.
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
                     }
                     
-                    Spacer() // Pushes the button to the bottom.
+                    Spacer()
 
                     Button("Got it!") { isPresented = false }
                         .font(.headline)
@@ -427,7 +417,6 @@ struct FairyTipPopupView: View {
                         .background(Color(red: 0.7, green: 0.9, blue: 0.3))
                         .foregroundColor(.black.opacity(0.7))
                 }
-                // REFINED: Increased the total height of the popup window by 60.
                 .frame(width: 300, height: 420)
                 .background(Color(.systemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 30))
