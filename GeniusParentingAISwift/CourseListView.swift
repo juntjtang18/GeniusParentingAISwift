@@ -4,28 +4,55 @@ import KeychainAccess
 
 // MARK: - Course Card View
 struct CourseCardView: View {
+    @Environment(\.theme) var theme: Theme
     let course: Course
     let selectedLanguage: String
+    private let cardHeight: CGFloat = 250
+
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            LinearGradient(gradient: Gradient(colors: [.clear, .black.opacity(0.8)]), startPoint: .center, endPoint: .bottom)
-            VStack(alignment: .leading) {
-                let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                Text(displayTitle).font(.headline).foregroundColor(.white).lineLimit(2).padding(8)
-            }
-        }
-        .aspectRatio(16/7, contentMode: .fit)
-        .background(
+        VStack(alignment: .leading, spacing: 0) {
+            // Top part: Image (3/5 of the height)
             Group {
                 if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                     CachedAsyncImage(url: imageUrl)
-                } else { Color(UIColor.secondarySystemBackground) }
+                } else {
+                    theme.cardBackground
+                        .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                }
             }
-        )
+            .frame(height: cardHeight * 3 / 5)
+            .frame(maxWidth: .infinity)
+            .clipped()
+
+            // Bottom part: Title and Play Button (2/5 of the height)
+            HStack(alignment: .center) {
+                let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
+                Text(displayTitle)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+
+                Spacer()
+
+                // Play Button
+                ZStack {
+                    Circle()
+                        .fill(theme.accent)
+                    Image(systemName: "play.fill")
+                        .foregroundColor(theme.cardBackground)
+                        .font(.system(size: 20))
+                }
+                .frame(width: 50, height: 50)
+            }
+            .frame(height: cardHeight * 2 / 5)
+            .style(.courseCard)
+        }
+        .frame(height: cardHeight)
         .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
         .clipped()
     }
 }
+
 
 // MARK: - Collapsible Category View
 struct CollapsibleCategoryView: View {
@@ -105,9 +132,9 @@ struct CollapsibleCategoryView: View {
 
 // MARK: - Main Course List View
 struct CourseView: View {
+    @Environment(\.theme) var theme: Theme
     @StateObject private var viewModel = CourseViewModel()
     @Binding var selectedLanguage: String
-    // FIXED: Add the binding to receive the side menu state.
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
@@ -143,8 +170,8 @@ struct CourseView: View {
                 }
             }
         }
+        .background(theme.background.ignoresSafeArea())
         .navigationDestination(for: Int.self) { courseId in
-            // FIXED: Pass the binding down to the detail view.
             ShowACourseView(selectedLanguage: $selectedLanguage, courseId: courseId, isSideMenuShowing: $isSideMenuShowing)
         }
         .onAppear {
@@ -187,7 +214,6 @@ class CourseViewModel: ObservableObject {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, _) = try await URLSession.shared.data(for: request)
             let decoder = JSONDecoder()
-            // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decodedResponse = try decoder.decode(StrapiListResponse<CategoryData>.self, from: data)
             
             self.categories = decodedResponse.data ?? []
@@ -207,91 +233,73 @@ class CourseViewModel: ObservableObject {
     }
 
     func fetchCourses(for categoryID: Int) async {
-        // 1. Guard against redundant fetches for the same category.
+        // ... (rest of the function is unchanged)
         guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else {
             return
         }
 
-        // 2. Set loading state and ensure it's removed on completion/exit.
         loadingCategoryIDs.insert(categoryID)
         defer { loadingCategoryIDs.remove(categoryID) }
 
-        // 3. Ensure authentication token is available.
         guard let token = keychain["jwt"] else {
             print("Authentication token not found for fetching courses.")
-            // Optionally, you could set an error message for the UI here.
-            // self.errorMessage = "Authentication required."
             return
         }
 
-        // 4. Initialize variables for pagination.
         var allCourses: [Course] = []
         var currentPage = 1
         var totalPages = 1
-        let pageSize = 100 // Fetch up to 100 items per page for better performance.
+        let pageSize = 100
 
         do {
-            // 5. Loop until all pages for the category are fetched.
             repeat {
                 let populateQuery = "populate=icon_image,translations"
                 let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
-                let sortQuery = "sort=order:asc"
+                let sortQuery = "sort[0]=order:asc&sort[1]=title:asc"
                 let paginationQuery = "pagination[page]=\(currentPage)&pagination[pageSize]=\(pageSize)"
                 
-                // 6. Safely construct the request URL.
                 var urlComponents = URLComponents(string: "\(strapiUrl)/courses")
                 urlComponents?.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)&\(paginationQuery)"
 
                 guard let url = urlComponents?.url else {
                     print("Internal error: Invalid URL for fetching courses.")
-                    break // Exit the loop if URL is invalid.
+                    break
                 }
 
                 var request = URLRequest(url: url)
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-                // 7. Perform the network request.
                 let (data, response) = try await URLSession.shared.data(for: request)
 
-                // 8. Validate the HTTP response.
                 guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                     let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                     print("Server error \(statusCode) while fetching courses for category \(categoryID) on page \(currentPage).")
-                    break // Exit loop on server error.
+                    break
                 }
                 
-                // 9. Decode the JSON response.
                 let decoder = JSONDecoder()
-                // REMOVED: decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
 
-                // 10. Append the newly fetched courses to the master list.
                 if let newCourses = decodedResponse.data {
                     allCourses.append(contentsOf: newCourses)
                 }
 
-                // 11. Get the total page count from the first successful response.
                 if let pagination = decodedResponse.meta?.pagination {
                     totalPages = pagination.pageCount
                 }
                 
-                // 12. Move to the next page.
                 currentPage += 1
 
             } while currentPage <= totalPages
 
-            // 13. Update the published dictionary with all fetched courses for the category.
             self.coursesByCategoryID[categoryID] = allCourses
 
         } catch {
-            // 14. Handle any errors during the fetch or decoding process.
             print("Failed to fetch or decode courses for category \(categoryID): \(error.localizedDescription)")
             if let decodingError = error as? DecodingError {
                 print("Decoding error details: \(decodingError)")
             }
-            // Optionally, set a user-facing error message.
-            // self.errorMessage = "Failed to load courses for this category."
         }
     }
 }

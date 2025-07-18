@@ -1,3 +1,4 @@
+// GeniusParentingAISwift/Theme/Theme.swift
 import SwiftUI
 
 // 1. The protocol clearly defines the properties for each color role.
@@ -9,6 +10,7 @@ protocol Theme {
     var accent: Color { get }
     var background: Color { get }
     var text: Color { get }
+    var cardBackground: Color { get }
 }
 
 // 2. This is the single, generic struct that represents all your themes.
@@ -28,6 +30,7 @@ struct AppTheme: Theme {
     var accent: Color { color(for: "Accent") }
     var background: Color { color(for: "Background") }
     var text: Color { color(for: "Text") }
+    var cardBackground: Color { color(for: "CardBackground") }
 
     /// A private helper to create the full asset path and fetch the color.
     private func color(for role: String) -> Color {

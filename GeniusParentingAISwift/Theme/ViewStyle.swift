@@ -1,8 +1,9 @@
+// GeniusParentingAISwift/Theme/ViewStyle.swift
 import SwiftUI
 
 // 1. Define your style cases.
 enum ViewStyle {
-    case title, body, caption, primaryButton, secondaryButton, themedTextField
+    case title, body, caption, primaryButton, secondaryButton, themedTextField, courseCard
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
@@ -18,7 +19,7 @@ struct StyleModifier: ViewModifier {
         switch style {
         case .title:
             content
-                .font(.largeTitle)            // ← correct, built-in style
+                .font(.largeTitle)
                 .foregroundColor(theme.text)
 
         case .body:
@@ -50,6 +51,14 @@ struct StyleModifier: ViewModifier {
                 .background(theme.secondary.opacity(0.2))
                 .cornerRadius(10)
                 .foregroundColor(theme.text)
+        
+        case .courseCard:
+            content
+                .font(.headline)
+                .foregroundColor(theme.text)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading) // Set alignment for the container
+                .background(theme.cardBackground)
         }
     }
 }

@@ -4,6 +4,7 @@ import SwiftUI
 import AVKit
 import WebKit
 import os
+import Combine
 
 // MARK: - Refactored Sub-Views for Each Component Type
 
@@ -82,14 +83,49 @@ private struct VideoView: View {
     let media: Media
     
     @Environment(\.theme) var theme: Theme
-    
+    @State private var player: AVPlayer?
+    @State private var isPlaying = false
+
+    /// A computed property that safely creates and type-erases the publisher for the player's rate.
+    private var ratePublisher: AnyPublisher<Float, Never> {
+        player?
+            .publisher(for: \.rate)
+            .eraseToAnyPublisher()
+        ?? Empty<Float, Never>()
+            .eraseToAnyPublisher()
+    }
+
     var body: some View {
         VStack(spacing: 4) {
             if let videoURL = URL(string: media.attributes.url) {
-                VideoPlayer(player: AVPlayer(url: videoURL))
-                    .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
-                    .cornerRadius(10)
-                
+                ZStack {
+                    VideoPlayer(player: player)
+                        .onAppear {
+                            if player == nil {
+                                player = AVPlayer(url: videoURL)
+                            }
+                        }
+                        .onDisappear {
+                            player?.pause()
+                        }
+                    
+                    if !isPlaying {
+                        Button(action: {
+                            player?.play()
+                        }) {
+                            Image(systemName: "play.circle.fill")
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                }
+                .frame(minHeight: 200, idealHeight: 250, maxHeight: 300)
+                .cornerRadius(10)
+                .onReceive(ratePublisher) { rate in
+                    isPlaying = rate != 0
+                }
+
                 if let caption = media.attributes.caption, !caption.isEmpty {
                     Text(caption).font(.caption).foregroundColor(theme.secondary).italic().padding(.top, 2)
                 }

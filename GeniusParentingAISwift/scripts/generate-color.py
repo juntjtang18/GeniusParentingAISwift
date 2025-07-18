@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# GeniusParentingAISwift/scripts/generate-color.py
 import os
 import json
 import sys
@@ -12,6 +13,7 @@ schemes = {
             "Accent":     "#5AC8FA",
             "Background": "#F2F2F7",
             "Text":       "#1C1C1E",
+            "CardBackground": "#FFFFFF",
         },
         "Dark": {
             "Primary":    "#0A84FF",
@@ -19,6 +21,7 @@ schemes = {
             "Accent":     "#64D2FF",
             "Background": "#1C1C1E",
             "Text":       "#F2F2F7",
+            "CardBackground": "#2C2C2E",
         }
     },
     "SunsetCoral": {
@@ -26,8 +29,9 @@ schemes = {
             "Primary":    "#FF6B6B",
             "Secondary":  "#FFD93D",
             "Accent":     "#FF9F43",
-            "Background": "#FFFFFF",
+            "Background": "#F0F0F0",
             "Text":       "#333333",
+            "CardBackground": "#FFFFFF",
         },
         "Dark": {
             "Primary":    "#FF453A",
@@ -35,6 +39,7 @@ schemes = {
             "Accent":     "#FF9F0A",
             "Background": "#000000",
             "Text":       "#FFFFFF",
+            "CardBackground": "#1C1C1E",
         }
     },
     "ForestNight": {
@@ -42,8 +47,9 @@ schemes = {
             "Primary":    "#1F4822",
             "Secondary":  "#55C57A",
             "Accent":     "#82D9A9",
-            "Background": "#FFFFFF",
+            "Background": "#F5F5F5",
             "Text":       "#0A1F1B",
+            "CardBackground": "#FFFFFF",
         },
         "Dark": {
             "Primary":    "#0A1F1B",
@@ -51,6 +57,7 @@ schemes = {
             "Accent":     "#55C57A",
             "Background": "#121212",
             "Text":       "#E0E0E0",
+            "CardBackground": "#1E1E1E",
         }
     },
     "SoftPastel": {
@@ -58,8 +65,9 @@ schemes = {
             "Primary":    "#A29BFE",
             "Secondary":  "#74B9FF",
             "Accent":     "#55EFC4",
-            "Background": "#FFFFFF",
+            "Background": "#F9F9F9",
             "Text":       "#2D3436",
+            "CardBackground": "#FFFFFF",
         },
         "Dark": {
             "Primary":    "#6C5CE7",
@@ -67,6 +75,7 @@ schemes = {
             "Accent":     "#00B894",
             "Background": "#2D3436",
             "Text":       "#FFFFFF",
+            "CardBackground": "#424242",
         }
     }
 }
