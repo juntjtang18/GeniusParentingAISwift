@@ -20,7 +20,7 @@ struct CourseCardView: View {
                         .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                 }
             }
-            .frame(height: cardHeight * 3 / 5)
+            .frame(height: cardHeight * 0.7)
             .frame(maxWidth: .infinity)
             .clipped()
 
@@ -43,7 +43,7 @@ struct CourseCardView: View {
                 }
                 .frame(width: 50, height: 50)
             }
-            .frame(height: cardHeight * 2 / 5)
+            .frame(height: cardHeight * 0.3)
             .style(.courseCard)
         }
         .frame(height: cardHeight)
