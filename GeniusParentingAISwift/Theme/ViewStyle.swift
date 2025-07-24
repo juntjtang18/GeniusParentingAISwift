@@ -5,7 +5,8 @@ import SwiftUI
 enum ViewStyle {
     case title, body, caption, primaryButton, secondaryButton, themedTextField, courseCard, homeSectionTitle,
          subscriptionCardTitle, subscriptionCardButton, subscriptionCardFeatureTitle, subscriptionCardFeatureItem,
-         subscriptionPlanBadge
+         subscriptionPlanBadge,
+         cardTitle // <-- NEW STYLE ADDED HERE
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
@@ -56,11 +57,9 @@ struct StyleModifier: ViewModifier {
         
         case .courseCard:
             content
-                .font(.headline)
-                .foregroundColor(theme.text)
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading) // Set alignment for the container
-                .background(theme.cardBackground.opacity(0.6))
+                .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(theme.cardBackground.opacity(0.7))
                 
         case .homeSectionTitle:
             content
@@ -68,6 +67,15 @@ struct StyleModifier: ViewModifier {
                 .foregroundColor(theme.text)
                 .padding(.horizontal)
         
+        // --- STYLE TO MODIFY ---
+        case .cardTitle:
+            content
+                .font(.subheadline) // <-- CHANGED FROM .body to .subheadline
+                .foregroundColor(theme.text)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+
+        // ... (other styles remain unchanged)
         case .subscriptionCardTitle:
             content
                 .font(.title3.bold())
