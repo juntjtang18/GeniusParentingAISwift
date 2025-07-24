@@ -307,7 +307,6 @@ class CourseViewModel: ObservableObject {
 
         do {
             repeat {
-                // The populate query correctly includes 'coursecategory' to derive the locked state.
                 let populateQuery = "populate=icon_image,translations,coursecategory"
                 let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
                 let sortQuery = "sort[0]=order:asc&sort[1]=title:asc"
