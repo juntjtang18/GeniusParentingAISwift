@@ -1,4 +1,4 @@
-// GeniusParentingAISwift/CourseListView.swift
+// GeniusParentingAISwift/Courses/CourseListView.swift
 import SwiftUI
 import KeychainAccess
 
@@ -172,7 +172,7 @@ struct CollapsibleCategoryView: View {
         }
         .fullScreenCover(isPresented: $showSubscriptionSheet) {
             // This sheet is presented when the user confirms they want to subscribe.
-            SubscriptionView(isPresented: $showSubscriptionSheet)
+            SubscriptionView(isPresented: $showSubscriptionSheet, recommendedPlanTier: .basic)
         }
     }
 }

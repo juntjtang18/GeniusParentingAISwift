@@ -25,12 +25,20 @@ enum PlanTier: Int, Comparable {
 struct SubscriptionView: View {
     @StateObject private var viewModel = SubscriptionViewModel()
     @Binding var isPresented: Bool
-    
+    let recommendedPlanTier: PlanTier?
+
     @State private var selectedPlanIndex: Int = 0
 
+    // Initializer to accept the recommended plan
+    init(isPresented: Binding<Bool>, recommendedPlanTier: PlanTier? = nil) {
+        self._isPresented = isPresented
+        self.recommendedPlanTier = recommendedPlanTier
+    }
+    
     private var currentUserPlanName: String? {
         SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.name
     }
+    
     private var currentUserPlanTier: PlanTier {
         PlanTier(planName: currentUserPlanName ?? "")
     }
@@ -79,8 +87,18 @@ struct SubscriptionView: View {
                 await viewModel.fetchPlans()
             }
             .task(id: viewModel.plans) {
-                guard !viewModel.plans.isEmpty, let userPlanName = currentUserPlanName else { return }
-                if let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
+                guard !viewModel.plans.isEmpty else { return }
+
+                // 1. Prioritize scrolling to the recommended plan if it exists
+                if let recommendedTier = recommendedPlanTier,
+                   let index = viewModel.plans.firstIndex(where: { PlanTier(planName: $0.attributes.name) == recommendedTier }) {
+                    selectedPlanIndex = index
+                    return
+                }
+
+                // 2. Fallback to the user's current plan if no recommendation is provided
+                if let userPlanName = currentUserPlanName,
+                   let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
                     selectedPlanIndex = index
                 }
             }
