@@ -9,7 +9,8 @@ struct StrapiUser: Codable, Identifiable {
     let username: String
     let email: String
     var user_profile: UserProfile?
-    let role: Role?
+    // The 'role' property from the user object is the Strapi system role, which we will keep.
+    let role: StrapiSystemRole?
     let subscription: StrapiRelation<Subscription>?
 }
 
@@ -37,7 +38,9 @@ struct Child: Codable, Identifiable, Hashable {
 
 // MARK: - Role & Subscription Models
 
-struct Role: Codable {
+// This is the Strapi system role (e.g., 'Authenticated', 'Public').
+// We rename it to avoid conflict with our new app-specific Role enum.
+struct StrapiSystemRole: Codable {
     let id: Int
     let name: String
     let description: String
@@ -62,7 +65,6 @@ struct Sale: Codable, Hashable {
     let endDate: String?
 }
 
-// MODIFIED: Changed back to a class to handle recursion.
 class Plan: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: PlanAttributes
@@ -76,13 +78,12 @@ class Plan: Codable, Identifiable, Hashable {
     }
 }
 
-// MODIFIED: Properties that are not present in the nested 'inherit_from' plan are now optional.
 class PlanAttributes: Codable, Hashable {
     let name: String
     let productId: String
+    let role: String? // <-- ADDED: The role string from the backend.
     let order: Int?
     let sale: Sale?
-    // These properties are now optional to handle the simplified nested plan structure.
     let features: StrapiListResponse<Feature>?
     let entitlements: StrapiListResponse<Entitlement>?
     let inherit_from: StrapiRelation<Plan>?

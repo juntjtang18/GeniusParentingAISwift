@@ -9,6 +9,18 @@ class SessionManager: ObservableObject {
     static let shared = SessionManager()
 
     @Published var currentUser: StrapiUser?
+    /// Computes the user's role based on their subscription plan.
+    var role: Role {
+        // Safely access the role string from the user's subscribed plan.
+        guard let roleString = currentUser?.subscription?.data?.attributes.plan.attributes.role else {
+            // If there's no plan or role string, default to 'free'.
+            return .free
+        }
+        
+        // Initialize our Role enum from the string. If the string from the backend
+        // doesn't match a case in our enum, default to 'free'.
+        return Role(rawValue: roleString) ?? .free
+    }
 
     private init() {}
 }
