@@ -28,7 +28,7 @@ struct SubscriptionView: View {
     let recommendedPlanTier: PlanTier?
 
     @State private var selectedPlanIndex: Int = 0
-
+    
     // Initializer to accept the recommended plan
     init(isPresented: Binding<Bool>, recommendedPlanTier: PlanTier? = nil) {
         self._isPresented = isPresented
@@ -63,7 +63,9 @@ struct SubscriptionView: View {
                             SubscriptionCardView(
                                 plan: plan,
                                 isCurrentUserPlan: isCurrentUserPlan,
-                                isDisabled: isDisabled
+                                isDisabled: isDisabled,
+                                selectedPlanIndex: $selectedPlanIndex,
+                                totalPlans: viewModel.plans.count
                             )
                             .padding([.horizontal, .top])
                             .padding(.bottom, 50)
@@ -71,8 +73,8 @@ struct SubscriptionView: View {
                             .tag(index)
                         }
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .automatic))
-                    .indexViewStyle(.page(backgroundDisplayMode: .always))
+                    .tabViewStyle(.page(indexDisplayMode: .always))
+                    .indexViewStyle(.page(backgroundDisplayMode: .never))
                 }
             }
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
@@ -89,14 +91,12 @@ struct SubscriptionView: View {
             .task(id: viewModel.plans) {
                 guard !viewModel.plans.isEmpty else { return }
 
-                // 1. Prioritize scrolling to the recommended plan if it exists
                 if let recommendedTier = recommendedPlanTier,
                    let index = viewModel.plans.firstIndex(where: { PlanTier(planName: $0.attributes.name) == recommendedTier }) {
                     selectedPlanIndex = index
                     return
                 }
 
-                // 2. Fallback to the user's current plan if no recommendation is provided
                 if let userPlanName = currentUserPlanName,
                    let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
                     selectedPlanIndex = index
@@ -145,15 +145,85 @@ private struct SparklingBadgeView: View {
     }
 }
 
+// MARK: - Subscription Controls (Button and Arrows)
+private struct SubscriptionControlView: View {
+    @Environment(\.theme) var theme: Theme
+    let isOwned: Bool
+    @Binding var selectedPlanIndex: Int
+    let totalPlans: Int
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Left Arrow
+            arrowButton(direction: .left)
+
+            if !isOwned {
+                // Subscribe Button
+                subscribeButton
+            } else {
+                // Placeholder to maintain height and allow arrows to be centered vertically
+                Spacer().frame(height: 50)
+            }
+            
+            // Right Arrow
+            arrowButton(direction: .right)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var subscribeButton: some View {
+        Button(action: {}) {
+            Label("Subscribe now", systemImage: "arrow.right")
+                .style(.subscriptionCardButton)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity) // Take up available space between arrows
+                .background(theme.accent)
+                .cornerRadius(12)
+        }
+    }
+
+    private enum ArrowDirection { case left, right }
+    
+    @ViewBuilder
+    private func arrowButton(direction: ArrowDirection) -> some View {
+        Button(action: {
+            withAnimation {
+                if direction == .left {
+                    selectedPlanIndex -= 1
+                } else {
+                    selectedPlanIndex += 1
+                }
+            }
+        }) {
+            Image(systemName: direction == .left ? "chevron.left.circle.fill" : "chevron.right.circle.fill")
+                .font(.system(size: 36, weight: .semibold))
+                .foregroundColor(theme.accent.opacity(0.7))
+        }
+        .buttonStyle(.plain)
+        .opacity(isVisible(for: direction) ? 1 : 0)
+        .disabled(!isVisible(for: direction))
+    }
+
+    private func isVisible(for direction: ArrowDirection) -> Bool {
+        switch direction {
+        case .left:
+            return selectedPlanIndex > 0
+        case .right:
+            return selectedPlanIndex < totalPlans - 1
+        }
+    }
+}
+
 
 // MARK: - Subscription Card View
 private struct SubscriptionCardView: View {
-    @Environment(\.theme) var theme: Theme
     let plan: Plan
     let isCurrentUserPlan: Bool
     let isDisabled: Bool
+    @Binding var selectedPlanIndex: Int
+    let totalPlans: Int
 
-    /// A computed property to determine if the plan is already owned by the user.
     private var isOwned: Bool {
         isCurrentUserPlan || isDisabled
     }
@@ -161,7 +231,13 @@ private struct SubscriptionCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             planInfo
-            subscribeButton
+            
+            SubscriptionControlView(
+                isOwned: isOwned,
+                selectedPlanIndex: $selectedPlanIndex,
+                totalPlans: totalPlans
+            )
+
             Divider()
             featuresList
             Spacer()
@@ -188,22 +264,6 @@ private struct SubscriptionCardView: View {
             Text(plan.attributes.name)
                 .style(.subscriptionCardTitle)
                 .foregroundColor(isOwned ? .secondary : .primary)
-        }
-    }
-
-    private var subscribeButton: some View {
-        Group {
-            if !isOwned {
-                Button(action: {}) {
-                    Label("Subscribe now", systemImage: "arrow.right")
-                        .style(.subscriptionCardButton)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(theme.accent)
-                        .cornerRadius(12)
-                }
-            }
         }
     }
 
