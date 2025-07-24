@@ -1,4 +1,4 @@
-// GeniusParentingAISwift/SubscriptionView.swift
+// GeniusParentingAISwift/Subscription/SubscriptionView.swift
 
 import SwiftUI
 
@@ -26,7 +26,6 @@ struct SubscriptionView: View {
     @StateObject private var viewModel = SubscriptionViewModel()
     @Binding var isPresented: Bool
     
-    // ADDED: State to control the currently displayed page in the TabView.
     @State private var selectedPlanIndex: Int = 0
 
     private var currentUserPlanName: String? {
@@ -46,9 +45,7 @@ struct SubscriptionView: View {
                         .foregroundColor(.red)
                         .padding()
                 } else {
-                    // MODIFIED: The TabView's selection is now bound to the state variable.
                     TabView(selection: $selectedPlanIndex) {
-                        // MODIFIED: Iterate over indices to tag each page view.
                         ForEach(viewModel.plans.indices, id: \.self) { index in
                             let plan = viewModel.plans[index]
                             let planTier = PlanTier(planName: plan.attributes.name)
@@ -63,7 +60,7 @@ struct SubscriptionView: View {
                             .padding([.horizontal, .top])
                             .padding(.bottom, 50)
                             .frame(maxHeight: .infinity)
-                            .tag(index) // Tag the view with its corresponding index.
+                            .tag(index)
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .automatic))
@@ -79,17 +76,11 @@ struct SubscriptionView: View {
                 }
             }
             .task {
-                // This task still fetches the plans as before.
                 await viewModel.fetchPlans()
             }
-            // ADDED: This new task runs whenever viewModel.plans changes.
             .task(id: viewModel.plans) {
-                // We run this check only after the plans have been loaded.
                 guard !viewModel.plans.isEmpty, let userPlanName = currentUserPlanName else { return }
-
-                // Find the index of the user's current plan.
                 if let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
-                    // Update the state variable to scroll the TabView to the correct page.
                     selectedPlanIndex = index
                 }
             }
@@ -97,12 +88,57 @@ struct SubscriptionView: View {
     }
 }
 
-// MARK: - Subscription Card View (The rest of the file remains unchanged)
+// MARK: - Sparkling Badge View
+private struct SparklingBadgeView: View {
+    @Environment(\.theme) var theme: Theme
+    @State private var isAnimating = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "sparkles")
+                .font(.caption.bold())
+                .foregroundStyle(
+                    .linearGradient(
+                        colors: [.yellow, .orange, .yellow],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .scaleEffect(isAnimating ? 1.2 : 0.8)
+                .rotationEffect(.degrees(isAnimating ? 15 : -5))
+                .shadow(color: .yellow.opacity(0.5), radius: isAnimating ? 6 : 2)
+
+            Text("Current Plan")
+                .font(.caption.bold())
+                .foregroundColor(theme.text)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(theme.secondary.opacity(0.2))
+        .clipShape(Capsule())
+        .onAppear {
+            withAnimation(
+                .easeInOut(duration: 1.5)
+                .repeatForever(autoreverses: true)
+            ) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+
+// MARK: - Subscription Card View
 private struct SubscriptionCardView: View {
     @Environment(\.theme) var theme: Theme
     let plan: Plan
     let isCurrentUserPlan: Bool
     let isDisabled: Bool
+
+    /// A computed property to determine if the plan is already owned by the user.
+    private var isOwned: Bool {
+        isCurrentUserPlan || isDisabled
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -112,36 +148,44 @@ private struct SubscriptionCardView: View {
             featuresList
             Spacer()
         }
-        .subscriptionCardStyle(isHighlighted: isCurrentUserPlan || isDisabled)
-        .frame(maxWidth: 400)
+        .padding(25)
+        .background(isOwned ? Color.green.opacity(0.1) : Color(UIColor.systemBackground))
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
         .overlay(
             isCurrentUserPlan ?
-                Text("Current Plan")
-                    .style(.subscriptionPlanBadge)
-                    .padding(.top, 10)
+                SparklingBadgeView()
+                    .padding([.top, .trailing], 12)
                 : nil
             , alignment: .topTrailing
         )
-        .disabled(isCurrentUserPlan || isDisabled)
-        .foregroundColor(isCurrentUserPlan || isDisabled ? Color(UIColor.secondaryLabel) : .primary)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(isOwned ? Color.green : Color.clear, lineWidth: 2)
+        )
     }
 
     private var planInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(plan.attributes.name)
                 .style(.subscriptionCardTitle)
+                .foregroundColor(isOwned ? .secondary : .primary)
         }
     }
 
     private var subscribeButton: some View {
-        Button(action: {}) {
-            Label("Subscribe now", systemImage: "arrow.right")
-                .style(.subscriptionCardButton)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(isCurrentUserPlan || isDisabled ? Color.gray : theme.accent)
-                .cornerRadius(12)
+        Group {
+            if !isOwned {
+                Button(action: {}) {
+                    Label("Subscribe now", systemImage: "arrow.right")
+                        .style(.subscriptionCardButton)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(theme.accent)
+                        .cornerRadius(12)
+                }
+            }
         }
     }
 
@@ -150,10 +194,11 @@ private struct SubscriptionCardView: View {
             if let featureResponse = plan.attributes.features, let features = featureResponse.data, !features.isEmpty {
                 Text("Features:")
                     .style(.subscriptionCardFeatureTitle)
+                    .foregroundColor(isOwned ? .secondary : .primary)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         ForEach(features) { feature in
-                            FeatureRow(name: feature.attributes.name, isDisabled: isCurrentUserPlan || isDisabled)
+                            FeatureRow(name: feature.attributes.name, isOwned: isOwned)
                         }
                     }
                 }
@@ -166,14 +211,15 @@ private struct SubscriptionCardView: View {
 private struct FeatureRow: View {
     @Environment(\.theme) var theme: Theme
     let name: String
-    let isDisabled: Bool
+    let isOwned: Bool
 
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(isDisabled ? .gray : theme.secondary)
+                .foregroundColor(isOwned ? .green : theme.secondary)
             Text(name)
                 .style(.subscriptionCardFeatureItem)
+                .foregroundColor(isOwned ? .secondary : .primary)
             Spacer()
         }
     }

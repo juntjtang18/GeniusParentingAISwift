@@ -170,7 +170,7 @@ struct CollapsibleCategoryView: View {
         } message: {
             Text("The course is accessible only by member. Subscribe membership plan to gain full access.")
         }
-        .sheet(isPresented: $showSubscriptionSheet) {
+        .fullScreenCover(isPresented: $showSubscriptionSheet) {
             // This sheet is presented when the user confirms they want to subscribe.
             SubscriptionView(isPresented: $showSubscriptionSheet)
         }
@@ -236,4 +236,3 @@ struct CourseView: View {
         }
     }
 }
-

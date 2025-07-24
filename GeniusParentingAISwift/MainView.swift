@@ -58,6 +58,9 @@ struct MainView: View {
             .onChange(of: themeManager.currentTheme.id) { _ in
                 updateUnselectedTabItemColor()
             }
+            .fullScreenCover(isPresented: $isShowingSubscriptionSheet) {
+                SubscriptionView(isPresented: $isShowingSubscriptionSheet)
+            }
             
             // --- Side Menu Layer ---
             if isSideMenuShowing {
@@ -122,11 +125,6 @@ struct MainView: View {
             
             if isShowingTermsSheet {
                 TermsOfServiceView(isPresented: $isShowingTermsSheet)
-                    .transition(.move(edge: .leading))
-                    .zIndex(3)
-            }
-            if isShowingSubscriptionSheet {
-                SubscriptionView(isPresented: $isShowingSubscriptionSheet)
                     .transition(.move(edge: .leading))
                     .zIndex(3)
             }
