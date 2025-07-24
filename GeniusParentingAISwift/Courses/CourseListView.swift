@@ -9,22 +9,41 @@ struct CourseCardView: View {
     let selectedLanguage: String
     private let cardHeight: CGFloat = 250
 
+    // Determine if the course is locked for the current user.
+    private var isLocked: Bool {
+        // A course is locked if it's membership-only AND the user doesn't have access.
+        return course.isMembershipOnly && !PermissionManager.shared.canAccess(.accessMembershipCourses)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Top part: Image (3/5 of the height)
-            Group {
-                if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
-                    CachedAsyncImage(url: imageUrl)
-                } else {
-                    theme.cardBackground
-                        .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+            // Top part: Image (70% of the height)
+            ZStack(alignment: .topLeading) { // Use a ZStack to overlay the lock icon.
+                Group {
+                    if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
+                        CachedAsyncImage(url: imageUrl)
+                    } else {
+                        theme.cardBackground
+                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                    }
+                }
+                .frame(height: cardHeight * 0.7)
+                .frame(maxWidth: .infinity)
+                .clipped()
+
+                // Add a lock icon overlay if the course is restricted.
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                        .padding(10)
                 }
             }
-            .frame(height: cardHeight * 0.7)
-            .frame(maxWidth: .infinity)
-            .clipped()
 
-            // Bottom part: Title and Play Button (2/5 of the height)
+            // Bottom part: Title and Play Button (30% of the height)
             HStack(alignment: .center) {
                 let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
                 Text(displayTitle)
@@ -36,7 +55,7 @@ struct CourseCardView: View {
                 // Play Button
                 ZStack {
                     Circle()
-                        .fill(theme.accent)
+                        .fill(isLocked ? .gray : theme.accent) // Use gray color for locked courses.
                     Image(systemName: "play.fill")
                         .foregroundColor(theme.cardBackground)
                         .font(.system(size: 20))
@@ -60,6 +79,10 @@ struct CollapsibleCategoryView: View {
     @ObservedObject var viewModel: CourseViewModel
     @Binding var selectedLanguage: String
     @State private var isExpanded: Bool = true
+    
+    // State to manage the alert and the subsequent sheet presentation.
+    @State private var showPermissionAlert = false
+    @State private var showSubscriptionSheet = false
 
     private let lastViewedCategoryKey = "lastViewedCategoryID"
 
@@ -89,7 +112,7 @@ struct CollapsibleCategoryView: View {
             .cornerRadius(15)
             .contentShape(Rectangle())
             .clipped()
-            .zIndex(1) // Prioritize header gestures
+            .zIndex(1)
             .onTapGesture {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     isExpanded.toggle()
@@ -102,15 +125,25 @@ struct CollapsibleCategoryView: View {
                     LazyVStack(spacing: 15) {
                         if let courses = viewModel.coursesByCategoryID[category.id] {
                             ForEach(courses) { course in
-                                NavigationLink(value: course.id) {
-                                    CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                // Determine if the course is locked for the current user.
+                                let isLocked = course.isMembershipOnly && !PermissionManager.shared.canAccess(.accessMembershipCourses)
+
+                                if isLocked {
+                                    // If the course is locked, display it as a Button that triggers an alert.
+                                    Button(action: {
+                                        self.showPermissionAlert = true
+                                    }) {
+                                        CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                    }
+                                } else {
+                                    // If the course is accessible, display it as a NavigationLink.
+                                    NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: course.id, isSideMenuShowing: .constant(false))) {
+                                        CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                    }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                         UserDefaults.standard.set(category.id, forKey: lastViewedCategoryKey)
+                                     })
                                 }
-                                .buttonStyle(.plain)
-                                .contentShape(Rectangle())
-                                .clipped()
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    UserDefaults.standard.set(category.id, forKey: lastViewedCategoryKey)
-                                })
                             }
                         } else if viewModel.loadingCategoryIDs.contains(category.id) {
                             HStack { Spacer(); ProgressView(); Spacer() }.frame(height: 100)
@@ -120,12 +153,26 @@ struct CollapsibleCategoryView: View {
                         }
                     }
                     .padding(.top, 15)
-                    .padding(.bottom, 20) // Separate from next category
+                    .padding(.bottom, 20)
                     .clipped()
                     .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
                 }
             }
-            .zIndex(0) // Courses below header
+            .zIndex(0)
+        }
+        .buttonStyle(.plain) // Ensures the buttons don't have default styling.
+        .alert("Membership Required", isPresented: $showPermissionAlert) {
+            Button("Subscribe") {
+                // When the user taps "Subscribe", trigger the subscription sheet to show.
+                self.showSubscriptionSheet = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The course is accessible only by member. Subscribe membership plan to gain full access.")
+        }
+        .sheet(isPresented: $showSubscriptionSheet) {
+            // This sheet is presented when the user confirms they want to subscribe.
+            SubscriptionView(isPresented: $showSubscriptionSheet)
         }
     }
 }
@@ -138,7 +185,6 @@ struct CourseView: View {
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
-        // The ZStack has been removed and the background is now a modifier.
         VStack {
             if !viewModel.initialLoadCompleted && viewModel.categories.isEmpty {
                 ProgressView("Loading Categories...")
@@ -173,7 +219,7 @@ struct CourseView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensures the VStack fills the area for the background.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             Image("background1")
                 .resizable()
@@ -242,7 +288,6 @@ class CourseViewModel: ObservableObject {
     }
 
     func fetchCourses(for categoryID: Int) async {
-        // ... (rest of the function is unchanged)
         guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else {
             return
         }
@@ -262,7 +307,8 @@ class CourseViewModel: ObservableObject {
 
         do {
             repeat {
-                let populateQuery = "populate=icon_image,translations"
+                // The populate query correctly includes 'coursecategory' to derive the locked state.
+                let populateQuery = "populate=icon_image,translations,coursecategory"
                 let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
                 let sortQuery = "sort[0]=order:asc&sort[1]=title:asc"
                 let paginationQuery = "pagination[page]=\(currentPage)&pagination[pageSize]=\(pageSize)"

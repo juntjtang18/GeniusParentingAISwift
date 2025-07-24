@@ -2,14 +2,6 @@
 //  Permission.swift
 //  GeniusParentingAISwift
 //
-//  Created by James Tang on 2025/7/23.
-//
-
-
-//
-//  Permission.swift
-//  GeniusParentingAISwift
-//
 //  Created by James Tang on 2025/07/23.
 //
 
@@ -22,5 +14,6 @@ enum Permission {
     case viewCommunityTab
     case canPostComment
     case accessPremiumCourses
+    case accessMembershipCourses // <-- ADDED
     // Add other specific permissions as your app grows.
 }

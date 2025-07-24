@@ -221,6 +221,11 @@ struct Course: Codable, Identifiable, Hashable {
     var updatedAt: String? { attributes.updatedAt }
     var publishedAt: String? { attributes.publishedAt }
 
+    /// A computed property to determine if a course is for members only based on its category name.
+    var isMembershipOnly: Bool {
+        return attributes.coursecategory?.data?.attributes.name == "Membership Only"
+    }
+
     struct Attributes: Codable, Hashable {
         let title: String
         let icon_image: StrapiRelation<Media>?
@@ -232,6 +237,7 @@ struct Course: Codable, Identifiable, Hashable {
         let publishedAt: String?
         let locale: String?
         let order: Int?
+        // The isMembershipOnly boolean field is correctly removed from here.
     }
 
     struct CourseTranslation: Codable, Hashable {

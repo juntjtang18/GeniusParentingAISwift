@@ -2,14 +2,6 @@
 //  PermissionManager.swift
 //  GeniusParentingAISwift
 //
-//  Created by James Tang on 2025/7/23.
-//
-
-
-//
-//  PermissionManager.swift
-//  GeniusParentingAISwift
-//
 //  Created by James Tang on 2025/07/23.
 //
 
@@ -45,6 +37,10 @@ class PermissionManager {
         case .accessPremiumCourses:
             // Only 'premium' users can access premium courses.
             return userRole == .premium
+            
+        case .accessMembershipCourses: // <-- ADDED
+            // Users with 'basic' role or higher can access membership courses.
+            return userRole >= .basic
         }
     }
     
