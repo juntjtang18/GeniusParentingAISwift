@@ -1,48 +1,14 @@
 // GeniusParentingAISwift/Subscription/SubscriptionView.swift
-
 import SwiftUI
-
-enum PlanTier: Int, Comparable {
-    case free = 0
-    case basic = 1
-    case premium = 2
-    case unknown = -1
-
-    init(planName: String) {
-        switch planName.lowercased() {
-        case let name where name.contains("free"): self = .free
-        case let name where name.contains("basic"): self = .basic
-        case let name where name.contains("premium"): self = .premium
-        default: self = .unknown
-        }
-    }
-
-    static func < (lhs: PlanTier, rhs: PlanTier) -> Bool {
-        return lhs.rawValue < rhs.rawValue
-    }
-}
+import StoreKit
 
 struct SubscriptionView: View {
+    @EnvironmentObject var storeManager: StoreManager
     @StateObject private var viewModel = SubscriptionViewModel()
     @Binding var isPresented: Bool
-    let recommendedPlanTier: PlanTier?
-
+    
     @State private var selectedPlanIndex: Int = 0
     
-    // Initializer to accept the recommended plan
-    init(isPresented: Binding<Bool>, recommendedPlanTier: PlanTier? = nil) {
-        self._isPresented = isPresented
-        self.recommendedPlanTier = recommendedPlanTier
-    }
-    
-    private var currentUserPlanName: String? {
-        SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.name
-    }
-    
-    private var currentUserPlanTier: PlanTier {
-        PlanTier(planName: currentUserPlanName ?? "")
-    }
-
     var body: some View {
         NavigationView {
             VStack {
@@ -53,23 +19,17 @@ struct SubscriptionView: View {
                         .foregroundColor(.red)
                         .padding()
                 } else {
+                    // This TabView creates the carousel effect.
                     TabView(selection: $selectedPlanIndex) {
-                        ForEach(viewModel.plans.indices, id: \.self) { index in
-                            let plan = viewModel.plans[index]
-                            let planTier = PlanTier(planName: plan.attributes.name)
-                            let isCurrentUserPlan = plan.attributes.name == currentUserPlanName
-                            let isDisabled = planTier < currentUserPlanTier
-
+                        ForEach(viewModel.displayPlans.indices, id: \.self) { index in
+                            let plan = viewModel.displayPlans[index]
                             SubscriptionCardView(
                                 plan: plan,
-                                isCurrentUserPlan: isCurrentUserPlan,
-                                isDisabled: isDisabled,
                                 selectedPlanIndex: $selectedPlanIndex,
-                                totalPlans: viewModel.plans.count
+                                totalPlans: viewModel.displayPlans.count
                             )
                             .padding([.horizontal, .top])
                             .padding(.bottom, 50)
-                            .frame(maxHeight: .infinity)
                             .tag(index)
                         }
                     }
@@ -86,99 +46,119 @@ struct SubscriptionView: View {
                 }
             }
             .task {
-                await viewModel.fetchPlans()
-            }
-            .task(id: viewModel.plans) {
-                guard !viewModel.plans.isEmpty else { return }
-
-                if let recommendedTier = recommendedPlanTier,
-                   let index = viewModel.plans.firstIndex(where: { PlanTier(planName: $0.attributes.name) == recommendedTier }) {
-                    selectedPlanIndex = index
-                    return
-                }
-
-                if let userPlanName = currentUserPlanName,
-                   let index = viewModel.plans.firstIndex(where: { $0.attributes.name == userPlanName }) {
-                    selectedPlanIndex = index
-                }
+                // Load and merge the plans when the view appears.
+                await viewModel.loadPlans(from: storeManager)
             }
         }
     }
 }
 
-// MARK: - Sparkling Badge View
-private struct SparklingBadgeView: View {
-    @Environment(\.theme) var theme: Theme
-    @State private var isAnimating = false
+// MARK: - Subscription Card View (Restored and Updated)
+private struct SubscriptionCardView: View {
+    @EnvironmentObject var storeManager: StoreManager
+    let plan: SubscriptionPlanViewData
+    @Binding var selectedPlanIndex: Int
+    let totalPlans: Int
+
+    var isPurchased: Bool {
+        storeManager.purchasedProductIDs.contains(plan.id)
+    }
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "sparkles")
-                .font(.caption.bold())
-                .foregroundStyle(
-                    .linearGradient(
-                        colors: [.yellow, .orange, .yellow],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .scaleEffect(isAnimating ? 1.2 : 0.8)
-                .rotationEffect(.degrees(isAnimating ? 15 : -5))
-                .shadow(color: .yellow.opacity(0.5), radius: isAnimating ? 6 : 2)
-
-            Text("Current Plan")
-                .font(.caption.bold())
-                .foregroundColor(theme.text)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(theme.secondary.opacity(0.2))
-        .clipShape(Capsule())
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 1.5)
-                .repeatForever(autoreverses: true)
-            ) {
-                isAnimating = true
+        VStack(alignment: .leading, spacing: 24) {
+            // Plan Info
+            VStack(alignment: .leading, spacing: 8) {
+                Text(plan.displayName)
+                    .font(.title2.bold())
+                Text(plan.description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
+
+            // Subscription Controls (Arrows and Button)
+            SubscriptionControlView(
+                isPurchased: isPurchased,
+                productToPurchase: plan.storeKitProduct,
+                selectedPlanIndex: $selectedPlanIndex,
+                totalPlans: totalPlans
+            )
+
+            Divider()
+
+            // Features List from Strapi
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Features:")
+                    .font(.headline)
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(plan.features) { feature in
+                            FeatureRow(name: feature.attributes.name)
+                        }
+                    }
+                }
+            }
+            Spacer()
         }
+        .padding(25)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .overlay(
+            isPurchased ?
+                Text("Current Plan")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.green.opacity(0.2))
+                    .clipShape(Capsule())
+                    .padding()
+                : nil
+            , alignment: .topTrailing
+        )
     }
 }
+
 
 // MARK: - Subscription Controls (Button and Arrows)
 private struct SubscriptionControlView: View {
-    @Environment(\.theme) var theme: Theme
-    let isOwned: Bool
+    @EnvironmentObject var storeManager: StoreManager
+    let isPurchased: Bool
+    let productToPurchase: Product
     @Binding var selectedPlanIndex: Int
     let totalPlans: Int
 
     var body: some View {
         HStack(spacing: 12) {
-            // Left Arrow
             arrowButton(direction: .left)
 
-            if !isOwned {
-                // Subscribe Button
+            if !isPurchased {
                 subscribeButton
             } else {
-                // Placeholder to maintain height and allow arrows to be centered vertically
-                Spacer().frame(height: 50)
+                Spacer().frame(height: 50) // Placeholder
             }
             
-            // Right Arrow
             arrowButton(direction: .right)
         }
         .frame(maxWidth: .infinity)
     }
 
     private var subscribeButton: some View {
-        Button(action: {}) {
-            Label("Subscribe now", systemImage: "arrow.right")
-                .style(.subscriptionCardButton)
+        Button(action: {
+            Task {
+                do {
+                    try await storeManager.purchase(productToPurchase)
+                } catch {
+                    print("Purchase failed: \(error)")
+                }
+            }
+        }) {
+            Text("Subscribe for \(productToPurchase.displayPrice)")
+                .font(.headline)
                 .foregroundColor(.white)
                 .padding()
-                .frame(maxWidth: .infinity) // Take up available space between arrows
-                .background(theme.accent)
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
                 .cornerRadius(12)
         }
     }
@@ -190,15 +170,15 @@ private struct SubscriptionControlView: View {
         Button(action: {
             withAnimation {
                 if direction == .left {
-                    selectedPlanIndex -= 1
+                    selectedPlanIndex = max(0, selectedPlanIndex - 1)
                 } else {
-                    selectedPlanIndex += 1
+                    selectedPlanIndex = min(totalPlans - 1, selectedPlanIndex + 1)
                 }
             }
         }) {
             Image(systemName: direction == .left ? "chevron.left.circle.fill" : "chevron.right.circle.fill")
                 .font(.system(size: 36, weight: .semibold))
-                .foregroundColor(theme.accent.opacity(0.7))
+                .foregroundColor(.blue.opacity(0.7))
         }
         .buttonStyle(.plain)
         .opacity(isVisible(for: direction) ? 1 : 0)
@@ -215,89 +195,16 @@ private struct SubscriptionControlView: View {
     }
 }
 
-
-// MARK: - Subscription Card View
-private struct SubscriptionCardView: View {
-    let plan: Plan
-    let isCurrentUserPlan: Bool
-    let isDisabled: Bool
-    @Binding var selectedPlanIndex: Int
-    let totalPlans: Int
-
-    private var isOwned: Bool {
-        isCurrentUserPlan || isDisabled
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            planInfo
-            
-            SubscriptionControlView(
-                isOwned: isOwned,
-                selectedPlanIndex: $selectedPlanIndex,
-                totalPlans: totalPlans
-            )
-
-            Divider()
-            featuresList
-            Spacer()
-        }
-        .padding(25)
-        .background(isOwned ? Color.green.opacity(0.1) : Color(UIColor.systemBackground))
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
-        .overlay(
-            isCurrentUserPlan ?
-                SparklingBadgeView()
-                    .padding([.top, .trailing], 12)
-                : nil
-            , alignment: .topTrailing
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(isOwned ? Color.green : Color.clear, lineWidth: 2)
-        )
-    }
-
-    private var planInfo: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(plan.attributes.name)
-                .style(.subscriptionCardTitle)
-                .foregroundColor(isOwned ? .secondary : .primary)
-        }
-    }
-
-    private var featuresList: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if let featureResponse = plan.attributes.features, let features = featureResponse.data, !features.isEmpty {
-                Text("Features:")
-                    .style(.subscriptionCardFeatureTitle)
-                    .foregroundColor(isOwned ? .secondary : .primary)
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        ForEach(features) { feature in
-                            FeatureRow(name: feature.attributes.name, isOwned: isOwned)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Feature Row View
 private struct FeatureRow: View {
-    @Environment(\.theme) var theme: Theme
     let name: String
-    let isOwned: Bool
 
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(isOwned ? .green : theme.secondary)
+                .foregroundColor(.green)
             Text(name)
-                .style(.subscriptionCardFeatureItem)
-                .foregroundColor(isOwned ? .secondary : .primary)
+                .font(.subheadline)
             Spacer()
         }
     }

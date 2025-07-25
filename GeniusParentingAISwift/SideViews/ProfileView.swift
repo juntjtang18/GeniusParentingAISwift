@@ -8,6 +8,9 @@ struct ProfileView: View {
     @State private var isShowingEditView = false
     @Binding var isPresented: Bool
 
+    // URL to open the user's Apple subscription management page
+    private let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
+
     var body: some View {
         NavigationView {
             VStack {
@@ -32,6 +35,12 @@ struct ProfileView: View {
                             ProfileRow(label: "Username", value: user.username)
                             ProfileRow(label: "Email", value: user.email)
                         }
+
+                        // --- ADD THIS NEW SECTION ---
+                        Section(header: Text("Subscription")) {
+                            Link("Manage Subscription", destination: manageSubscriptionURL)
+                        }
+                        // --- END OF NEW SECTION ---
                         
                         if let profile = user.user_profile {
                             Section(header: Text("Family Information")) {
@@ -52,7 +61,6 @@ struct ProfileView: View {
                             }
                             
                             Section(header: Text("Preferences")) {
-                                // MODIFIED: Provide a default value of 'false' for the optional Bool.
                                 Toggle(isOn: .constant(profile.consentForEmailNotice ?? false)) {
                                     Text("Email Notifications")
                                 }

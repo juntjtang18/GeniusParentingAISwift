@@ -1,26 +1,54 @@
-// GeniusParentingAISwift/SubscriptionViewModel.swift
-
+// GeniusParentingAISwift/Subscription/SubscriptionViewModel.swift
 import Foundation
+import StoreKit
 
 @MainActor
 class SubscriptionViewModel: ObservableObject {
-    @Published var plans: [Plan] = [] // MODIFIED: Use the Plan model from UserModels.swift
+    // This is the final, merged list of plans that the view will display.
+    @Published var displayPlans: [SubscriptionPlanViewData] = []
+    
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    func fetchPlans() async {
-        isLoading = true
-        errorMessage = nil
-        
+    // Fetches plans from both Strapi and StoreKit, then merges them.
+    func loadPlans(from storeManager: StoreManager) async {
+        self.isLoading = true
+        self.errorMessage = nil
+
         do {
-            // MODIFIED: Use the centralized StrapiService
-            let response = try await StrapiService.shared.fetchPlans()
-            self.plans = response.data ?? []
+            // 1. Fetch plans from your Strapi backend.
+            let strapiPlans = try await StrapiService.shared.fetchPlans().data ?? []
+            
+            // Ensure StoreKit products are loaded.
+            if storeManager.products.isEmpty {
+                await storeManager.requestProducts()
+            }
+            let storeKitProducts = storeManager.products
+
+            // 2. Merge the two lists based on the productID.
+            var mergedPlans: [SubscriptionPlanViewData] = []
+            for strapiPlan in strapiPlans {
+                // Find the corresponding StoreKit product.
+                if let matchingProduct = storeKitProducts.first(where: { $0.id == strapiPlan.attributes.productId }) {
+                    mergedPlans.append(
+                        SubscriptionPlanViewData(
+                            id: strapiPlan.attributes.productId,
+                            strapiPlan: strapiPlan,
+                            storeKitProduct: matchingProduct
+                        )
+                    )
+                }
+            }
+            
+            // 3. Sort the final list based on the 'order' field from Strapi.
+            self.displayPlans = mergedPlans.sorted(by: {
+                ($0.strapiPlan.attributes.order ?? 99) < ($1.strapiPlan.attributes.order ?? 99)
+            })
             
         } catch {
-            errorMessage = "Failed to fetch subscription plans: \(error.localizedDescription)"
+            self.errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"
         }
         
-        isLoading = false
+        self.isLoading = false
     }
 }

@@ -172,7 +172,9 @@ struct CollapsibleCategoryView: View {
         }
         .fullScreenCover(isPresented: $showSubscriptionSheet) {
             // This sheet is presented when the user confirms they want to subscribe.
-            SubscriptionView(isPresented: $showSubscriptionSheet, recommendedPlanTier: .basic)
+            //SubscriptionView(isPresented: $showSubscriptionSheet, recommendedPlanTier: .basic)
+            SubscriptionView(isPresented: $showSubscriptionSheet)
+
         }
     }
 }

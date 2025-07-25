@@ -2,6 +2,7 @@
 
 import SwiftUI
 import KeychainAccess
+import StoreKit // Import the StoreKit framework
 
 // MARK: - Session Manager
 @MainActor
@@ -33,6 +34,7 @@ struct GeniusParentingAISwiftApp: App {
     
     @StateObject private var speechManager = SpeechManager()
     @StateObject private var themeManager = ThemeManager()
+    @StateObject private var storeManager = StoreManager() // Initialize the StoreManager
 
     private let keychain = Keychain(service: Config.keychainService)
 
@@ -52,9 +54,14 @@ struct GeniusParentingAISwiftApp: App {
                 }
             }
             .environmentObject(speechManager)
-            .theme(themeManager.currentTheme)
             .environmentObject(themeManager)
-            .onAppear(perform: checkLoginStatus)
+            .environmentObject(storeManager) // Make the StoreManager available to all views
+            .theme(themeManager.currentTheme)
+            .onAppear {
+                // Connect the StoreManager to the PermissionManager when the app starts
+                PermissionManager.shared.storeManager = storeManager
+                checkLoginStatus()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
                 isLoggedIn = false
             }

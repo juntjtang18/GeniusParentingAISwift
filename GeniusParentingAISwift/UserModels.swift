@@ -65,6 +65,28 @@ struct Sale: Codable, Hashable {
     let endDate: String?
 }
 
+// MARK: - Plan Tier Enum
+// This enum is now accessible to the entire app.
+enum PlanTier: Int, Comparable {
+    case free = 0
+    case basic = 1
+    case premium = 2
+    case unknown = -1
+
+    init(planName: String) {
+        switch planName.lowercased() {
+        case let name where name.contains("free"): self = .free
+        case let name where name.contains("basic"): self = .basic
+        case let name where name.contains("premium"): self = .premium
+        default: self = .unknown
+        }
+    }
+
+    static func < (lhs: PlanTier, rhs: PlanTier) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+}
+
 class Plan: Codable, Identifiable, Hashable {
     let id: Int
     let attributes: PlanAttributes

@@ -4,7 +4,44 @@
 //
 //  Created by James Tang on 2025/07/23.
 //
+// GeniusParentingAISwift/Subscription/PermissionManager.swift
+import Foundation
 
+@MainActor
+class PermissionManager {
+    static let shared = PermissionManager()
+
+    // Pass the StoreManager instance to the manager
+    // This can be done at app launch.
+    var storeManager: StoreManager?
+
+    private init() {}
+
+    func canAccess(_ permission: Permission) -> Bool {
+        guard let purchasedIDs = storeManager?.purchasedProductIDs else {
+            return false // If the store manager isn't set, deny access.
+        }
+
+        switch permission {
+        case .viewAITab, .useAIChat, .accessMembershipCourses:
+            // Grant access if ANY of the plans are purchased.
+            return !purchasedIDs.isEmpty
+
+        case .viewCommunityTab:
+            return true
+
+        case .canPostComment:
+            // Example: Allow comments for any subscriber.
+            return !purchasedIDs.isEmpty
+
+        case .accessPremiumCourses:
+            // Grant access only if the premium plan is purchased.
+            return purchasedIDs.contains(ProductIdentifiers.premiumYearly)
+        }
+    }
+}
+
+/*
 import Foundation
 
 /// A centralized manager to handle all permission checks based on the user's role.
@@ -56,3 +93,4 @@ class PermissionManager {
         return entitlements.first(where: { $0.attributes.slug == entitlementSlug })?.attributes.limit
     }
 }
+*/
