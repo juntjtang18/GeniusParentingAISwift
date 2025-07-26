@@ -8,46 +8,75 @@ struct SubscriptionView: View {
     @Binding var isPresented: Bool
     
     @State private var selectedPlanIndex: Int = 0
-    
+    @State private var showSuccessAlert = false // State for success alert
+
     var body: some View {
         NavigationView {
-            VStack {
-                if viewModel.isLoading {
-                    ProgressView("Loading Plans...")
-                } else if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                } else {
-                    // This TabView creates the carousel effect.
-                    TabView(selection: $selectedPlanIndex) {
-                        ForEach(viewModel.displayPlans.indices, id: \.self) { index in
-                            let plan = viewModel.displayPlans[index]
-                            SubscriptionCardView(
-                                plan: plan,
-                                selectedPlanIndex: $selectedPlanIndex,
-                                totalPlans: viewModel.displayPlans.count
-                            )
-                            .padding([.horizontal, .top])
-                            .padding(.bottom, 50)
-                            .tag(index)
+            ZStack { // Use a ZStack to overlay a loading indicator
+                VStack {
+                    if viewModel.isLoading {
+                        ProgressView("Loading Plans...")
+                    } else if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    } else {
+                        TabView(selection: $selectedPlanIndex) {
+                            ForEach(viewModel.displayPlans.indices, id: \.self) { index in
+                                let plan = viewModel.displayPlans[index]
+                                SubscriptionCardView(
+                                    plan: plan,
+                                    selectedPlanIndex: $selectedPlanIndex,
+                                    totalPlans: viewModel.displayPlans.count
+                                )
+                                .padding([.horizontal, .top])
+                                .padding(.bottom, 50)
+                                .tag(index)
+                            }
                         }
+                        .tabViewStyle(.page(indexDisplayMode: .always))
+                        .indexViewStyle(.page(backgroundDisplayMode: .never))
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .always))
-                    .indexViewStyle(.page(backgroundDisplayMode: .never))
+                }
+                .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+                .navigationTitle("Subscription Plans")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Close") { isPresented = false }
+                            .disabled(storeManager.purchaseState == .inProgress)
+                    }
+                }
+                .task {
+                    await viewModel.loadPlans(from: storeManager)
+                }
+                .onChange(of: storeManager.purchaseState) { newState in
+                    if case .success = newState {
+                        showSuccessAlert = true
+                    }
+                }
+                .alert("Purchase Successful", isPresented: $showSuccessAlert) {
+                    Button("OK", role: .cancel) {
+                        // Dismiss the subscription view after user taps OK
+                        isPresented = false
+                    }
+                } message: {
+                    Text("Your new plan is now active!")
+                }
+
+                // Show a loading overlay when a purchase is in progress
+                if case .inProgress = storeManager.purchaseState {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    ProgressView("Processing...")
+                        .padding()
+                        .background(.white)
+                        .cornerRadius(10)
+                        .progressViewStyle(CircularProgressViewStyle())
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("Subscription Plans")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") { isPresented = false }
-                }
-            }
-            .task {
-                // Load and merge the plans when the view appears.
-                await viewModel.loadPlans(from: storeManager)
+            .onDisappear {
+                // Reset state when the view disappears
+                storeManager.purchaseState = .idle
             }
         }
     }
@@ -146,11 +175,7 @@ private struct SubscriptionControlView: View {
     private var subscribeButton: some View {
         Button(action: {
             Task {
-                do {
-                    try await storeManager.purchase(productToPurchase)
-                } catch {
-                    print("Purchase failed: \(error)")
-                }
+                await storeManager.purchase(productToPurchase)
             }
         }) {
             Text("Subscribe for \(productToPurchase.displayPrice)")
@@ -161,6 +186,7 @@ private struct SubscriptionControlView: View {
                 .background(Color.blue)
                 .cornerRadius(12)
         }
+        .disabled(storeManager.purchaseState == .inProgress)
     }
 
     private enum ArrowDirection { case left, right }
