@@ -6,7 +6,8 @@ enum ViewStyle {
     case title, body, caption, primaryButton, secondaryButton, themedTextField, courseCard, homeSectionTitle,
          subscriptionCardTitle, subscriptionCardButton, subscriptionCardFeatureTitle, subscriptionCardFeatureItem,
          subscriptionPlanBadge,
-         cardTitle // <-- NEW STYLE ADDED HERE
+         // ADDED: New text styles for home screen cards
+         lessonCardTitle, hotTopicCardTitle, dailyTipCardTitle
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
@@ -67,12 +68,26 @@ struct StyleModifier: ViewModifier {
                 .foregroundColor(theme.text)
                 .padding(.horizontal)
         
-        // --- STYLE TO MODIFY ---
-        case .cardTitle:
+        // --- ADDED: Definitions for the new home card title styles ---
+        case .lessonCardTitle:
             content
-                .font(.subheadline) // <-- CHANGED FROM .body to .subheadline
+                .font(.headline)
                 .foregroundColor(theme.text)
                 .lineLimit(2)
+                .multilineTextAlignment(.leading)
+
+        case .hotTopicCardTitle:
+            content
+                .font(.subheadline.weight(.bold))
+                .foregroundColor(theme.text)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+
+        case .dailyTipCardTitle:
+            content
+                .font(.callout)
+                .foregroundColor(theme.text)
+                .lineLimit(3) // Allow more lines for tips
                 .multilineTextAlignment(.leading)
 
         // ... (other styles remain unchanged)
@@ -127,5 +142,61 @@ struct SubscriptionCardStyle: ViewModifier {
 extension View {
     func subscriptionCardStyle(isHighlighted: Bool) -> some View {
         self.modifier(SubscriptionCardStyle(isHighlighted: isHighlighted))
+    }
+}
+
+
+// MARK: - Home Card Styles
+// ADDED: New ViewModifiers for each home screen card type.
+
+struct LessonCardStyle: ViewModifier {
+    @Environment(\.theme) var theme: Theme
+    func body(content: Content) -> some View {
+        content
+            .frame(width: 300, height: 250)
+            .background(theme.cardBackground)
+            .cornerRadius(15)
+            .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
+            .clipped()
+    }
+}
+
+struct HotTopicCardStyle: ViewModifier {
+    @Environment(\.theme) var theme: Theme
+    func body(content: Content) -> some View {
+        content
+            .frame(width: 300, height: 250)
+            .background(theme.cardBackground)
+            .cornerRadius(15)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(theme.accent.opacity(0.7), lineWidth: 2)
+            )
+            .shadow(color: theme.accent.opacity(0.3), radius: 6, x: 0, y: 5)
+            .clipped()
+    }
+}
+
+struct DailyTipCardStyle: ViewModifier {
+    @Environment(\.theme) var theme: Theme
+    func body(content: Content) -> some View {
+        content
+            .frame(width: 300, height: 250)
+            .background(theme.cardBackground)
+            .cornerRadius(25) // More rounded
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .clipped()
+    }
+}
+
+extension View {
+    func lessonCardStyle() -> some View {
+        self.modifier(LessonCardStyle())
+    }
+    func hotTopicCardStyle() -> some View {
+        self.modifier(HotTopicCardStyle())
+    }
+    func dailyTipCardStyle() -> some View {
+        self.modifier(DailyTipCardStyle())
     }
 }
