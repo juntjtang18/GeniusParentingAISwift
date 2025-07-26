@@ -2,9 +2,9 @@
 
 import Foundation
 import KeychainAccess
-import os
+// NOTE: We no longer need to import `os` directly here.
 
-// ADD THIS: A global constant for the notification name.
+// A global constant for the notification name.
 extension Notification.Name {
     static let didInvalidateSession = Notification.Name("didInvalidateSession")
 }
@@ -15,15 +15,13 @@ class NetworkManager {
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
     private let keychain = Keychain(service: Config.keychainService)
-    private let logger = Logger(subsystem: "com.geniusparentingai.GeniusParentingAI", category: "NetworkManager")
+    
+    // Use the new AppLogger, configured for the "NetworkManager" category.
+    private let logger = AppLogger(category: "NetworkManager")
 
     private init() {
         decoder = JSONDecoder()
         encoder = JSONEncoder()
-        
-        // --- FIXED: Removed the global key decoding/encoding strategies ---
-        // We will rely on explicit CodingKeys in each model to handle
-        // the inconsistent naming from the backend API.
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
@@ -52,7 +50,6 @@ class NetworkManager {
         return try await performRequest(url: url, method: "POST", body: payload)
     }
 
-    /// Fetches a single page of items and returns the response shell, including pagination metadata.
     func fetchPage<T: Codable>(baseURLComponents: URLComponents, page: Int, pageSize: Int = 25) async throws -> StrapiListResponse<T> {
         var components = baseURLComponents
         var queryItems = components.queryItems ?? []
@@ -67,7 +64,6 @@ class NetworkManager {
         return try await performRequest(url: url, method: "GET")
     }
 
-    /// Fetches all pages for a given query by aggregating the results. Useful for background data sync.
     func fetchAllPages<T: Codable>(baseURLComponents: URLComponents) async throws -> [T] {
         var allItems: [T] = []
         var currentPage = 1
@@ -131,32 +127,28 @@ class NetworkManager {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         
-        // --- FIX: CENTRALIZED SESSION HANDLING ---
-        // If the token is expired or invalid, handle it here globally.
         if httpResponse.statusCode == 401 {
-            // 1. Clear the bad session data.
             keychain["jwt"] = nil
             await MainActor.run { SessionManager.shared.currentUser = nil }
-            
-            // 2. Broadcast a notification that the session was invalidated.
             NotificationCenter.default.post(name: .didInvalidateSession, object: nil)
-            
-            // 3. Throw a specific error so the original caller knows what happened.
             throw URLError(.userAuthenticationRequired)
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "No response body"
+            
+            // Replaced old logger call with the new configurable one.
             logger.error("HTTP Error: \(method) request to \(url) failed with status code \(httpResponse.statusCode). Body: \(errorBody)")
+            
             if let errorResponse = try? decoder.decode(StrapiErrorResponse.self, from: data) {
                 throw NSError(domain: "NetworkManager.StrapiError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error.message])
             }
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Received status code \(httpResponse.statusCode)."])
         }
-        // Log the raw JSON string for debugging purposes.
+        
+        // Replaced old logger call with the new configurable one.
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("📦 Raw JSON Response from \(url):")
-            print(jsonString)
+            logger.debug("📦 Raw JSON Response from \(url):\n\(jsonString)")
         }
         
         if data.isEmpty {
@@ -167,6 +159,7 @@ class NetworkManager {
         do {
             return try decoder.decode(ResponseBody.self, from: data)
         } catch {
+            // Replaced old logger calls with the new configurable ones.
             logger.error("Decoding Error: Failed to decode \(ResponseBody.self). Error: \(error.localizedDescription)")
             logger.error("Decoding Error Details: \(error)")
             if let jsonString = String(data: data, encoding: .utf8) { logger.error("Raw JSON: \(jsonString)") }
