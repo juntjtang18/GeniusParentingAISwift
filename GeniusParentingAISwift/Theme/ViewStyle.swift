@@ -153,7 +153,8 @@ struct LessonCardStyle: ViewModifier {
     @Environment(\.theme) var theme: Theme
     func body(content: Content) -> some View {
         content
-            .frame(width: 300, height: 250)
+            // MODIFIED: Changed fixed width to 85% of screen width.
+            .frame(width: UIScreen.main.bounds.width * 0.85, height: 250)
             .background(theme.cardBackground)
             .cornerRadius(15)
             .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
