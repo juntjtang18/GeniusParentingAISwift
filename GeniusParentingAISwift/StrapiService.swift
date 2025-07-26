@@ -154,5 +154,17 @@ class StrapiService {
         // Use fetchDirect since the response is a direct object, not wrapped in another "data" key.
         return try await NetworkManager.shared.fetchDirect(from: url)
     }
-    
+    // MARK: - Subscription Management
+
+    /// Activates a subscription by sending a validated Apple receipt to the backend.
+    /// - Parameter receipt: The Base64 encoded App Store receipt data.
+    /// - Returns: The response from the server confirming activation status.
+    func activateSubscription(receipt: String) async throws -> SubscriptionActivationResponse {
+        logger.debug("StrapiService: Activating subscription.")
+        guard let url = URL(string: "\(Config.subscriptionSubsystemBaseUrl)/api/v1/subscriptions/activate") else {
+            throw URLError(.badURL)
+        }
+        let payload = SubscriptionActivationPayload(apple_receipt: receipt)
+        return try await NetworkManager.shared.post(to: url, body: payload)
+    }
 }

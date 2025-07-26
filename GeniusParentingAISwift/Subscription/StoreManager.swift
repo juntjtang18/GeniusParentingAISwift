@@ -4,8 +4,7 @@
 //
 //  Created by James Tang on 2025/7/24.
 //
-
-// GeniusParentingAISwift/StoreManager.swift
+// GeniusParentingAISwift/Subscription/StoreManager.swift
 import Foundation
 import StoreKit
 
@@ -69,6 +68,9 @@ class StoreManager: ObservableObject {
             // The purchase was successful, verify the transaction.
             let transaction = try checkVerified(verification)
             
+            // --- MODIFIED: SEND RECEIPT TO YOUR SERVER ---
+            await sendReceiptToServer(transaction: transaction)
+
             // Update the user's set of purchased products.
             await updatePurchasedProducts()
 
@@ -90,6 +92,9 @@ class StoreManager: ObservableObject {
                 do {
                     let transaction = try await self.checkVerified(result)
                     
+                    // --- MODIFIED: SEND RECEIPT TO YOUR SERVER ---
+                    await self.sendReceiptToServer(transaction: transaction)
+                    
                     // The transaction was successful, update the purchase status.
                     await self.updatePurchasedProducts()
 
@@ -99,6 +104,36 @@ class StoreManager: ObservableObject {
                     print("Transaction failed verification")
                 }
             }
+        }
+    }
+    
+    /// **Handles the crucial step of sending the Apple receipt to your server for activation.**
+    /// This ensures your backend is the source of truth for user entitlements.
+    private func sendReceiptToServer(transaction: Transaction) async {
+        guard let receiptURL = Bundle.main.appStoreReceiptURL,
+              let receiptData = try? Data(contentsOf: receiptURL) else {
+            print("StoreManager Error: Could not get App Store receipt data.")
+            // You might want to add more robust error handling here,
+            // like retrying later or alerting the user.
+            return
+        }
+
+        // The receipt data needs to be Base64 encoded to be sent in the JSON payload.
+        let receiptString = receiptData.base64EncodedString()
+
+        do {
+            let response = try await StrapiService.shared.activateSubscription(receipt: receiptString)
+            print("StoreManager Success: Successfully activated subscription on server. Message: \(response.message)")
+
+            // After successful activation, refetch the user's profile to get the
+            // latest subscription status from your server. This updates the entire app state.
+            if let updatedUser = try? await StrapiService.shared.fetchCurrentUser() {
+                SessionManager.shared.currentUser = updatedUser
+            }
+        } catch {
+            print("StoreManager Error: Failed to activate subscription on server. Error: \(error.localizedDescription)")
+            // Handle the error appropriately. For example, you could show an alert to the user
+            // asking them to try restoring purchases or contact support.
         }
     }
     
