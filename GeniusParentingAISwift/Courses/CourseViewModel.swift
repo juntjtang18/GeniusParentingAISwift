@@ -1,25 +1,28 @@
-//
-//  CourseViewModel.swift
-//  GeniusParentingAISwift
-//
-//  Created by James Tang on 2025/7/24.
-//
-
 import Foundation
 import KeychainAccess
 
-// MARK: - Course View Model
 @MainActor
 class CourseViewModel: ObservableObject {
     @Published var categories: [CategoryData] = []
-    @Published var coursesByCategoryID: [Int: [Course]] = [:]
     @Published var loadingCategoryIDs = Set<Int>()
-    @Published var errorMessage: String? = nil
-    var initialLoadCompleted = false
+    @Published var errorMessage: String?
+    @Published var initialLoadCompleted = false
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
     private let keychain = Keychain(service: Config.keychainService)
     private let lastViewedCategoryKey = "lastViewedCategoryID"
+
+    var coursesByCategoryID: [Int: [Course]] {
+        get {
+            guard let userId = SessionManager.shared.currentUser?.id else { return [:] }
+            return SessionStore.shared.getUserData("coursesByCategoryID", userId: userId) ?? [:]
+        }
+        set {
+            if let userId = SessionManager.shared.currentUser?.id {
+                SessionStore.shared.setUserData(newValue, forKey: "coursesByCategoryID", userId: userId)
+            }
+        }
+    }
 
     func initialFetch() async {
         guard !initialLoadCompleted else { return }
@@ -43,10 +46,11 @@ class CourseViewModel: ObservableObject {
             let decodedResponse = try decoder.decode(StrapiListResponse<CategoryData>.self, from: data)
             
             self.categories = decodedResponse.data ?? []
+            SessionStore.shared.setNonUserData(categories, forKey: "categories")
             self.initialLoadCompleted = true
 
-            var priorityCategoryID: Int? = UserDefaults.standard.integer(forKey: lastViewedCategoryKey)
-            if priorityCategoryID == 0 {
+            var priorityCategoryID: Int? = UserPreferencesManager.shared.value(forKey: lastViewedCategoryKey)
+            if priorityCategoryID == nil || priorityCategoryID == 0 {
                 priorityCategoryID = self.categories.first?.id
             }
             
@@ -60,6 +64,11 @@ class CourseViewModel: ObservableObject {
 
     func fetchCourses(for categoryID: Int) async {
         guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else {
+            return
+        }
+
+        guard let userId = SessionManager.shared.currentUser?.id else {
+            errorMessage = "No active user session."
             return
         }
 
@@ -118,7 +127,9 @@ class CourseViewModel: ObservableObject {
 
             } while currentPage <= totalPages
 
-            self.coursesByCategoryID[categoryID] = allCourses
+            var currentCourses = coursesByCategoryID
+            currentCourses[categoryID] = allCourses
+            SessionStore.shared.setUserData(currentCourses, forKey: "coursesByCategoryID", userId: userId)
 
         } catch {
             print("Failed to fetch or decode courses for category \(categoryID): \(error.localizedDescription)")

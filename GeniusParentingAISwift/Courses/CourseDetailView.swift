@@ -1,22 +1,6 @@
-// GeniusParentingAISwift/CourseDetailView.swift
+// GeniusParentingAISwift/Courses/CourseDetailView.swift
 import SwiftUI
 import AVKit
-
-class CourseCache {
-    static let shared = CourseCache()
-    private init() {}
-
-    private(set) var courses: [Int: Course] = [:]
-
-    func get(courseId: Int) -> Course? {
-        return courses[courseId]
-    }
-
-    func set(course: Course) {
-        courses[course.id] = course
-    }
-}
-
 
 struct ShowACourseView: View {
     @Environment(\.theme) var theme: Theme
@@ -28,7 +12,6 @@ struct ShowACourseView: View {
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
-        // --- The View body remains unchanged ---
         VStack(spacing: 0) {
             if viewModel.isLoading {
                 ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -135,7 +118,6 @@ struct ShowACourseView: View {
         }
     }
     
-    // --- Helper functions remain unchanged ---
     func groupContentIntoPages(content: [CourseContentItem]) -> [[CourseContentItem]] {
         var pages: [[CourseContentItem]] = []
         var currentPage: [CourseContentItem] = []
@@ -190,10 +172,8 @@ class ShowACourseViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
-    // The keychain property is no longer needed here.
 
     func fetchCourse(courseId: Int) async {
-        // Keep the existing caching logic.
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
         
         if !isRefreshEnabled, let cachedCourse = CourseCache.shared.get(courseId: courseId) {
@@ -214,7 +194,6 @@ class ShowACourseViewModel: ObservableObject {
         }
         
         do {
-            // Replace the network logic with a single call to our manager.
             let fetchedCourse: Course = try await NetworkManager.shared.fetchSingle(from: url)
             
             CourseCache.shared.set(course: fetchedCourse)

@@ -1,20 +1,22 @@
-// GeniusParentingAISwift/ProfileView.swift
 import SwiftUI
 import KeychainAccess
 
 struct ProfileView: View {
     @Binding var isLoggedIn: Bool
-    @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject var viewModel: ProfileViewModel
     @State private var isShowingEditView = false
     @Binding var isPresented: Bool
 
-    // URL to open the user's Apple subscription management page
     private let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
     var body: some View {
         NavigationView {
             VStack {
-                if viewModel.isLoading {
+                if !isLoggedIn {
+                    Text("Please log in to view your profile.")
+                        .foregroundColor(.secondary)
+                        .padding()
+                } else if viewModel.isLoading {
                     ProgressView("Loading Profile...")
                 } else if let errorMessage = viewModel.errorMessage {
                     VStack {
@@ -29,6 +31,10 @@ struct ProfileView: View {
                         }
                         .padding()
                     }
+                } else if viewModel.user == nil {
+                    Text("No profile data available.")
+                        .foregroundColor(.secondary)
+                        .padding()
                 } else if let user = viewModel.user {
                     List {
                         Section(header: Text("Account Details")) {
@@ -36,11 +42,9 @@ struct ProfileView: View {
                             ProfileRow(label: "Email", value: user.email)
                         }
 
-                        // --- ADD THIS NEW SECTION ---
                         Section(header: Text("Subscription")) {
                             Link("Manage Subscription", destination: manageSubscriptionURL)
                         }
-                        // --- END OF NEW SECTION ---
                         
                         if let profile = user.user_profile {
                             Section(header: Text("Family Information")) {
@@ -95,7 +99,7 @@ struct ProfileView: View {
                 ProfileEditView(isPresented: $isShowingEditView, viewModel: viewModel)
             }
             .onAppear {
-                if viewModel.user == nil {
+                if isLoggedIn {
                     Task {
                         await viewModel.fetchUserProfile()
                     }
@@ -121,7 +125,11 @@ struct ProfileRow: View {
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            ProfileView(isLoggedIn: .constant(true), isPresented: .constant(true))
+            ProfileView(
+                isLoggedIn: .constant(true),
+                viewModel: ProfileViewModel(),
+                isPresented: .constant(true)
+            )
         }
     }
 }

@@ -4,14 +4,17 @@ import Foundation
 // MARK: - Top-Level User Authentication Models
 
 /// Represents the main user object returned from Strapi.
-struct StrapiUser: Codable, Identifiable {
+struct StrapiUser: Codable, Identifiable, Equatable {
     let id: Int
     let username: String
     let email: String
     var user_profile: UserProfile?
-    // The 'role' property from the user object is the Strapi system role, which we will keep.
     let role: StrapiSystemRole?
     let subscription: StrapiRelation<Subscription>?
+
+    static func ==(lhs: StrapiUser, rhs: StrapiUser) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
 /// Represents the populated 'user_profile' relation within the StrapiUser.
@@ -20,10 +23,12 @@ struct UserProfile: Codable, Identifiable, Hashable {
     let locale: String?
     let consentForEmailNotice: Bool?
     let children: [Child]?
+    let users_permissions_user: StrapiRelation<PopulatedUser>?
 
     enum CodingKeys: String, CodingKey {
         case id, children, locale
         case consentForEmailNotice
+        case users_permissions_user = "users_permissions_user"
     }
 }
 
@@ -35,11 +40,48 @@ struct Child: Codable, Identifiable, Hashable {
     let gender: String
 }
 
+// MARK: - User Profile API Models & Payloads
+
+/// The response from the `/api/user-profiles/mine` endpoint.
+public struct UserProfileApiResponse: Codable {
+    let data: UserProfileData
+}
+
+public struct UserProfileData: Codable {
+    let id: Int
+    let attributes: UserProfileAttributes
+}
+
+public struct UserProfileAttributes: Codable {
+    let locale: String?
+    let consentForEmailNotice: Bool
+    let children: [Child]?
+}
+
+/// The payload for updating a user's account (`PUT /api/users/:id`).
+public struct UserUpdatePayload: Codable {
+    let username: String
+}
+
+/// The payload for updating a user's profile (`PUT /api/user-profiles/mine`).
+public struct ProfileUpdatePayload: Codable {
+    let data: ProfileUpdateData
+}
+
+public struct ProfileUpdateData: Codable {
+    let consentForEmailNotice: Bool
+    let children: [ChildPayload]
+}
+
+public struct ChildPayload: Codable {
+    let id: Int?
+    let name: String
+    let age: Int
+    let gender: String
+}
+
 
 // MARK: - Role & Subscription Models
-
-// This is the Strapi system role (e.g., 'Authenticated', 'Public').
-// We rename it to avoid conflict with our new app-specific Role enum.
 struct StrapiSystemRole: Codable {
     let id: Int
     let name: String
@@ -47,6 +89,7 @@ struct StrapiSystemRole: Codable {
     let type: String
 }
 
+// ... (The rest of the file remains unchanged)
 struct Subscription: Codable, Identifiable {
     let id: Int
     let attributes: SubscriptionAttributes
@@ -65,8 +108,6 @@ struct Sale: Codable, Hashable {
     let endDate: String?
 }
 
-// MARK: - Plan Tier Enum
-// This enum is now accessible to the entire app.
 enum PlanTier: Int, Comparable {
     case free = 0
     case basic = 1
@@ -103,7 +144,7 @@ class Plan: Codable, Identifiable, Hashable {
 class PlanAttributes: Codable, Hashable {
     let name: String
     let productId: String
-    let role: String? // <-- ADDED: The role string from the backend.
+    let role: String?
     let order: Int?
     let sale: Sale?
     let features: StrapiListResponse<Feature>?
@@ -120,7 +161,6 @@ class PlanAttributes: Codable, Hashable {
         return lhs.name == rhs.name && lhs.productId == rhs.productId
     }
 }
-
 
 struct Feature: Codable, Identifiable, Hashable {
     let id: Int

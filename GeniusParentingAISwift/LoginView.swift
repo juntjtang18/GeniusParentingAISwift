@@ -1,5 +1,3 @@
-// GeniusParentingAISwift/LoginView.swift
-
 import SwiftUI
 import KeychainAccess
 
@@ -15,8 +13,6 @@ struct LoginView: View {
     @State private var agreeToPrivacy = false
     @State private var showingPrivacyPolicy = false
     @State private var showingTermsOfService = false
-    
-    let keychain = Keychain(service: Config.keychainService)
 
     enum ViewState {
         case login
@@ -59,9 +55,7 @@ struct LoginView: View {
                         }
                         
                         VStack(spacing: 15) {
-                            // Terms and Privacy Checkboxes
                             VStack(alignment: .leading, spacing: 10) {
-                                // Terms of Service Checkbox
                                 Button(action: { agreeToTerms.toggle() }) {
                                     HStack {
                                         Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
@@ -78,7 +72,6 @@ struct LoginView: View {
                                     TermsOfServiceView(isPresented: $showingTermsOfService)
                                 }
                                 
-                                // Privacy Policy Checkbox
                                 Button(action: { agreeToPrivacy.toggle() }) {
                                     HStack {
                                         Image(systemName: agreeToPrivacy ? "checkmark.square.fill" : "square")
@@ -112,7 +105,6 @@ struct LoginView: View {
                         }
                         .padding(.horizontal)
                         
-                        
                         Button(action: {
                             currentView = .signup
                         }) {
@@ -133,31 +125,68 @@ struct LoginView: View {
     func login() async {
         isLoading = true
         errorMessage = ""
+        print("Login attempt for email: \(email)")
         
         let credentials = LoginCredentials(identifier: email, password: password)
         
         do {
-            // Use the new StrapiService to handle the login logic.
-            let authResponse = try await StrapiService.shared.login(credentials: credentials)
-            keychain["jwt"] = authResponse.jwt
-            
-            // Log the entire authResponse to the console for verification.
-            print("Login Successful. Received AuthResponse:")
-            dump(authResponse) // Use dump() for a detailed, readable output of the object.
-
-            // Store the fetched user object in our session manager.
-            SessionManager.shared.currentUser = authResponse.user
-            isLoggedIn = true
+            if let existingJWT = SessionManager.shared.getJWT(), SessionManager.shared.isSameUser(email: email) {
+                do {
+                    let user = try await StrapiService.shared.fetchCurrentUser()
+                    print("Reusing existing JWT, fetched user: \(user.email)")
+                    SessionManager.shared.setCurrentUser(user)
+                    await loadUserData(userId: user.id)
+                    isLoggedIn = true
+                } catch {
+                    print("Existing JWT failed, error: \(error.localizedDescription)")
+                    SessionManager.shared.clearSession()
+                    try await performNewLogin(credentials: credentials)
+                }
+            } else {
+                print("No valid JWT or different user, performing new login")
+                SessionManager.shared.clearSession()
+                try await performNewLogin(credentials: credentials)
+            }
         } catch {
+            print("Login failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
+            SessionManager.shared.clearSession()
+            isLoggedIn = false
         }
         
         isLoading = false
     }
-}
 
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView(isLoggedIn: .constant(false))
+    private func performNewLogin(credentials: LoginCredentials) async throws {
+        print("Performing new login for \(credentials.identifier)")
+        let authResponse = try await StrapiService.shared.login(credentials: credentials)
+        print("Login successful, JWT: \(authResponse.jwt)")
+        SessionManager.shared.setJWT(authResponse.jwt)
+        SessionManager.shared.setCurrentUser(authResponse.user)
+        SessionManager.shared.updateLastUserEmail(authResponse.user.email)
+        await loadUserData(userId: authResponse.user.id)
+        isLoggedIn = true // Ensure isLoggedIn is set after data loading
+    }
+
+    private func loadUserData(userId: Int) async {
+        print("Loading user data for userId: \(userId)")
+        let profileViewModel = ProfileViewModel()
+        await profileViewModel.fetchUserProfile()
+        print("Profile fetched: \(String(describing: profileViewModel.user?.user_profile))")
+        
+        let subscriptionViewModel = SubscriptionViewModel()
+        await subscriptionViewModel.loadPlans(from: StoreManager.shared)
+        print("Subscription plans loaded")
+        
+        do {
+            try await StoreManager.shared.updatePurchasedProducts()
+            print("Purchased products updated")
+        } catch {
+            print("Failed to update purchased products: \(error.localizedDescription)")
+        }
+        
+        let courseViewModel = CourseViewModel()
+        await courseViewModel.initialFetch()
+        print("Courses fetched")
     }
 }

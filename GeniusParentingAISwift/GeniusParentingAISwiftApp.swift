@@ -1,31 +1,10 @@
-// GeniusParentingAISwiftApp.swift
-
 import SwiftUI
 import KeychainAccess
-import StoreKit // Import the StoreKit framework
+import StoreKit
 
-// MARK: - Session Manager
-@MainActor
-class SessionManager: ObservableObject {
-    static let shared = SessionManager()
-
-    @Published var currentUser: StrapiUser?
-    /// Computes the user's role based on their subscription plan.
-    var role: Role {
-        // Safely access the role string from the user's subscribed plan.
-        guard let roleString = currentUser?.subscription?.data?.attributes.plan.attributes.role else {
-            // If there's no plan or role string, default to 'free'.
-            return .free
-        }
-        
-        // Initialize our Role enum from the string. If the string from the backend
-        // doesn't match a case in our enum, default to 'free'.
-        return Role(rawValue: roleString) ?? .free
-    }
-
-    private init() {}
+extension Notification.Name {
+    static let didLogout = Notification.Name("didLogout")
 }
-
 
 @main
 struct GeniusParentingAISwiftApp: App {
@@ -34,9 +13,7 @@ struct GeniusParentingAISwiftApp: App {
     
     @StateObject private var speechManager = SpeechManager()
     @StateObject private var themeManager = ThemeManager()
-    @StateObject private var storeManager = StoreManager() // Initialize the StoreManager
-
-    private let keychain = Keychain(service: Config.keychainService)
+    @StateObject private var storeManager = StoreManager.shared
 
     init() {
         print("Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")
@@ -47,51 +24,53 @@ struct GeniusParentingAISwiftApp: App {
             ZStack {
                 if isCheckingToken {
                     ProgressView("Checking Login Status...")
-                } else if isLoggedIn {
-                    MainView(isLoggedIn: $isLoggedIn)
+                } else if isLoggedIn, let user = SessionManager.shared.currentUser {
+                    MainView(isLoggedIn: $isLoggedIn, logoutAction: logout)
+                        .id(user.id)
                 } else {
                     LoginView(isLoggedIn: $isLoggedIn)
                 }
             }
             .environmentObject(speechManager)
             .environmentObject(themeManager)
-            .environmentObject(storeManager) // Make the StoreManager available to all views
+            .environmentObject(storeManager)
             .theme(themeManager.currentTheme)
             .onAppear {
-                // Connect the StoreManager to the PermissionManager when the app starts
                 PermissionManager.shared.storeManager = storeManager
                 checkLoginStatus()
             }
             .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
-                isLoggedIn = false
+                logout()
             }
         }
     }
 
     private func checkLoginStatus() {
         Task {
-            // Check if a JWT token exists in the keychain.
-            if keychain["jwt"] != nil {
+            if let jwt = SessionManager.shared.getJWT() {
                 do {
-                    // Attempt to fetch the current user's profile using the token.
                     let user = try await StrapiService.shared.fetchCurrentUser()
-                    
-                    // If successful, update the session and set the logged-in state to true.
                     SessionManager.shared.currentUser = user
+                    SessionManager.shared.updateLastUserEmail(user.email)
+                    await storeManager.updatePurchasedProducts()
                     isLoggedIn = true
                 } catch {
-                    // If the fetch fails (e.g., token is expired), clear the invalid token
-                    // and ensure the logged-in state is false.
-                    keychain["jwt"] = nil
+                    SessionManager.shared.clearSession()
                     isLoggedIn = false
                 }
             } else {
-                // If no token is found, the user is not logged in.
+                SessionManager.shared.clearSession()
                 isLoggedIn = false
             }
-            
-            // Hide the loading indicator once the check is complete.
             isCheckingToken = false
+        }
+    }
+
+    private func logout() {
+        SessionManager.shared.clearSession()
+        NotificationCenter.default.post(name: .didLogout, object: nil)
+        withAnimation {
+            isLoggedIn = false
         }
     }
 }

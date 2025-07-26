@@ -1,9 +1,6 @@
-// GeniusParentingAISwift/Subscription/StoreManager.swift
 import Foundation
 import StoreKit
 
-// 1. Define your product IDs in a centralized place for easy access.
-//    Use the exact IDs you created in App Store Connect.
 enum ProductIdentifiers {
     static let basicMonthly = "ca.geniusparentingai.basic.monthly"
     static let basicYearly = "ca.geniusparentingai.basic.yearlyplan"
@@ -12,14 +9,14 @@ enum ProductIdentifiers {
 
 @MainActor
 class StoreManager: ObservableObject {
-    // MARK: - Purchase Status Enum
+    static let shared = StoreManager() // Added singleton instance
+
     enum PurchaseStatus: Equatable {
         case idle
         case inProgress
         case success
         case failed(Error)
 
-        // Equatable conformance to use in .onChange
         static func == (lhs: PurchaseStatus, rhs: PurchaseStatus) -> Bool {
             switch (lhs, rhs) {
             case (.idle, .idle), (.inProgress, .inProgress), (.success, .success):
@@ -32,51 +29,49 @@ class StoreManager: ObservableObject {
         }
     }
 
-    // A list of the products available for purchase.
     @Published private(set) var products: [Product] = []
-    
-    // The set of product IDs the user has purchased and is entitled to.
-    @Published private(set) var purchasedProductIDs = Set<String>()
-
-    // NEW: Published property for views to observe
     @Published var purchaseState: PurchaseStatus = .idle
 
     private var transactionListener: Task<Void, Error>? = nil
 
-    init() {
-        // Start a listener for transactions that happen outside the app (e.g., from a promo code).
+    private init() {
         transactionListener = listenForTransactions()
-
         Task {
-            // Fetch products from the App Store as soon as the manager is initialized.
             await requestProducts()
-            // Update the user's purchase status.
             await updatePurchasedProducts()
         }
     }
 
     deinit {
-        // Stop listening for transactions when the object is deallocated.
         transactionListener?.cancel()
     }
 
-    // Fetches products from the App Store.
+    var purchasedProductIDs: Set<String> {
+        get {
+            guard let userId = SessionManager.shared.currentUser?.id else { return [] }
+            return SessionStore.shared.getUserData("purchasedProductIDs", userId: userId) ?? []
+        }
+        set {
+            if let userId = SessionManager.shared.currentUser?.id {
+                SessionStore.shared.setUserData(newValue, forKey: "purchasedProductIDs", userId: userId)
+            }
+        }
+    }
+
     func requestProducts() async {
         do {
-            // Request product information using the identifiers.
             let storeProducts = try await Product.products(for: [
                 ProductIdentifiers.basicMonthly,
                 ProductIdentifiers.basicYearly,
                 ProductIdentifiers.premiumYearly
             ])
-            // Sort products by price to ensure a consistent order.
             self.products = storeProducts.sorted(by: { $0.price < $1.price })
+            SessionStore.shared.setNonUserData(products, forKey: "storeProducts")
         } catch {
             print("Failed to fetch products: \(error)")
         }
     }
 
-    // Initiates the purchase flow for a product.
     func purchase(_ product: Product) async {
         purchaseState = .inProgress
         do {
@@ -88,21 +83,20 @@ class StoreManager: ObservableObject {
                 await sendReceiptToServer(transaction: transaction)
                 await updatePurchasedProducts()
                 await transaction.finish()
-                purchaseState = .success // Signal success
+                purchaseState = .success
             case .userCancelled, .pending:
-                purchaseState = .idle // Reset state
+                purchaseState = .idle
                 break
             @unknown default:
-                purchaseState = .idle // Reset state
+                purchaseState = .idle
                 break
             }
         } catch {
             print("Purchase failed: \(error)")
-            purchaseState = .failed(error) // Signal failure
+            purchaseState = .failed(error)
         }
     }
 
-    // Listens for transaction updates from the App Store.
     private func listenForTransactions() -> Task<Void, Error> {
         return Task.detached {
             for await result in Transaction.updates {
@@ -119,9 +113,10 @@ class StoreManager: ObservableObject {
     }
     
     private func sendReceiptToServer(transaction: Transaction) async {
-        guard let receiptURL = Bundle.main.appStoreReceiptURL,
+        guard let userId = SessionManager.shared.currentUser?.id,
+              let receiptURL = Bundle.main.appStoreReceiptURL,
               let receiptData = try? Data(contentsOf: receiptURL) else {
-            print("StoreManager Error: Could not get App Store receipt data.")
+            print("StoreManager Error: Could not get App Store receipt data or user session.")
             return
         }
 
@@ -130,16 +125,15 @@ class StoreManager: ObservableObject {
         do {
             let response = try await StrapiService.shared.activateSubscription(receipt: receiptString)
             print("StoreManager Success: Successfully activated subscription on server. Message: \(response.message)")
-
+            
             if let updatedUser = try? await StrapiService.shared.fetchCurrentUser() {
-                SessionManager.shared.currentUser = updatedUser
+                SessionManager.shared.setCurrentUser(updatedUser)
             }
         } catch {
             print("StoreManager Error: Failed to activate subscription on server. Error: \(error.localizedDescription)")
         }
     }
     
-    // Checks if a transaction is cryptographically signed by Apple.
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
@@ -149,8 +143,8 @@ class StoreManager: ObservableObject {
         }
     }
     
-    // Updates the `purchasedProductIDs` set with the user's current entitlements.
     func updatePurchasedProducts() async {
+        guard let userId = SessionManager.shared.currentUser?.id else { return }
         var purchasedIDs = Set<String>()
         for await result in Transaction.currentEntitlements {
             if let transaction = try? checkVerified(result) {
@@ -159,6 +153,6 @@ class StoreManager: ObservableObject {
                 }
             }
         }
-        self.purchasedProductIDs = purchasedIDs
+        SessionStore.shared.setUserData(purchasedIDs, forKey: "purchasedProductIDs", userId: userId)
     }
 }

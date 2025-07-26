@@ -5,6 +5,13 @@ import KeychainAccess
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Binding var isLoggedIn: Bool
+    let logoutAction: () -> Void // To receive the logout function
+    
+    // --- MODIFIED: The MainView now owns the ViewModel ---
+    // Because MainView is re-created for each user via .id(), this StateObject
+    // is guaranteed to be a new, clean instance for each new user session.
+    @StateObject private var profileViewModel = ProfileViewModel()
+    
     @State private var selectedTab: Int = 0
     
     // State management for sheets
@@ -62,7 +69,6 @@ struct MainView: View {
                 SubscriptionView(isPresented: $isShowingSubscriptionSheet)
             }
             
-            // --- Side Menu Layer ---
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
@@ -75,13 +81,15 @@ struct MainView: View {
                     .zIndex(1)
             }
 
+            // --- MODIFIED: Pass the new viewModel to the SideMenuView ---
             SideMenuView(
                 isShowing: $isSideMenuShowing,
+                profileViewModel: profileViewModel, // Pass the viewModel down
                 isShowingProfileSheet: $isShowingProfileSheet,
                 isShowingLanguageSheet: $isShowingLanguageSheet,
                 isShowingSettingSheet: $isShowingSettingSheet,
                 isShowingThemeSheet: $isShowingThemeSheet,
-                isLoggedIn: $isLoggedIn,
+                logoutAction: logoutAction,
                 isShowingPrivacySheet: $isShowingPrivacySheet,
                 isShowingTermsSheet: $isShowingTermsSheet,
                 isShowingSubscriptionSheet: $isShowingSubscriptionSheet
@@ -92,13 +100,18 @@ struct MainView: View {
             .ignoresSafeArea()
             .zIndex(2)
             
-            // --- Custom "Fly from Left" Views ---
+            // --- MODIFIED: Pass the new viewModel to the ProfileView ---
             if isShowingProfileSheet {
-                ProfileView(isLoggedIn: $isLoggedIn, isPresented: $isShowingProfileSheet)
-                    .transition(.move(edge: .leading))
-                    .zIndex(3)
+                ProfileView(
+                    isLoggedIn: $isLoggedIn,
+                    viewModel: profileViewModel, // Pass the viewModel down
+                    isPresented: $isShowingProfileSheet
+                )
+                .transition(.move(edge: .leading))
+                .zIndex(3)
             }
             
+            // Other sheets remain the same...
             if isShowingLanguageSheet {
                 LanguagePickerView(selectedLanguage: $selectedLanguage, isPresented: $isShowingLanguageSheet)
                     .transition(.move(edge: .leading))
@@ -145,8 +158,6 @@ struct MainView: View {
         UITabBar.appearance().unselectedItemTintColor = UIColor(named: colorName)
     }
     
-    // MARK: - Toolbar Content
-    
     private var menuToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: {
@@ -159,8 +170,6 @@ struct MainView: View {
             }
         }
     }
-    
-    // MARK: - Tab Views
     
     private var homeTab: some View {
         NavigationView {
@@ -233,6 +242,6 @@ struct LanguagePickerView: View {
 
 struct MainView_Previews: PreviewProvider {
     static var previews: some View {
-        MainView(isLoggedIn: .constant(true))
+        MainView(isLoggedIn: .constant(true), logoutAction: {})
     }
 }

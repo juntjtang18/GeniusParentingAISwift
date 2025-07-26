@@ -1,23 +1,21 @@
 // GeniusParentingAISwift/SideMenuView.swift
 import SwiftUI
-import KeychainAccess
 
 struct SideMenuView: View {
     @Binding var isShowing: Bool
+    // --- ADDED: To receive the viewModel from MainView ---
+    let profileViewModel: ProfileViewModel
     @Binding var isShowingProfileSheet: Bool
     @Binding var isShowingLanguageSheet: Bool
     @Binding var isShowingSettingSheet: Bool
     @Binding var isShowingThemeSheet: Bool
-    @Binding var isLoggedIn: Bool
+    let logoutAction: () -> Void
     @Binding var isShowingPrivacySheet: Bool
     @Binding var isShowingTermsSheet: Bool
     @Binding var isShowingSubscriptionSheet: Bool
 
-    private let keychain = Keychain(service: Config.keychainService)
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 1. Menu Header
             VStack(alignment: .leading) {
                 Text("Settings")
                     .font(.title2.bold())
@@ -27,7 +25,6 @@ struct SideMenuView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.blue)
 
-            // 2. Menu Items
             VStack(alignment: .leading, spacing: 1) {
                 Button(action: { handleMenuSelection { isShowingProfileSheet = true } }) {
                     Label("Profile", systemImage: "person.fill")
@@ -79,14 +76,7 @@ struct SideMenuView: View {
 
             Spacer()
             
-            // 3. Logout Button
-            Button(action: {
-                keychain["jwt"] = nil
-                SessionManager.shared.currentUser = nil
-                withAnimation {
-                    isLoggedIn = false
-                }
-            }) {
+            Button(action: logoutAction) {
                 Label("Logout", systemImage: "arrow.right.to.line")
                     .foregroundColor(.red)
             }
@@ -97,7 +87,6 @@ struct SideMenuView: View {
     }
 
     private func handleMenuSelection(action: @escaping () -> Void) {
-        // MODIFIED: Removed the delay for more reliable state updates
         withAnimation(.easeInOut) {
             isShowing = false
         }
@@ -121,11 +110,12 @@ struct SideMenuView_Previews: PreviewProvider {
     static var previews: some View {
         SideMenuView(
             isShowing: .constant(true),
+            profileViewModel: ProfileViewModel(),
             isShowingProfileSheet: .constant(false),
             isShowingLanguageSheet: .constant(false),
             isShowingSettingSheet: .constant(false),
             isShowingThemeSheet: .constant(false),
-            isLoggedIn: .constant(true),
+            logoutAction: {},
             isShowingPrivacySheet: .constant(false),
             isShowingTermsSheet: .constant(false),
             isShowingSubscriptionSheet: .constant(false)
