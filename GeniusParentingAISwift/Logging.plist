@@ -7,7 +7,7 @@
 	<key>Levels</key>
 	<dict>
 		<key>NetworkManager</key>
-		<string>info</string>
+		<string>debug</string>
 		<key>StrapiService</key>
 		<string>debug</string>
 		<key>ProfileViewModel</key>
@@ -15,7 +15,7 @@
 		<key>StoreManager</key>
 		<string>error</string>
 		<key>SessionManager</key>
-		<string>debug</string>
+		<string>info</string>
 	</dict>
 </dict>
 </plist>

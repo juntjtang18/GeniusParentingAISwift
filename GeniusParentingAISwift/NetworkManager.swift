@@ -2,7 +2,7 @@
 
 import Foundation
 import KeychainAccess
-// NOTE: We no longer need to import `os` directly here.
+// No longer need to import `os` directly.
 
 // A global constant for the notification name.
 extension Notification.Name {
@@ -111,6 +111,7 @@ class NetworkManager {
     // MARK: - Private Core Request Function
 
     private func performRequest<ResponseBody: Decodable, RequestBody: Encodable>(url: URL, method: String, body: RequestBody? = nil) async throws -> ResponseBody {
+        let functionName = #function
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -123,11 +124,14 @@ class NetworkManager {
         if let body = body {
             request.httpBody = try encoder.encode(body)
         }
+        
+        logger.debug("[NetworkManager::\(functionName)] - Sending \(method) request to URL: \(url)")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         
         if httpResponse.statusCode == 401 {
+            logger.warning("[NetworkManager::\(functionName)] - Received 401 Unauthorized. Invalidating session.")
             keychain["jwt"] = nil
             await MainActor.run { SessionManager.shared.currentUser = nil }
             NotificationCenter.default.post(name: .didInvalidateSession, object: nil)
@@ -137,8 +141,7 @@ class NetworkManager {
         guard (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "No response body"
             
-            // Replaced old logger call with the new configurable one.
-            logger.error("HTTP Error: \(method) request to \(url) failed with status code \(httpResponse.statusCode). Body: \(errorBody)")
+            logger.error("[NetworkManager::\(functionName)] - HTTP Error \(httpResponse.statusCode) for \(method) request to \(url). Body: \(errorBody)")
             
             if let errorResponse = try? decoder.decode(StrapiErrorResponse.self, from: data) {
                 throw NSError(domain: "NetworkManager.StrapiError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error.message])
@@ -146,9 +149,8 @@ class NetworkManager {
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Received status code \(httpResponse.statusCode)."])
         }
         
-        // Replaced old logger call with the new configurable one.
         if let jsonString = String(data: data, encoding: .utf8) {
-            logger.debug("📦 Raw JSON Response from \(url):\n\(jsonString)")
+            logger.debug("[NetworkManager::\(functionName)] - Raw JSON Response from \(url):\n\(jsonString)")
         }
         
         if data.isEmpty {
@@ -159,10 +161,8 @@ class NetworkManager {
         do {
             return try decoder.decode(ResponseBody.self, from: data)
         } catch {
-            // Replaced old logger calls with the new configurable ones.
-            logger.error("Decoding Error: Failed to decode \(ResponseBody.self). Error: \(error.localizedDescription)")
-            logger.error("Decoding Error Details: \(error)")
-            if let jsonString = String(data: data, encoding: .utf8) { logger.error("Raw JSON: \(jsonString)") }
+            logger.error("[NetworkManager::\(functionName)] - Decoding Error for type \(ResponseBody.self). Error: \(error.localizedDescription)")
+            if let jsonString = String(data: data, encoding: .utf8) { logger.error("[NetworkManager::\(functionName)] - Raw JSON that failed to decode: \(jsonString)") }
             throw error
         }
     }
