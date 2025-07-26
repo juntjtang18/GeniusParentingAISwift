@@ -82,7 +82,7 @@ struct SubscriptionView: View {
     }
 }
 
-// MARK: - Subscription Card View (Restored and Updated)
+// MARK: - Subscription Card View
 private struct SubscriptionCardView: View {
     @EnvironmentObject var storeManager: StoreManager
     let plan: SubscriptionPlanViewData
@@ -133,16 +133,23 @@ private struct SubscriptionCardView: View {
         .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        // --- MODIFIED: New, improved "Current Plan" badge ---
         .overlay(
             isPurchased ?
-                Text("Current Plan")
-                    .font(.caption.bold())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.green.opacity(0.2))
-                    .clipShape(Capsule())
-                    .padding()
-                : nil
+                HStack(spacing: 6) {
+                    Image(systemName: "star.fill")
+                    Text("Current Plan")
+                }
+                .font(.caption.bold())
+                .foregroundColor(.black.opacity(0.8))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule().fill(Color.yellow.gradient)
+                        .shadow(color: .black.opacity(0.2), radius: 3, y: 2)
+                )
+                .padding(15)
+            : nil
             , alignment: .topTrailing
         )
     }
