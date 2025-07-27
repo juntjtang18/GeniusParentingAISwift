@@ -1,10 +1,4 @@
-//
-//  SessionManager.swift
-//  GeniusParentingAISwift
-//
-//  Created by James Tang on 2025/7/26.
-//
-
+// GeniusParentingAISwift/SessionManager.swift
 
 import Foundation
 import KeychainAccess
@@ -20,8 +14,7 @@ class SessionManager: ObservableObject {
     private init() {}
 
     var role: Role {
-        guard let userId = currentUser?.id,
-              let subscription: StrapiRelation<Subscription> = SessionStore.shared.getUserData("subscription", userId: userId),
+        guard let subscription = currentUser?.subscription,
               let roleString = subscription.data?.attributes.plan.attributes.role else {
             return .free
         }
@@ -38,9 +31,6 @@ class SessionManager: ObservableObject {
 
     func clearSession() {
         keychain["jwt"] = nil
-        if let userId = currentUser?.id {
-            SessionStore.shared.clearUserData(userId: userId)
-        }
         currentUser = nil
         lastUserEmail = nil
     }
@@ -55,6 +45,5 @@ class SessionManager: ObservableObject {
 
     func setCurrentUser(_ user: StrapiUser) {
         currentUser = user
-        SessionStore.shared.setUserData(user, forKey: "user", userId: user.id)
     }
 }

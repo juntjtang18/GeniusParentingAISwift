@@ -56,7 +56,7 @@ struct GeniusParentingAISwiftApp: App {
                     SessionManager.shared.updateLastUserEmail(user.email)
                     
                     // **CRITICAL FIX:** Sync the store with the server's subscription data.
-                    storeManager.syncWithServerState(for: user)
+                    //storeManager.syncWithServerState(for: user)
                     
                     isLoggedIn = true
                 } catch {
@@ -73,8 +73,6 @@ struct GeniusParentingAISwiftApp: App {
 
     private func logout() {
         SessionManager.shared.clearSession()
-        // Also clear the local purchase state on logout.
-        //storeManager.syncWithServerState(for: nil)
         NotificationCenter.default.post(name: .didLogout, object: nil)
         withAnimation {
             isLoggedIn = false

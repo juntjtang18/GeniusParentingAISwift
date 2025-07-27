@@ -26,21 +26,21 @@ class SubscriptionService {
         }
     }
 
-    /// Activates a subscription by sending a validated Apple JWS token and the user ID to the backend.
-    func activateSubscription(receiptToken: String, userId: Int) async throws -> SubscriptionActivationResponse {
+    /// Verifies a purchase receipt with the backend. The backend validates it with Apple and updates the user's subscription.
+    /// RENAMED: from activateSubscription to verifyPurchaseReceipt
+    func verifyPurchaseReceipt(receiptToken: String, userId: Int) async throws -> SubscriptionActivationResponse {
         let functionName = #function
-        logger.info("[\(String(describing: self))::\(functionName)] - Activating subscription for userId: \(userId).")
+        logger.info("[\(String(describing: self))::\(functionName)] - Verifying purchase receipt for userId: \(userId).")
         do {
-            // **MODIFIED:** Creates the payload with the corrected key name.
             let payload = SubscriptionActivationPayload(apple_receipt: receiptToken, userId: userId)
             guard let url = URL(string: "\(Config.strapiBaseUrl)/api/v1/subscriptions/activate") else {
                 throw URLError(.badURL)
             }
             let response: SubscriptionActivationResponse = try await NetworkManager.shared.post(to: url, body: payload)
-            logger.info("[\(String(describing: self))::\(functionName)] - Subscription activation request sent successfully.")
+            logger.info("[\(String(describing: self))::\(functionName)] - Receipt verification request sent successfully.")
             return response
         } catch {
-            logger.error("[\(String(describing: self))::\(functionName)] - Failed to activate subscription: \(error.localizedDescription)")
+            logger.error("[\(String(describing: self))::\(functionName)] - Failed to verify receipt: \(error.localizedDescription)")
             throw error
         }
     }

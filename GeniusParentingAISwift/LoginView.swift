@@ -155,7 +155,7 @@ struct LoginView: View {
         SessionManager.shared.updateLastUserEmail(authResponse.user.email)
         
         // **CRITICAL FIX:** Sync the store with the server's subscription data.
-        StoreManager.shared.syncWithServerState(for: authResponse.user)
+        //StoreManager.shared.syncWithServerState(for: authResponse.user)
         
         isLoggedIn = true
     }

@@ -6,25 +6,20 @@ class ProfileViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    init() {}
-
+    // The user object is now a direct reference to the one in SessionManager.
+    // This makes the ViewModel lighter and always in sync.
     var user: StrapiUser? {
-        get {
-            guard let userId = SessionManager.shared.currentUser?.id else { return nil }
-            return SessionStore.shared.getUserData("user", userId: userId)
-        }
-        set {
-            if let userToSave = newValue {
-                SessionManager.shared.setCurrentUser(userToSave)
-            }
-        }
+        get { SessionManager.shared.currentUser }
+        set { SessionManager.shared.currentUser = newValue }
     }
+
+    init() {}
 
     func fetchUserProfile() async {
         isLoading = true
         errorMessage = nil
 
-        guard var baseUser = SessionManager.shared.currentUser else {
+        guard var baseUser = self.user else {
             errorMessage = "No active user session."
             isLoading = false
             return
@@ -32,8 +27,6 @@ class ProfileViewModel: ObservableObject {
 
         do {
             let apiResponse = try await StrapiService.shared.fetchUserProfile()
-            
-            print("API Response: \(apiResponse)")
             let decodedData = apiResponse.data
             
             let userProfile = UserProfile(
@@ -44,6 +37,7 @@ class ProfileViewModel: ObservableObject {
                 users_permissions_user: nil
             )
             
+            // Update the user object and assign it back to the SessionManager's property.
             baseUser.user_profile = userProfile
             self.user = baseUser
             
@@ -60,7 +54,7 @@ class ProfileViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            guard let currentUser = SessionManager.shared.currentUser else {
+            guard let currentUser = self.user else {
                 errorMessage = "No active user session."
                 isLoading = false
                 return false
@@ -76,6 +70,7 @@ class ProfileViewModel: ObservableObject {
             let profilePayload = ProfileUpdatePayload(data: profileData)
             _ = try await StrapiService.shared.updateUserProfile(payload: profilePayload)
             
+            // Re-fetch the profile to ensure the local state is perfectly in sync with the server.
             await fetchUserProfile()
             isLoading = false
             return true

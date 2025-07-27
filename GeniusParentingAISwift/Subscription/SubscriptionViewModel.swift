@@ -7,33 +7,22 @@ import StoreKit
 class SubscriptionViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var displayPlans: [SubscriptionPlanViewData] = []
 
     init() {}
-
-    var displayPlans: [SubscriptionPlanViewData] {
-        get {
-            guard let userId = SessionManager.shared.currentUser?.id else { return [] }
-            return SessionStore.shared.getUserData("subscriptionPlans", userId: userId) ?? []
-        }
-        set {
-            if let userId = SessionManager.shared.currentUser?.id {
-                SessionStore.shared.setUserData(newValue, forKey: "subscriptionPlans", userId: userId)
-            }
-        }
-    }
 
     func loadPlans(from storeManager: StoreManager) async {
         isLoading = true
         errorMessage = nil
 
-        guard let userId = SessionManager.shared.currentUser?.id else {
+        // We still check for a user session, as loading plans might be a protected action.
+        guard SessionManager.shared.currentUser != nil else {
             errorMessage = "No active user session."
             isLoading = false
             return
         }
 
         do {
-            // MODIFIED: Now calls the new SubscriptionService.
             let strapiPlans = try await SubscriptionService.shared.fetchPlans().data ?? []
             
             if storeManager.products.isEmpty {
@@ -54,9 +43,10 @@ class SubscriptionViewModel: ObservableObject {
                 }
             }
             
-            SessionStore.shared.setUserData(mergedPlans.sorted(by: {
+            // The data is now stored directly in the @Published property.
+            self.displayPlans = mergedPlans.sorted(by: {
                 ($0.strapiPlan.attributes.order ?? 99) < ($1.strapiPlan.attributes.order ?? 99)
-            }), forKey: "subscriptionPlans", userId: userId)
+            })
             
         } catch {
             errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"

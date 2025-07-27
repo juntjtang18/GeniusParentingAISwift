@@ -14,6 +14,14 @@ class StoreManager: ObservableObject {
     static let shared = StoreManager()
     private let logger = AppLogger(category: "StoreManager")
 
+    // MARK: - Published Properties
+    @Published private(set) var products: [Product] = []
+    @Published var purchaseState: PurchaseStatus = .idle
+    
+    // MARK: - Private Properties
+    private var transactionListener: Task<Void, Error>? = nil
+
+    // MARK: - Public Enum
     enum PurchaseStatus: Equatable {
         case idle, inProgress, success, failed(Error)
         var isFailed: Bool { if case .failed = self { return true }; return false }
@@ -27,10 +35,6 @@ class StoreManager: ObservableObject {
         }
     }
 
-    @Published private(set) var products: [Product] = []
-    @Published var purchaseState: PurchaseStatus = .idle
-    private var transactionListener: Task<Void, Error>? = nil
-
     private init() {
         transactionListener = listenForTransactions()
         Task { await requestProducts() }
@@ -38,152 +42,116 @@ class StoreManager: ObservableObject {
 
     deinit { transactionListener?.cancel() }
 
-    @Published private(set) var purchasedProductIDs: Set<String> = []
-
-    func syncWithServerState(for user: StrapiUser?) {
-        let functionName = #function
-        guard let user = user else {
-            logger.info("[\(String(describing: self))::\(functionName)] - User is nil. Clearing all local purchased product IDs.")
-            self.purchasedProductIDs.removeAll()
-            return
-        }
-        logger.info("[\(String(describing: self))::\(functionName)] - Syncing local purchases with server state for user \(user.id).")
-        if let activePlanProductId = user.subscription?.data?.attributes.plan.attributes.productId {
-            logger.debug("[\(String(describing: self))::\(functionName)] - Found active plan productId from server: \(activePlanProductId)")
-            self.purchasedProductIDs = [activePlanProductId]
-        } else {
-            logger.info("[\(String(describing: self))::\(functionName)] - No active plan productId found in user's subscription. Clearing purchased IDs.")
-            self.purchasedProductIDs.removeAll()
-        }
-        logger.info("[\(String(describing: self))::\(functionName)] - Sync complete. Final active product IDs are now: \(self.purchasedProductIDs)")
-    }
-
+    // MARK: - Public Methods
+    
     func requestProducts() async {
-        let functionName = #function
-        logger.info("[\(String(describing: self))::\(functionName)] - Requesting products from App Store.")
+        logger.info("Requesting products from App Store.")
         do {
             let storeProducts = try await Product.products(for: [
                 ProductIdentifiers.basicMonthly, ProductIdentifiers.basicYearly, ProductIdentifiers.premiumYearly
             ])
             self.products = storeProducts.sorted(by: { $0.price < $1.price })
-            logger.info("[\(String(describing: self))::\(functionName)] - Successfully fetched \(self.products.count) products.")
+            logger.info("Successfully fetched \(self.products.count) products.")
         } catch {
-            logger.error("[\(String(describing: self))::\(functionName)] - Failed to fetch products: \(error.localizedDescription)")
+            logger.error("Failed to fetch products: \(error.localizedDescription)")
         }
     }
 
     func purchase(_ product: Product) async {
-        let functionName = #function
-        logger.info("[\(String(describing: self))::\(functionName)] - [Step 1] Starting purchase process for product: \(product.id)")
+        logger.info("[Step 1] Starting purchase process for product: \(product.id)")
         purchaseState = .inProgress
 
-        guard let strapiUserId = SessionManager.shared.currentUser?.id else {
-            let error = NSError(domain: "StoreManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Cannot purchase because user is not logged in."])
-            logger.error("[\(String(describing: self))::\(functionName)] - Purchase failed: No active Strapi user session.")
-            purchaseState = .failed(error)
-            return
-        }
-        
-        logger.debug("[\(String(describing: self))::\(functionName)] - [Step 1a] Found Strapi User ID: \(strapiUserId)")
-
         do {
-            var hexString = String(format: "%032llx", CUnsignedLongLong(strapiUserId))
-            hexString.insert("-", at: hexString.index(hexString.startIndex, offsetBy: 8))
-            hexString.insert("-", at: hexString.index(hexString.startIndex, offsetBy: 13))
-            hexString.insert("-", at: hexString.index(hexString.startIndex, offsetBy: 18))
-            hexString.insert("-", at: hexString.index(hexString.startIndex, offsetBy: 23))
-
-            guard let appAccountToken = UUID(uuidString: hexString) else {
-                let error = NSError(domain: "StoreManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Could not create a valid appAccountToken from the user ID."])
-                logger.error("[\(String(describing: self))::\(functionName)] - Failed to generate appAccountToken for user ID \(strapiUserId) from hex string '\(hexString)'.")
-                purchaseState = .failed(error)
-                return
-            }
-
-            logger.debug("[\(String(describing: self))::\(functionName)] - [Step 1b] Generated appAccountToken for purchase: \(appAccountToken.uuidString)")
-
-            let result = try await product.purchase(options: [.appAccountToken(appAccountToken)])
+            // Step 1: Initiate the purchase with StoreKit
+            let result = try await product.purchase()
 
             switch result {
             case .success(let verification):
-                logger.info("[\(String(describing: self))::\(functionName)] - [Step 2] Local purchase successful. Verifying transaction...")
+                logger.info("[Step 2] Local purchase successful. Verifying transaction with Apple...")
                 let transaction = try checkVerified(verification)
-                let jws = verification.jwsRepresentation
-                //logger.debug("[\(String(describing: self))::\(functionName)] - [Step 3] Transaction verified locally. JWS token obtained.")
-                //logger.info("[\(String(describing: self))::\(functionName)] - [Step 4] Sending JWS and UserID to server for validation...")
-                try await sendTransactionToServer(jws: jws)
                 
-                logger.info("[\(String(describing: self))::\(functionName)] - [Step 5] Server validation successful. Finalizing transaction.")
-                await transaction.finish()
+                logger.info("[Step 3] Verifying receipt with our server...")
+                let wasSuccessful = await verifyPurchaseReceipt(jws: verification.jwsRepresentation)
                 
-                purchaseState = .success
-                logger.info("[\(String(describing: self))::\(functionName)] - [Step 6] Purchase process complete.")
+                if wasSuccessful {
+                    logger.info("[Step 4] Server verification successful. Finishing transaction.")
+                    await transaction.finish()
+                    purchaseState = .success
+                    logger.info("[Step 5] Purchase process complete.")
+                } else {
+                    logger.error("[Step 4] Server verification failed. Not finishing transaction.")
+                    throw NSError(domain: "StoreManager.ServerVerification", code: -1, userInfo: [NSLocalizedDescriptionKey: "Our server could not validate the purchase."])
+                }
 
             case .userCancelled:
-                logger.info("[\(String(describing: self))::\(functionName)] - User cancelled the purchase.")
+                logger.info("User cancelled the purchase.")
                 purchaseState = .idle
             case .pending:
-                logger.info("[\(String(describing: self))::\(functionName)] - Purchase is pending.")
+                logger.info("Purchase is pending.")
                 purchaseState = .idle
             @unknown default:
+                logger.warning("An unknown purchase result occurred.")
                 purchaseState = .idle
             }
         } catch {
-            logger.error("[\(String(describing: self))::\(functionName)] - Purchase process failed: \(error.localizedDescription)")
+            logger.error("Purchase process failed: \(error.localizedDescription)")
             purchaseState = .failed(error)
         }
     }
 
+    // MARK: - Private Methods
+
     private func listenForTransactions() -> Task<Void, Error> {
-        let functionName = #function
-        logger.info("[\(String(describing: self))::\(functionName)] - Starting transaction listener.")
         return Task.detached {
             for await result in Transaction.updates {
                 do {
                     let transaction = try await self.checkVerified(result)
-                    let jws = result.jwsRepresentation
-                    await MainActor.run { self.logger.info("[\(String(describing: self))::\(functionName)] - Transaction listener detected update for product: \(transaction.productID).") }
-                    try await self.sendTransactionToServer(jws: jws)
-                    await transaction.finish()
+                    await MainActor.run { self.logger.info("Transaction listener detected update for product: \(transaction.productID).") }
+                    
+                    if await self.verifyPurchaseReceipt(jws: result.jwsRepresentation) {
+                        await transaction.finish()
+                    }
+                    
                 } catch {
-                    await MainActor.run { self.logger.error("[\(String(describing: self))::\(functionName)] - Transaction listener failed verification: \(error.localizedDescription)") }
+                    await MainActor.run { self.logger.error("Transaction listener failed: \(error.localizedDescription)") }
                 }
             }
         }
     }
     
-    private func sendTransactionToServer(jws: String) async throws {
-        let functionName = #function
+    private func verifyPurchaseReceipt(jws: String) async -> Bool {
         guard let user = SessionManager.shared.currentUser else {
-            let error = NSError(domain: "StoreManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "User is not logged in."])
-            logger.error("[\(String(describing: self))::\(functionName)] - Could not send transaction: No active user session.")
-            throw error
+            logger.error("Cannot verify receipt: User is not logged in.")
+            return false
         }
         
         do {
-            logger.debug("[\(String(describing: self))::\(functionName)] - Sending transaction JWS and UserID (\(user.id)) to backend for validation...")
-            _ = try await SubscriptionService.shared.activateSubscription(receiptToken: jws, userId: user.id)
-            logger.info("[\(String(describing: self))::\(functionName)] - Successfully activated subscription on server.")
+            logger.debug("Sending JWS and UserID (\(user.id)) to backend for validation...")
+            // The service now returns a response with the new subscription object.
+            _ = try await SubscriptionService.shared.verifyPurchaseReceipt(receiptToken: jws, userId: user.id)
             
-            if let updatedUser = try? await StrapiService.shared.fetchCurrentUser() {
-                SessionManager.shared.setCurrentUser(updatedUser)
-                self.syncWithServerState(for: updatedUser)
-                logger.debug("[\(String(describing: self))::\(functionName)] - Refreshed user data and synced server state after successful subscription.")
-            }
+            // **CRITICAL FIX:** After the purchase is validated, fetch the *entire* user object again.
+            // This guarantees that the SessionManager holds the absolute latest user state,
+            // including the newly activated subscription plan.
+            let updatedUser = try await StrapiService.shared.fetchCurrentUser()
+            SessionManager.shared.setCurrentUser(updatedUser)
+            
+            logger.info("Successfully verified receipt and updated local user session with new plan.")
+            return true
+            
         } catch {
-            logger.error("[\(String(describing: self))::\(functionName)] - Failed to send transaction to server or process response: \(error.localizedDescription)")
-            throw error
+            logger.error("Failed to verify receipt or refresh user session: \(error.localizedDescription)")
+            return false
         }
     }
     
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
-        let functionName = #function
         switch result {
         case .unverified:
-            logger.warning("[\(String(describing: self))::\(functionName)] - Transaction failed verification (unverified).")
+            logger.warning("Transaction failed verification (unverified).")
             throw StoreKitError.unknown
         case .verified(let safe):
-            logger.debug("[\(String(describing: self))::\(functionName)] - Transaction verification successful.")
+            logger.debug("Transaction verification successful.")
             return safe
         }
     }
