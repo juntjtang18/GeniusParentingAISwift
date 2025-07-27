@@ -13,7 +13,7 @@
 		<key>ProfileViewModel</key>
 		<string>info</string>
 		<key>StoreManager</key>
-		<string>error</string>
+		<string>debug</string>
 		<key>SessionManager</key>
 		<string>info</string>
 	</dict>

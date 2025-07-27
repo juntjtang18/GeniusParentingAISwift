@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/Subscription/SubscriptionViewModel.swift
+
 import Foundation
 import StoreKit
 
@@ -31,7 +33,8 @@ class SubscriptionViewModel: ObservableObject {
         }
 
         do {
-            let strapiPlans = try await StrapiService.shared.fetchPlans().data ?? []
+            // MODIFIED: Now calls the new SubscriptionService.
+            let strapiPlans = try await SubscriptionService.shared.fetchPlans().data ?? []
             
             if storeManager.products.isEmpty {
                 await storeManager.requestProducts()

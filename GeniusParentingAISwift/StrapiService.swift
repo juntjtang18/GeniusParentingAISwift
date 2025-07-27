@@ -187,35 +187,4 @@ class StrapiService {
             throw error
         }
     }
-    
-    func fetchPlans() async throws -> StrapiListResponse<Plan> {
-        let functionName = #function
-        logger.info("[StrapiService::\(functionName)] - Fetching subscription plans.")
-        do {
-            // FIX: Added explicit type annotation
-            let response: StrapiListResponse<Plan> = try await NetworkManager.shared.fetchDirect(from: URL(string: "\(Config.strapiBaseUrl)/api/plans")!)
-            logger.info("[StrapiService::\(functionName)] - Successfully fetched \(response.data?.count ?? 0) plans.")
-            return response
-        } catch {
-            logger.error("[StrapiService::\(functionName)] - Failed to fetch plans: \(error.localizedDescription)")
-            throw error
-        }
-    }
-
-    // MARK: - Subscription Management
-
-    func activateSubscription(receipt: String) async throws -> SubscriptionActivationResponse {
-        let functionName = #function
-        logger.info("[StrapiService::\(functionName)] - Activating subscription.")
-        do {
-            let payload = SubscriptionActivationPayload(apple_receipt: receipt)
-            // FIX: Added explicit type annotation
-            let response: SubscriptionActivationResponse = try await NetworkManager.shared.post(to: URL(string: "\(Config.subscriptionSubsystemBaseUrl)/api/v1/subscriptions/activate")!, body: payload)
-            logger.info("[StrapiService::\(functionName)] - Subscription activation request sent successfully.")
-            return response
-        } catch {
-            logger.error("[StrapiService::\(functionName)] - Failed to activate subscription: \(error.localizedDescription)")
-            throw error
-        }
-    }
 }

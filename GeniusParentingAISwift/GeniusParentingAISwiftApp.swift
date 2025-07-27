@@ -1,3 +1,5 @@
+// GeniusParentingAISwiftApp.swift
+
 import SwiftUI
 import KeychainAccess
 import StoreKit
@@ -50,9 +52,12 @@ struct GeniusParentingAISwiftApp: App {
             if let jwt = SessionManager.shared.getJWT() {
                 do {
                     let user = try await StrapiService.shared.fetchCurrentUser()
-                    SessionManager.shared.currentUser = user
+                    SessionManager.shared.setCurrentUser(user)
                     SessionManager.shared.updateLastUserEmail(user.email)
-                    await storeManager.updatePurchasedProducts()
+                    
+                    // **CRITICAL FIX:** Sync the store with the server's subscription data.
+                    storeManager.syncWithServerState(for: user)
+                    
                     isLoggedIn = true
                 } catch {
                     SessionManager.shared.clearSession()
@@ -68,6 +73,8 @@ struct GeniusParentingAISwiftApp: App {
 
     private func logout() {
         SessionManager.shared.clearSession()
+        // Also clear the local purchase state on logout.
+        //storeManager.syncWithServerState(for: nil)
         NotificationCenter.default.post(name: .didLogout, object: nil)
         withAnimation {
             isLoggedIn = false

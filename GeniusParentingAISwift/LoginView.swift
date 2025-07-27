@@ -1,3 +1,5 @@
+// GeniusParentingAISwift/LoginView.swift
+
 import SwiftUI
 import KeychainAccess
 
@@ -130,23 +132,10 @@ struct LoginView: View {
         let credentials = LoginCredentials(identifier: email, password: password)
         
         do {
-            if let existingJWT = SessionManager.shared.getJWT(), SessionManager.shared.isSameUser(email: email) {
-                do {
-                    let user = try await StrapiService.shared.fetchCurrentUser()
-                    print("Reusing existing JWT, fetched user: \(user.email)")
-                    SessionManager.shared.setCurrentUser(user)
-                    await loadUserData(userId: user.id)
-                    isLoggedIn = true
-                } catch {
-                    print("Existing JWT failed, error: \(error.localizedDescription)")
-                    SessionManager.shared.clearSession()
-                    try await performNewLogin(credentials: credentials)
-                }
-            } else {
-                print("No valid JWT or different user, performing new login")
-                SessionManager.shared.clearSession()
-                try await performNewLogin(credentials: credentials)
-            }
+            // A fresh login should always perform a new login to get the latest user data.
+            print("Performing new login")
+            SessionManager.shared.clearSession()
+            try await performNewLogin(credentials: credentials)
         } catch {
             print("Login failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
@@ -164,29 +153,10 @@ struct LoginView: View {
         SessionManager.shared.setJWT(authResponse.jwt)
         SessionManager.shared.setCurrentUser(authResponse.user)
         SessionManager.shared.updateLastUserEmail(authResponse.user.email)
-        await loadUserData(userId: authResponse.user.id)
-        isLoggedIn = true // Ensure isLoggedIn is set after data loading
-    }
-
-    private func loadUserData(userId: Int) async {
-        print("Loading user data for userId: \(userId)")
-        let profileViewModel = ProfileViewModel()
-        await profileViewModel.fetchUserProfile()
-        print("Profile fetched: \(String(describing: profileViewModel.user?.user_profile))")
         
-        let subscriptionViewModel = SubscriptionViewModel()
-        await subscriptionViewModel.loadPlans(from: StoreManager.shared)
-        print("Subscription plans loaded")
+        // **CRITICAL FIX:** Sync the store with the server's subscription data.
+        StoreManager.shared.syncWithServerState(for: authResponse.user)
         
-        do {
-            try await StoreManager.shared.updatePurchasedProducts()
-            print("Purchased products updated")
-        } catch {
-            print("Failed to update purchased products: \(error.localizedDescription)")
-        }
-        
-        let courseViewModel = CourseViewModel()
-        await courseViewModel.initialFetch()
-        print("Courses fetched")
+        isLoggedIn = true
     }
 }

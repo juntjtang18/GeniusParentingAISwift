@@ -13,15 +13,17 @@ struct Config {
         return "https://strapi.geniusparentingai.ca"
         #endif
     }
+    /*
     // NEW: URL for the Subscription Subsystem
     static var subscriptionSubsystemBaseUrl: String {
         #if DEBUG
         // For local development, both might run on different ports
         // Or you might proxy them under the same IP. Adjust as needed.
-        return "http://localhost:1337"
+        return "http://192.168.1.66:2337"
         //return "http://gpasubsys.geniusParentingAI.ca"
         #else
         return "http://gpasubsys.geniusParentingAI.ca"
         #endif
     }
+     */
 }

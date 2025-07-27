@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1A53DA462DEE763A00C1AD2B /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 1A53DA452DEE763A00C1AD2B /* KeychainAccess */; };
-		1AFAC3E32E3353D300D2952B /* StorekitConfig.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 1AFAC3E22E3353D300D2952B /* StorekitConfig.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,7 +31,6 @@
 		1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeniusParentingAISwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1AFAC3E22E3353D300D2952B /* StorekitConfig.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StorekitConfig.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -111,7 +109,6 @@
 		1A6280FD2DECC52400DD0D1C = {
 			isa = PBXGroup;
 			children = (
-				1AFAC3E22E3353D300D2952B /* StorekitConfig.storekit */,
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
 				1A6281382DED033A00DD0D1C /* Frameworks */,
@@ -257,7 +254,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1AFAC3E32E3353D300D2952B /* StorekitConfig.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

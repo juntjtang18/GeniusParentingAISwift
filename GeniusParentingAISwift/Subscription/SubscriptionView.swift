@@ -8,11 +8,12 @@ struct SubscriptionView: View {
     @Binding var isPresented: Bool
     
     @State private var selectedPlanIndex: Int = 0
-    @State private var showSuccessAlert = false // State for success alert
+    @State private var showSuccessAlert = false
+    @State private var showErrorAlert = false
 
     var body: some View {
         NavigationView {
-            ZStack { // Use a ZStack to overlay a loading indicator
+            ZStack {
                 VStack {
                     if viewModel.isLoading {
                         ProgressView("Loading Plans...")
@@ -54,17 +55,23 @@ struct SubscriptionView: View {
                     if case .success = newState {
                         showSuccessAlert = true
                     }
+                    if newState.isFailed {
+                        showErrorAlert = true
+                    }
                 }
                 .alert("Purchase Successful", isPresented: $showSuccessAlert) {
                     Button("OK", role: .cancel) {
-                        // Dismiss the subscription view after user taps OK
                         isPresented = false
                     }
                 } message: {
                     Text("Your new plan is now active!")
                 }
+                .alert("Purchase Failed", isPresented: $showErrorAlert) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(storeManager.purchaseState.errorMessage ?? "An unknown error occurred. Please try again.")
+                }
 
-                // Show a loading overlay when a purchase is in progress
                 if case .inProgress = storeManager.purchaseState {
                     Color.black.opacity(0.4).ignoresSafeArea()
                     ProgressView("Processing...")
@@ -75,7 +82,6 @@ struct SubscriptionView: View {
                 }
             }
             .onDisappear {
-                // Reset state when the view disappears
                 storeManager.purchaseState = .idle
             }
         }
@@ -89,13 +95,17 @@ private struct SubscriptionCardView: View {
     @Binding var selectedPlanIndex: Int
     let totalPlans: Int
 
+    // **CRITICAL FIX:** This logic now directly compares the card's product ID
+    // with the active plan ID from the server, stored in SessionManager.
     var isPurchased: Bool {
-        storeManager.purchasedProductIDs.contains(plan.id)
+        guard let activeProductId = SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.productId else {
+            return false
+        }
+        return plan.id == activeProductId
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // Plan Info
             VStack(alignment: .leading, spacing: 8) {
                 Text(plan.displayName)
                     .font(.title2.bold())
@@ -104,7 +114,6 @@ private struct SubscriptionCardView: View {
                     .foregroundColor(.secondary)
             }
 
-            // Subscription Controls (Arrows and Button)
             SubscriptionControlView(
                 isPurchased: isPurchased,
                 productToPurchase: plan.storeKitProduct,
@@ -114,7 +123,6 @@ private struct SubscriptionCardView: View {
 
             Divider()
 
-            // Features List from Strapi
             VStack(alignment: .leading, spacing: 16) {
                 Text("Features:")
                     .font(.headline)
@@ -133,7 +141,6 @@ private struct SubscriptionCardView: View {
         .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
-        // --- MODIFIED: New, improved "Current Plan" badge ---
         .overlay(
             isPurchased ?
                 HStack(spacing: 6) {
