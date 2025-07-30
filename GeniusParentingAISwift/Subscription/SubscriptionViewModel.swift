@@ -8,6 +8,7 @@ class SubscriptionViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var displayPlans: [SubscriptionPlanViewData] = []
+    @Published var initialPlanIndex: Int = 0
 
     init() {}
 
@@ -16,7 +17,7 @@ class SubscriptionViewModel: ObservableObject {
         errorMessage = nil
 
         // We still check for a user session, as loading plans might be a protected action.
-        guard SessionManager.shared.currentUser != nil else {
+        guard let currentUser = SessionManager.shared.currentUser else {
             errorMessage = "No active user session."
             isLoading = false
             return
@@ -47,6 +48,13 @@ class SubscriptionViewModel: ObservableObject {
             self.displayPlans = mergedPlans.sorted(by: {
                 ($0.strapiPlan.attributes.order ?? 99) < ($1.strapiPlan.attributes.order ?? 99)
             })
+
+            // Find the index of the user's current plan
+            if let currentProductId = currentUser.subscription?.data?.attributes.plan.attributes.productId {
+                if let index = self.displayPlans.firstIndex(where: { $0.id == currentProductId }) {
+                    self.initialPlanIndex = index
+                }
+            }
             
         } catch {
             errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"

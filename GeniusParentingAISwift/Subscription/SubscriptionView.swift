@@ -50,6 +50,7 @@ struct SubscriptionView: View {
                 }
                 .task {
                     await viewModel.loadPlans(from: storeManager)
+                    selectedPlanIndex = viewModel.initialPlanIndex
                 }
                 .onChange(of: storeManager.purchaseState) { newState in
                     if case .success = newState {
