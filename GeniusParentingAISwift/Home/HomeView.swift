@@ -29,11 +29,10 @@ struct HomeView: View {
                         } else {
                             // Level 4: Card Views
                             ForEach(viewModel.todaysLessons) { lesson in
-                                LessonCardView(lesson: lesson)
-                                    .background(
-                                        NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id, isSideMenuShowing: $isSideMenuShowing)) { EmptyView() }
-                                        .opacity(0)
-                                    )
+                                NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id, isSideMenuShowing: $isSideMenuShowing)) {
+                                    LessonCardView(lesson: lesson)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                     }
@@ -55,11 +54,10 @@ struct HomeView: View {
                             Text("No hot topics available.").frame(width: 300, height: 250).multilineTextAlignment(.center)
                         } else {
                             ForEach(viewModel.hotTopics) { topic in
-                                HotTopicCardView(topic: topic)
-                                    .background(
-                                        NavigationLink(destination: TopicView(selectedLanguage: $selectedLanguage, topicId: topic.id, isSideMenuShowing: $isSideMenuShowing)) { EmptyView() }
-                                        .opacity(0)
-                                    )
+                                NavigationLink(destination: TopicView(selectedLanguage: $selectedLanguage, topicId: topic.id, isSideMenuShowing: $isSideMenuShowing)) {
+                                    HotTopicCardView(topic: topic)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                     }

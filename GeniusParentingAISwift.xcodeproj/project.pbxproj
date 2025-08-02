@@ -34,11 +34,25 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1A4DCDE32E3B2FCE00A32508 /* Exceptions for "GeniusParentingAISwiftUITests" folder in "GeniusParentingAISwift" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GeniusParentingAISwiftUITests.swift,
+				GeniusParentingAISwiftUITestsLaunchTests.swift,
+			);
+			target = 1A6281052DECC52400DD0D1C /* GeniusParentingAISwift */;
+		};
+		1A4DCDE42E3B2FCE00A32508 /* Exceptions for "GeniusParentingAISwiftUITests" folder in "GeniusParentingAISwiftUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GeniusParentingAISwiftUITests.swift,
+				GeniusParentingAISwiftUITestsLaunchTests.swift,
+			);
+			target = 1A62811F2DECC52600DD0D1C /* GeniusParentingAISwiftUITests */;
+		};
 		1A6281342DECC5FF00DD0D1C /* Exceptions for "GeniusParentingAISwift" folder in "GeniusParentingAISwift" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITests.swift,
-				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITestsLaunchTests.swift,
 				Info.plist,
 				"scripts/generate-color.py",
 			);
@@ -55,14 +69,21 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
-				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITests.swift,
-				GeniusParentingAISwiftUITests/GeniusParentingAISwiftUITestsLaunchTests.swift,
 			);
 			target = 1A62811F2DECC52600DD0D1C /* GeniusParentingAISwiftUITests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		1A4DCDE02E3B2FCE00A32508 /* GeniusParentingAISwiftUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1A4DCDE32E3B2FCE00A32508 /* Exceptions for "GeniusParentingAISwiftUITests" folder in "GeniusParentingAISwift" target */,
+				1A4DCDE42E3B2FCE00A32508 /* Exceptions for "GeniusParentingAISwiftUITests" folder in "GeniusParentingAISwiftUITests" target */,
+			);
+			path = GeniusParentingAISwiftUITests;
+			sourceTree = "<group>";
+		};
 		1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -113,6 +134,7 @@
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
 				1A6281382DED033A00DD0D1C /* Frameworks */,
 				1A6281072DECC52400DD0D1C /* Products */,
+				1A4DCDE02E3B2FCE00A32508 /* GeniusParentingAISwiftUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -149,6 +171,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				1A4DCDE02E3B2FCE00A32508 /* GeniusParentingAISwiftUITests */,
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 			);
 			name = GeniusParentingAISwift;
@@ -438,7 +461,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = GeniusParentingAISwift/GeniusParentingAISwift.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_ASSET_PATHS = "\"GeniusParentingAISwift/Preview Content\"";
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
@@ -457,7 +480,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.4;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = GeniusParentingAI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -480,7 +503,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = GeniusParentingAISwift/GeniusParentingAISwift.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_ASSET_PATHS = "\"GeniusParentingAISwift/Preview Content\"";
 				DEVELOPMENT_TEAM = 9HSN563CV2;
 				ENABLE_PREVIEWS = YES;
@@ -499,7 +522,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.4;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = GeniusParentingAI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
