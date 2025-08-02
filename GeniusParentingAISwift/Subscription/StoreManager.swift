@@ -61,9 +61,34 @@ class StoreManager: ObservableObject {
         logger.info("[Step 1] Starting purchase process for product: \(product.id)")
         purchaseState = .inProgress
 
+        // --- FINAL, CORRECT IMPLEMENTATION ---
+
+        // 1. Get the current user's ID.
+        guard let userId = SessionManager.shared.currentUser?.id else {
+            logger.error("Purchase failed: User is not logged in.")
+            purchaseState = .failed(NSError(domain: "StoreManager.Auth", code: -2, userInfo: [NSLocalizedDescriptionKey: "You must be logged in to make a purchase."]))
+            return
+        }
+
+        // 2. Convert the integer userId to a 12-character zero-padded hex string.
+        let userIdHex = String(format: "%012x", userId)
+        let uuidString = "00000000-0000-0000-0000-\(userIdHex)"
+
+        // 3. Create the final UUID object for the purchase option.
+        guard let appAccountToken = UUID(uuidString: uuidString) else {
+            logger.error("Could not create a valid UUID from user ID: \(userId)")
+            purchaseState = .failed(NSError(domain: "StoreManager.Token", code: -3, userInfo: [NSLocalizedDescriptionKey: "Could not prepare purchase token."]))
+            return
+        }
+        
+        logger.info("Generated user-specific appAccountToken for userId \(userId): \(appAccountToken.uuidString)")
+        // --- END OF IMPLEMENTATION ---
+        
         do {
-            // Step 1: Initiate the purchase with StoreKit
-            let result = try await product.purchase()
+            // --- MODIFIED LINE ---
+            // Pass the appAccountToken in the purchase options.
+            let result = try await product.purchase(options: [.appAccountToken(appAccountToken)])
+            // -------------------
 
             switch result {
             case .success(let verification):
