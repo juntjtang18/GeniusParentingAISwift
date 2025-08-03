@@ -133,10 +133,16 @@ class StoreManager: ObservableObject {
                     let transaction = try await self.checkVerified(result)
                     await MainActor.run { self.logger.info("Transaction listener detected update for product: \(transaction.productID).") }
                     
-                    if await self.verifyPurchaseReceipt(jws: result.jwsRepresentation) {
-                        await transaction.finish()
-                    }
-                    
+                    // As the subsys has a webhook to process the notification, here, the client don't need to send to subsys again for the event.
+                    //if await self.verifyPurchaseReceipt(jws: result.jwsRepresentation) {
+                    //    await transaction.finish()
+                    //}
+                    await SessionManager.shared.refreshCurrentUserFromServer()
+
+                    // Always finish the transaction on the device once you've acknowledged it.
+                    await transaction.finish()
+                    self.logger.info("Transaction listener finished processing and updated session for transaction: \(transaction.id)")
+
                 } catch {
                     await MainActor.run { self.logger.error("Transaction listener failed: \(error.localizedDescription)") }
                 }

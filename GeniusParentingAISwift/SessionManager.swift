@@ -21,6 +21,20 @@ class SessionManager: ObservableObject {
         return Role(rawValue: roleString) ?? .free
     }
 
+    func refreshCurrentUserFromServer() async {
+        let logger = AppLogger(category: "SessionManager")
+        logger.info("Attempting to refresh current user session from server.")
+        do {
+            let updatedUser = try await StrapiService.shared.fetchCurrentUser()
+            self.currentUser = updatedUser
+            logger.info("Successfully refreshed and updated current user: \(updatedUser.username)")
+        } catch {
+            logger.error("Failed to refresh current user from server: \(error.localizedDescription)")
+            // Decide if you want to clear the session on a failed refresh.
+            // For now, we will leave the stale data.
+        }
+    }
+    
     func isSameUser(email: String) -> Bool {
         return email.lowercased() == lastUserEmail?.lowercased()
     }
