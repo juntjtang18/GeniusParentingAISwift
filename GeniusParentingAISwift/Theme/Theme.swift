@@ -1,40 +1,43 @@
-// GeniusParentingAISwift/Theme/Theme.swift
 import SwiftUI
 
-// 1. The protocol clearly defines the properties for each color role.
-// This gives you the `theme.text` syntax you want.
+// 1) Protocol
 protocol Theme {
     var id: String { get }
+
+    var foreground: Color { get }     // for text
+    var background: Color { get }     // for background
+    var accent: Color { get }         // for interactive controls
+    var border: Color { get }         // for borders
+
     var primary: Color { get }
     var secondary: Color { get }
-    var accent: Color { get }
-    var background: Color { get }
-    var text: Color { get }
     var cardBackground: Color { get }
+
+    // NEW
+    var inputBoxBackground: Color { get }
 }
 
-// 2. This is the single, generic struct that represents all your themes.
+// 2) Concrete theme
 struct AppTheme: Theme {
     let id: String
     private let assetPath = "ColorSchemes/"
 
-    // The initializer just needs the theme's name.
-    init(id: String) {
-        self.id = id
-    }
+    init(id: String) { self.id = id }
 
-    // 3. Each property is a computed property. It calculates the correct
-    // asset name on the fly. This is both dynamic and efficient.
-    var primary: Color { color(for: "Primary") }
-    var secondary: Color { color(for: "Secondary") }
-    var accent: Color { color(for: "Accent") }
-    var background: Color { color(for: "Background") }
-    var text: Color { color(for: "Text") }
-    var cardBackground: Color { color(for: "CardBackground") }
+    var foreground: Color      { color(for: "foreground") }
+    var background: Color      { color(for: "Background") }
+    var accent: Color          { color(for: "Accent") }
+    var border: Color          { color(for: "border") }
 
-    /// A private helper to create the full asset path and fetch the color.
+    var primary: Color         { color(for: "Primary") }
+    var secondary: Color       { color(for: "Secondary") }
+    var cardBackground: Color  { color(for: "CardBackground") }
+
+    // NEW
+    var inputBoxBackground: Color { color(for: "InputBoxBackground") }
+
     private func color(for role: String) -> Color {
-        // e.g., "ColorSchemes/OceanBreeze/OceanBreezePrimary"
-        return Color("\(assetPath)\(id)/\(id)\(role)")
+        // -> "ColorSchemes/<ThemeID>/<ThemeID><Role>"
+        Color("\(assetPath)\(id)/\(id)\(role)")
     }
 }

@@ -23,8 +23,8 @@ struct SignupView: View {
                 }) {
                     Image(systemName: "chevron.left")
                     Text("Back")
-                        .foregroundColor(theme.text)
                 }
+                .buttonStyle(LinkStyleButtonStyle()) // Use link style for back button
                 .padding()
                 Spacer()
             }
@@ -33,23 +33,19 @@ struct SignupView: View {
                 .font(.largeTitle)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
 
             TextField("Email", text: $email)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .autocapitalization(.none)
                 .keyboardType(.emailAddress)
                 .padding(.horizontal)
                 .disabled(isLoading)
-            
 
             SecureField("Password", text: $password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
                 .disabled(isLoading)
 
             SecureField("Confirm Password", text: $confirmPassword)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
                 .disabled(isLoading)
 
@@ -71,11 +67,8 @@ struct SignupView: View {
             }) {
                 Text("Sign Up")
                     .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isLoading ? Color.gray : Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
             }
+            .buttonStyle(PrimaryButtonStyle()) // Use the main button style
             .padding(.horizontal)
             .disabled(isLoading)
 
@@ -83,12 +76,13 @@ struct SignupView: View {
                 currentView = .login
             }) {
                 Text("Already have an account? Log In")
-                    .foregroundColor(.blue)
             }
+            .buttonStyle(LinkStyleButtonStyle()) // Use link style
             .padding()
         }
         .textFieldStyle(ThemedTextFieldStyle())
         .padding()
+        .background(theme.background.ignoresSafeArea()) // Ensure background is set
     }
 
     func signup() async {
@@ -111,7 +105,6 @@ struct SignupView: View {
         do {
             let authResponse = try await NetworkManager.shared.signup(payload: payload)
             keychain["jwt"] = authResponse.jwt
-            // Redirect to login view for the user to log in after successful signup
             currentView = .login
         } catch {
             errorMessage = error.localizedDescription
@@ -124,5 +117,6 @@ struct SignupView: View {
 struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
         SignupView(isLoggedIn: .constant(false), currentView: .constant(.signup))
+            .environmentObject(ThemeManager())
     }
 }

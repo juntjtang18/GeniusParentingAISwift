@@ -45,7 +45,7 @@ struct AIView: View {
                     ZStack(alignment: .topLeading) {
                         if newMessage.isEmpty {
                             Text("Ask a parenting question...")
-                                .foregroundColor(theme.text.opacity(0.6))
+                                .foregroundColor(theme.foreground.opacity(0.6))
                                 .padding(.horizontal, 16.5)
                                 .padding(.vertical, 10)
                                 .allowsHitTesting(false)
@@ -53,7 +53,7 @@ struct AIView: View {
                         
                         TextField("", text: $newMessage, axis: .vertical)
                             .lineLimit(1...5)
-                            .foregroundColor(theme.text)
+                            .foregroundColor(theme.foreground)
                             .focused($isTextFieldFocused)
                             .submitLabel(.done)
                             .padding(.vertical, 10)

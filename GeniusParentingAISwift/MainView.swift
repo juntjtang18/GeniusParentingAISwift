@@ -32,28 +32,28 @@ struct MainView: View {
             TabView(selection: $selectedTab) {
                 homeTab
                     .tabItem {
-                        Image(systemName: "house.fill")
+                        Image("button-home").renderingMode(.template)
                         Text("Home")
                     }
                     .tag(0)
 
                 courseTab
                     .tabItem {
-                        Image(systemName: "book.fill")
+                        Image("button-courses").renderingMode(.template)
                         Text("Course")
                     }
                     .tag(1)
 
                 aiTab
                     .tabItem {
-                        Image(systemName: "brain.fill")
+                        Image("button-ai").renderingMode(.template)
                         Text("AI")
                     }
                     .tag(2)
 
                 communityTab
                     .tabItem {
-                        Image(systemName: "person.2.fill")
+                        Image("button-community").renderingMode(.template)
                         Text("Community")
                     }
                     .tag(3)

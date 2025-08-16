@@ -15,6 +15,7 @@ struct LoginView: View {
     @State private var agreeToPrivacy = false
     @State private var showingPrivacyPolicy = false
     @State private var showingTermsOfService = false
+    private let inputInset: CGFloat = 50   // match TextField/SecureField horizontal padding
 
     enum ViewState {
         case login
@@ -26,28 +27,50 @@ struct LoginView: View {
             if currentView == .login {
                 ZStack {
                     theme.background.ignoresSafeArea()
+                    
                     VStack(spacing: 20) {
                         Text("Welcome to Genius Parenting AI")
                             .font(.largeTitle)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
-                            .foregroundColor(theme.text)
 
+                        // Email
                         TextField("Email", text: $email)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .font(.system(size: 20))
                             .autocapitalization(.none)
                             .keyboardType(.emailAddress)
+                            .disableAutocorrection(true)
+                            .padding(.horizontal, 18)
+                            .frame(height: 50)
+                            .background(theme.inputBoxBackground)
+                            .foregroundColor(theme.foreground)         // text color
+                            //.overlay(
+                            //    Capsule().stroke(theme.border.opacity(0.15), lineWidth: 1) // subtle hairline
+                            //)
+                            .clipShape(Capsule())
                             .padding(.horizontal)
                             .disabled(isLoading)
-                        
+
+                        // Password
                         SecureField("Password", text: $password)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .font(.system(size: 20))
+                            .autocapitalization(.none)
+                            .padding(.horizontal, 18)
+                            .frame(height: 50)
+                            .background(theme.inputBoxBackground)
+                            .foregroundColor(theme.foreground)
+                            .overlay(
+                                Capsule().stroke(theme.border.opacity(0.15), lineWidth: 1)
+                            )
+                            .clipShape(Capsule())
                             .padding(.horizontal)
                             .disabled(isLoading)
                         
+                        
+                        // The rest of the view remains the same...
                         if !errorMessage.isEmpty {
                             Text(errorMessage)
-                                .foregroundColor(theme.accent)
+                                .foregroundColor(.red)
                                 .padding()
                         }
                         
@@ -57,87 +80,76 @@ struct LoginView: View {
                         }
                         
                         VStack(spacing: 15) {
+                            // ⬇︎ Checkbox block
                             VStack(alignment: .leading, spacing: 10) {
-                                Button(action: { agreeToTerms.toggle() }) {
-                                    HStack {
+                                // Terms row
+                                HStack(spacing: 8) {
+                                    Button { agreeToTerms.toggle() } label: {
                                         Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
                                             .foregroundColor(theme.accent)
-                                        Text("I agree to the")
-                                        Button("Terms of Service") {
-                                            showingTermsOfService = true
-                                        }
                                     }
+                                    .buttonStyle(.plain)
+
+                                    Text("Terms of Service")
+                                        .font(.caption)
+                                        .foregroundColor(theme.accent)
+                                        .onTapGesture { showingTermsOfService = true }
                                 }
-                                .font(.caption)
-                                .foregroundColor(theme.text)
-                                .sheet(isPresented: $showingTermsOfService) {
-                                    TermsOfServiceView(isPresented: $showingTermsOfService)
-                                }
-                                
-                                Button(action: { agreeToPrivacy.toggle() }) {
-                                    HStack {
+
+                                // Privacy row
+                                HStack(spacing: 8) {
+                                    Button { agreeToPrivacy.toggle() } label: {
                                         Image(systemName: agreeToPrivacy ? "checkmark.square.fill" : "square")
                                             .foregroundColor(theme.accent)
-                                        Text("I agree to the")
-                                        Button("Privacy Policy") {
-                                            showingPrivacyPolicy = true
-                                        }
                                     }
-                                }
-                                .font(.caption)
-                                .foregroundColor(theme.text)
-                                .sheet(isPresented: $showingPrivacyPolicy) {
-                                    PrivacyPolicyView(isPresented: $showingPrivacyPolicy)
+                                    .buttonStyle(.plain)
+
+                                    Text("Privacy Policy")
+                                        .font(.caption)
+                                        .foregroundColor(theme.accent)
+                                        .onTapGesture { showingPrivacyPolicy = true }
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading) // expand to same width as button/fields
+                            .padding(.leading, inputInset)
                             
-                            Button(action: {
-                                Task {
-                                    await login()
-                                }
-                            }) {
+                            Button(action: { Task { await login() } }) {
                                 Text("Login")
-                                    .frame(maxWidth: .infinity)
+                                    .font(.headline)
                                     .padding()
-                                    .background(isLoading || !agreeToTerms || !agreeToPrivacy ? Color(.systemGray4) : theme.accent)
-                                    .foregroundColor((isLoading || !agreeToTerms || !agreeToPrivacy) ? theme.text.opacity(0.6) : .white)
+                                    .frame(maxWidth: .infinity)
+                                    .background(theme.accent)
+                                    .foregroundColor(theme.background)
                                     .clipShape(Capsule())
                             }
                             .disabled(isLoading || !agreeToTerms || !agreeToPrivacy)
                         }
                         .padding(.horizontal)
                         
-                        Button(action: {
-                            currentView = .signup
-                        }) {
+                        Button(action: { currentView = .signup }) {
                             Text("Don't have an account? Sign Up")
+                                .foregroundColor(theme.accent)
                         }
-                        .buttonStyle(LinkStyleButtonStyle())
                         .padding()
                     }
                     .padding()
                 }
-                .textFieldStyle(ThemedTextFieldStyle())
             } else if currentView == .signup {
                 SignupView(isLoggedIn: $isLoggedIn, currentView: $currentView)
             }
         }
     }
 
+    // login() and performNewLogin() functions remain the same...
     func login() async {
         isLoading = true
         errorMessage = ""
-        print("Login attempt for email: \(email)")
-        
         let credentials = LoginCredentials(identifier: email, password: password)
         
         do {
-            // A fresh login should always perform a new login to get the latest user data.
-            print("Performing new login")
             SessionManager.shared.clearSession()
             try await performNewLogin(credentials: credentials)
         } catch {
-            print("Login failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             SessionManager.shared.clearSession()
             isLoggedIn = false
@@ -147,16 +159,10 @@ struct LoginView: View {
     }
 
     private func performNewLogin(credentials: LoginCredentials) async throws {
-        print("Performing new login for \(credentials.identifier)")
         let authResponse = try await StrapiService.shared.login(credentials: credentials)
-        print("Login successful, JWT: \(authResponse.jwt)")
         SessionManager.shared.setJWT(authResponse.jwt)
         SessionManager.shared.setCurrentUser(authResponse.user)
         SessionManager.shared.updateLastUserEmail(authResponse.user.email)
-        
-        // **CRITICAL FIX:** Sync the store with the server's subscription data.
-        //StoreManager.shared.syncWithServerState(for: authResponse.user)
-        
         isLoggedIn = true
     }
 }

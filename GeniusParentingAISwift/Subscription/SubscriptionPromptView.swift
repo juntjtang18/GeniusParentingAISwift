@@ -47,7 +47,7 @@ struct SubscriptionPromptView: View {
                 // 2. Title
                 Text("Unlock Full Access")
                     .font(.title2).bold()
-                    .foregroundColor(theme.text)
+                    .foregroundColor(theme.foreground)
 
                 // 3. Message
                 Text("This course is only available to members. Subscribe now to unlock this and all other exclusive content!")

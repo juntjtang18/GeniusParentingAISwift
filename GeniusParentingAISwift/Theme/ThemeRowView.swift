@@ -9,13 +9,13 @@ struct ThemeRowView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(theme.id)
                     .font(.headline)
-                    .foregroundColor(theme.text)
+                    .foregroundColor(theme.foreground)
                 
                 // Color swatches to preview the theme
                 HStack(spacing: 12) {
-                    Circle().fill(theme.primary).frame(width: 22, height: 22)
+                    Circle().fill(theme.background).frame(width: 22, height: 22)
                     Circle().fill(theme.accent).frame(width: 22, height: 22)
-                    Circle().fill(theme.text).frame(width: 22, height: 22)
+                    Circle().fill(theme.foreground).frame(width: 22, height: 22)
                 }
             }
             

@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "button-home.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

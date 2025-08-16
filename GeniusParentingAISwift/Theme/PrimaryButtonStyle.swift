@@ -10,7 +10,7 @@ struct PrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             // 2. Use theme colors
             .background(theme.primary)
-            .foregroundColor(theme.text)
+            .foregroundColor(theme.foreground)
             .clipShape(Capsule())
             // 3. Add a subtle effect for when the button is pressed
             .opacity(configuration.isPressed ? 0.8 : 1.0)

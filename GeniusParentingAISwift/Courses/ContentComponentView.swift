@@ -23,7 +23,7 @@ private struct TextView: View {
             Text(textData)
                 .font(.system(size: style?.fontSize ?? 17, weight: .regular))
                 .italic(style?.isItalic == true)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .lineSpacing(5)
             
             HStack {
@@ -262,7 +262,7 @@ private struct QuizOptionView: View {
                 }
             }
             .font(.headline)
-            .foregroundColor(theme.text)
+            .foregroundColor(theme.foreground)
             .padding()
             .frame(maxWidth: .infinity)
             .background(Color(UIColor.secondarySystemBackground))

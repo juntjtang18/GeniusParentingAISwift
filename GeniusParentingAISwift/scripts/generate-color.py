@@ -6,78 +6,110 @@ import sys
 
 # 1) Your schemes with Light + Dark hex values
 schemes = {
-    "OceanBreeze": {
+      "OceanBreeze": {
         "Light": {
-            "Primary":    "#007AFF",
-            "Secondary":  "#34C759",
-            "Accent":     "#5AC8FA",
-            "Background": "#F2F2F7",
-            "Text":       "#1C1C1E",
-            "CardBackground": "#FFFFFF",
+          "Foreground": "#1C1C1E",
+          "Background": "#F2F2F7",
+          "Accent": "#5AC8FA",
+          "Border": "#34C759",
+          "Primary": "#007AFF",
+          "Secondary": "#34C759",
+          "Text": "#1C1C1E",
+          "CardBackground": "#FFFFFF"
         },
         "Dark": {
-            "Primary":    "#0A84FF",
-            "Secondary":  "#30D158",
-            "Accent":     "#64D2FF",
-            "Background": "#1C1C1E",
-            "Text":       "#F2F2F7",
-            "CardBackground": "#2C2C2E",
+          "Foreground": "#F2F2F7",
+          "Background": "#1C1C1E",
+          "Accent": "#64D2FF",
+          "Border": "#30D158",
+          "Primary": "#0A84FF",
+          "Secondary": "#30D158",
+          "Text": "#F2F2F7",
+          "CardBackground": "#2C2C2E"
         }
-    },
-    "SunsetCoral": {
+      },
+      "SunsetCoral": {
         "Light": {
-            "Primary":    "#FF6B6B",
-            "Secondary":  "#FFD93D",
-            "Accent":     "#FF9F43",
-            "Background": "#F0F0F0",
-            "Text":       "#333333",
-            "CardBackground": "#FFFFFF",
+          "Foreground": "#333333",
+          "Background": "#F0F0F0",
+          "Accent": "#FF9F43",
+          "Border": "#FFD93D",
+          "Primary": "#FF6B6B",
+          "Secondary": "#FFD93D",
+          "Text": "#333333",
+          "CardBackground": "#FFFFFF"
         },
         "Dark": {
-            "Primary":    "#FF453A",
-            "Secondary":  "#FFD60A",
-            "Accent":     "#FF9F0A",
-            "Background": "#000000",
-            "Text":       "#FFFFFF",
-            "CardBackground": "#1C1C1E",
+          "Foreground": "#FFFFFF",
+          "Background": "#000000",
+          "Accent": "#FF9F0A",
+          "Border": "#FFD60A",
+          "Primary": "#FF453A",
+          "Secondary": "#FFD60A",
+          "Text": "#FFFFFF",
+          "CardBackground": "#1C1C1E"
         }
-    },
+      },
     "ForestNight": {
         "Light": {
+            "Foreground": "#0A1F1B",
+            "Background": "#F5F5F5",
+            "Accent":     "#82D9A9",
+            "Border":     "#55C57A",
             "Primary":    "#1F4822",
             "Secondary":  "#55C57A",
-            "Accent":     "#82D9A9",
-            "Background": "#F5F5F5",
             "Text":       "#0A1F1B",
             "CardBackground": "#FFFFFF",
         },
         "Dark": {
+            "Foreground": "#E0E0E0",
+            "Background": "#121212",
+            "Accent":     "#55C57A",
+            "Border":     "1F4822",
             "Primary":    "#0A1F1B",
             "Secondary":  "#1F4822",
-            "Accent":     "#55C57A",
-            "Background": "#121212",
             "Text":       "#E0E0E0",
             "CardBackground": "#1E1E1E",
         }
     },
     "SoftPastel": {
         "Light": {
+            "Foreground":  "#2D3436",
+            "Background": "#F9F9F9",
+            "Accent":     "#55EFC4",
+            "Border":     "#74B9FF",
             "Primary":    "#A29BFE",
             "Secondary":  "#74B9FF",
-            "Accent":     "#55EFC4",
-            "Background": "#F9F9F9",
             "Text":       "#2D3436",
             "CardBackground": "#FFFFFF",
         },
         "Dark": {
+            "Foreground": "#6C5CE7",
+            "Background": "#2D3436",
+            "Accent":     "#00B894",
+            "Border":     "#0984E3",
             "Primary":    "#6C5CE7",
             "Secondary":  "#0984E3",
-            "Accent":     "#00B894",
-            "Background": "#2D3436",
             "Text":       "#FFFFFF",
             "CardBackground": "#424242",
         }
-    }
+    },
+    "SoftBlue": {
+        "Light": {
+            "Foreground":   "#4A4A4A",
+            "Background":   "#3977BF",
+            "Accent":       "#40E0D0",
+            "Border":       "#FFFFFF",
+            "InputBoxBackground": "#FFFFFF",
+        },
+        "Dark": {
+            "Foreground":   "#F0F0F0",
+            "Background":   "#131920",
+            "Accent":       "#A4E5D9",
+            "Border":       "#F0F0F0",
+            "InputBoxBackground": "#FFFFFF",
+        },
+    },
 }
 
 def hex_to_components(hex_str):

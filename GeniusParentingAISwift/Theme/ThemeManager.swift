@@ -11,7 +11,8 @@ class ThemeManager: ObservableObject {
             "OceanBreeze",
             "SunsetCoral",
             "ForestNight",
-            "SoftPastel"
+            "SoftPastel",
+            "SoftBlue"
         ]
 
         // 2. Dynamically create the themes from the list of IDs.

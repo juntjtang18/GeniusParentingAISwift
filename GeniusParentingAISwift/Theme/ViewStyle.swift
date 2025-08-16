@@ -24,17 +24,17 @@ struct StyleModifier: ViewModifier {
         case .title:
             content
                 .font(.largeTitle)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
 
         case .body:
             content
                 .font(.body)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
         
         case .caption:
             content
                 .font(.caption)
-                .foregroundColor(theme.text.opacity(0.8))
+                .foregroundColor(theme.foreground.opacity(0.8))
 
         case .primaryButton:
             content
@@ -42,7 +42,7 @@ struct StyleModifier: ViewModifier {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(theme.primary)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .clipShape(Capsule())
 
         case .secondaryButton:
@@ -54,7 +54,7 @@ struct StyleModifier: ViewModifier {
                 .padding()
                 .background(theme.secondary.opacity(0.2))
                 .cornerRadius(10)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
         
         case .courseCard:
             content
@@ -65,28 +65,28 @@ struct StyleModifier: ViewModifier {
         case .homeSectionTitle:
             content
                 .font(.title2.bold())
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .padding(.horizontal)
         
         // --- ADDED: Definitions for the new home card title styles ---
         case .lessonCardTitle:
             content
                 .font(.headline)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
         case .hotTopicCardTitle:
             content
                 .font(.subheadline.weight(.bold))
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
         case .dailyTipCardTitle:
             content
                 .font(.callout)
-                .foregroundColor(theme.text)
+                .foregroundColor(theme.foreground)
                 .lineLimit(3) // Allow more lines for tips
                 .multilineTextAlignment(.leading)
 
