@@ -49,8 +49,16 @@ struct ShowACourseView: View {
                                 VStack(alignment: .leading, spacing: 15) {
                                     ForEach(pages[pageIndex], id: \.uniqueIdForList) { item in
                                         if item.__component != "coursecontent.pagebreaker" {
-                                            ContentComponentView(contentItem: item, language: selectedLanguage)
-                                                .id(item.uniqueIdForList)
+                                            // NEW: render videos inline with overlay controls
+                                            if let urlString = item.video_file?.data?.attributes.url,
+                                               let url = URL(string: urlString) {
+                                                VideoBlock(url: url)
+                                                    .id(item.uniqueIdForList)
+                                            } else {
+                                                // Non-video items keep their existing renderer
+                                                ContentComponentView(contentItem: item, language: selectedLanguage)
+                                                    .id(item.uniqueIdForList)
+                                            }
                                         }
                                     }
                                 }
@@ -203,5 +211,60 @@ class ShowACourseViewModel: ObservableObject {
             errorMessage = "Fetch error: \(error.localizedDescription)"
         }
         isLoading = false
+    }
+}
+
+private struct VideoBlock: View {
+    let url: URL
+
+    @State private var player: AVPlayer?
+    @State private var endObserver: NSObjectProtocol?
+
+    var body: some View {
+        VideoPlayer(player: player)
+            // Use the system controls; do NOT add overlays or gestures above this.
+            .onAppear { setupPlayer() }
+            .onDisappear { teardown() }
+            .frame(maxWidth: .infinity)
+            .aspectRatio(16/9, contentMode: .fit)
+            .background(Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+
+    // MARK: - Setup / Cleanup
+
+    private func setupPlayer() {
+        // Reuse if same URL; otherwise create a new player
+        if let p = player,
+           let asset = p.currentItem?.asset as? AVURLAsset,
+           asset.url == url {
+            attachEndObserver(to: p)
+            return
+        }
+        let item = AVPlayerItem(url: url)
+        let p = AVPlayer(playerItem: item)
+        player = p
+        attachEndObserver(to: p)
+    }
+
+    private func attachEndObserver(to player: AVPlayer) {
+        // When playback finishes, seek to start so the native Play button can restart immediately
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { _ in
+            player.seek(to: .zero)
+        }
+    }
+
+    private func teardown() {
+        if let token = endObserver {
+            NotificationCenter.default.removeObserver(token)
+            endObserver = nil
+        }
+        player?.pause()
+        player = nil
     }
 }
