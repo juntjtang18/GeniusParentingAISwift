@@ -46,7 +46,7 @@ struct LoginView: View {
                             .background(theme.inputBoxBackground)
                             .foregroundColor(theme.foreground)         // text color
                             .overlay(
-                                Capsule().stroke(theme.border, lineWidth: 1) // subtle hairline
+                                Capsule().stroke(theme.border, lineWidth: 2) // subtle hairline
                             )
                             .clipShape(Capsule())
                             .padding(.horizontal)
@@ -61,7 +61,7 @@ struct LoginView: View {
                             .background(theme.inputBoxBackground)
                             .foregroundColor(theme.foreground)
                             .overlay(
-                                Capsule().stroke(theme.border, lineWidth: 1)
+                                Capsule().stroke(theme.border, lineWidth: 2)
                             )
                             .clipShape(Capsule())
                             .padding(.horizontal)
@@ -122,7 +122,7 @@ struct LoginView: View {
                                     .background(theme.primary)
                                     .foregroundColor(theme.primaryText)
                                     .overlay(
-                                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                                        Capsule().stroke(theme.border, lineWidth: 2)   // ⬅️ added border
                                     )
                                     .clipShape(Capsule())
                             }

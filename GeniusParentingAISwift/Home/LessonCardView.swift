@@ -3,11 +3,10 @@ import SwiftUI
 
 struct LessonCardView: View {
     @Environment(\.theme) var theme: Theme
-    @Environment(\.appDimensions) private var dims
     let lesson: LessonCourse
-
-    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
-    private var cardHeight: CGFloat { cardWidth * 0.62 }
+    
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,16 +29,23 @@ struct LessonCardView: View {
             // TITLE ROW
             HStack(alignment: .center) {
                 Text(lesson.attributes.title)
-                    .style(.lessonCardTitle)
-                    .foregroundColor(theme.primaryText)
+                    .font(.subheadline.weight(.regular)) // was .subheadline.weight(.bold)
+                    .foregroundColor(theme.foreground)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
 
                 Spacer()
 
                 PlayButtonView()
-
             }
-            .style(.courseCard)
+            .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
+            // MODIFIED: Changed alignment from .top to .center to vertically center the content.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .background(theme.background.opacity(0.7))
         }
-        .newLessonCardStyle()
+        .frame(width: cardWidth, height: cardHeight)
+        .background(theme.accentBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 15))
+        .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
     }
 }

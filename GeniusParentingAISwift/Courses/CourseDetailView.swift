@@ -8,7 +8,7 @@ struct ShowACourseView: View {
     @Binding var selectedLanguage: String
     let courseId: Int
     @State private var currentPageIndex = 0
-    
+    @State private var navigationTransition = AnyTransition.identity
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
@@ -42,52 +42,55 @@ struct ShowACourseView: View {
                 .padding()
 
                 let pages = groupContentIntoPages(content: course.content ?? [])
-                if !pages.isEmpty {
-                    TabView(selection: $currentPageIndex) {
-                        ForEach(pages.indices, id: \.self) { pageIndex in
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 15) {
-                                    ForEach(pages[pageIndex], id: \.uniqueIdForList) { item in
-                                        if item.__component != "coursecontent.pagebreaker" {
-                                            // NEW: render videos inline with overlay controls
-                                            if let urlString = item.video_file?.data?.attributes.url,
-                                               let url = URL(string: urlString) {
-                                                VideoBlock(url: url)
-                                                    .id(item.uniqueIdForList)
-                                            } else {
-                                                // Non-video items keep their existing renderer
-                                                ContentComponentView(contentItem: item, language: selectedLanguage)
-                                                    .id(item.uniqueIdForList)
-                                            }
-                                        }
+                if !pages.isEmpty && pages.indices.contains(currentPageIndex) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 15) {
+                            ForEach(pages[currentPageIndex], id: \.uniqueIdForList) { item in
+                                if item.__component != "coursecontent.pagebreaker" {
+                                    if let urlString = item.video_file?.data?.attributes.url,
+                                       let url = URL(string: urlString) {
+                                        VideoBlock(url: url)
+                                            .id(item.uniqueIdForList)
+                                    } else {
+                                        ContentComponentView(contentItem: item, language: selectedLanguage)
+                                            .id(item.uniqueIdForList)
                                     }
                                 }
-                                .padding(.horizontal)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }.tag(pageIndex)
+                            }
                         }
+                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .animation(.easeInOut, value: currentPageIndex)
-                    
+                    .id(currentPageIndex)
+                    .transition(navigationTransition)
+
                     HStack {
                         let pageBreakerSettings = findPageBreakerSettings(forCurrentPage: currentPageIndex, totalPages: pages.count, allContent: course.content ?? [])
                         
                         if pageBreakerSettings.showBackButton {
-                            Button { withAnimation { currentPageIndex -= 1 } } label: { Image(systemName: "arrow.left.circle.fill").font(.title) }
+                            Button {
+                                navigationTransition = .asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing))
+                                withAnimation(.easeInOut) { currentPageIndex -= 1 }
+                            } label: { Image(systemName: "arrow.left.circle.fill").font(.title) }
                         } else {
                             Spacer().frame(width: 44)
                         }
+                        
                         Spacer()
                         Text("Page \(currentPageIndex + 1) of \(pages.count)")
                             .style(.caption)
                         Spacer()
+                        
                         if pageBreakerSettings.showNextButton {
-                            Button { withAnimation { currentPageIndex += 1 } } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
+                            Button {
+                                navigationTransition = .asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading))
+                                withAnimation(.easeInOut) { currentPageIndex += 1 }
+                            } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
                         } else {
                              Spacer().frame(width: 44)
                         }
                     }.padding()
+                    
                 } else {
                     Text("No content for this course.")
                         .style(.body)
@@ -219,10 +222,10 @@ private struct VideoBlock: View {
 
     @State private var player: AVPlayer?
     @State private var endObserver: NSObjectProtocol?
+    @State private var pauseTask: Task<Void, Never>?
 
     var body: some View {
         VideoPlayer(player: player)
-            // Use the system controls; do NOT add overlays or gestures above this.
             .onAppear { setupPlayer() }
             .onDisappear { teardown() }
             .frame(maxWidth: .infinity)
@@ -235,21 +238,33 @@ private struct VideoBlock: View {
     // MARK: - Setup / Cleanup
 
     private func setupPlayer() {
-        // Reuse if same URL; otherwise create a new player
+        pauseTask?.cancel()
+
+        let finalPlayer: AVPlayer
         if let p = player,
            let asset = p.currentItem?.asset as? AVURLAsset,
            asset.url == url {
-            attachEndObserver(to: p)
-            return
+            finalPlayer = p
+        } else {
+            let item = AVPlayerItem(url: url)
+            let newPlayer = AVPlayer(playerItem: item)
+            player = newPlayer
+            finalPlayer = newPlayer
         }
-        let item = AVPlayerItem(url: url)
-        let p = AVPlayer(playerItem: item)
-        player = p
-        attachEndObserver(to: p)
+        
+        attachEndObserver(to: finalPlayer)
+        finalPlayer.isMuted = true
+        finalPlayer.play()
+        
+        pauseTask = Task {
+            do {
+                try await Task.sleep(for: .seconds(3))
+                finalPlayer.pause()
+            } catch {}
+        }
     }
 
     private func attachEndObserver(to player: AVPlayer) {
-        // When playback finishes, seek to start so the native Play button can restart immediately
         endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: player.currentItem,
@@ -260,11 +275,11 @@ private struct VideoBlock: View {
     }
 
     private func teardown() {
+        pauseTask?.cancel()
         if let token = endObserver {
             NotificationCenter.default.removeObserver(token)
             endObserver = nil
         }
         player?.pause()
-        player = nil
     }
 }

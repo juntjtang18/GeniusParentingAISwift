@@ -10,12 +10,21 @@ struct HomeView: View {
 
     @State private var selectedTip: Tip? = nil
 
-    // Single source of truth (same math as NewLessonCardStyle)
     private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
-    private var cardHeight: CGFloat { cardWidth * 0.62 }
+    private var cardHeight: CGFloat { cardWidth * 0.9 }
     private let shadowAllowance: CGFloat = 12
 
     var body: some View {
+        // MARK: - Debug Prints
+        let _ = {
+            print("--- Debugging HomeView Heights ---")
+            print("Screen Width: \(dims.screenSize.width)")
+            print("Card Width (85% of screen): \(cardWidth)")
+            print("Card Height (62% of width): \(cardHeight)")
+            print("ScrollView Frame Height (cardHeight + shadow): \(cardHeight + shadowAllowance)")
+            print("------------------------------------")
+        }()
+
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
                 
@@ -40,7 +49,11 @@ struct HomeView: View {
                                         isSideMenuShowing: $isSideMenuShowing
                                     )
                                 ) {
-                                    LessonCardView(lesson: lesson)
+                                    LessonCardView(
+                                        lesson: lesson,
+                                        cardWidth: self.cardWidth,
+                                        cardHeight: self.cardHeight
+                                    )
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
@@ -56,7 +69,7 @@ struct HomeView: View {
                 Text("Hot Topics")
                     .style(.homeSectionTitle)
                     .padding(.bottom, 5)
-
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 15) {
                         if viewModel.isLoadingHotTopics {

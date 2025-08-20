@@ -28,9 +28,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeniusParentingAISwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = GeniusParentingAISwift.app; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwift.app"; sourceTree = "<absolute>"; };
+		1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = GeniusParentingAISwiftTests.xctest; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwift.app/PlugIns/GeniusParentingAISwiftTests.xctest"; sourceTree = "<absolute>"; };
+		1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = GeniusParentingAISwiftUITests.xctest; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwiftUITests-Runner.app/PlugIns/GeniusParentingAISwiftUITests.xctest"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -132,27 +132,8 @@
 			children = (
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
-				1A6281382DED033A00DD0D1C /* Frameworks */,
-				1A6281072DECC52400DD0D1C /* Products */,
 				1A4DCDE02E3B2FCE00A32508 /* GeniusParentingAISwiftUITests */,
 			);
-			sourceTree = "<group>";
-		};
-		1A6281072DECC52400DD0D1C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */,
-				1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */,
-				1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		1A6281382DED033A00DD0D1C /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -261,7 +242,7 @@
 				1A6281352DECF86C00DD0D1C /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 1A6281072DECC52400DD0D1C /* Products */;
+			productRefGroup = 1A6280FD2DECC52400DD0D1C;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
