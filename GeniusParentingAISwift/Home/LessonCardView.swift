@@ -35,13 +35,8 @@ struct LessonCardView: View {
 
                 Spacer()
 
-                ZStack {
-                    Circle().fill(theme.primaryText)
-                    Image(systemName: "play.fill")
-                        .foregroundColor(theme.primary)
-                        .font(.system(size: 20))
-                }
-                .frame(width: 50, height: 50)
+                PlayButtonView()
+
             }
             .style(.courseCard)
         }

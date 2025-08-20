@@ -68,24 +68,25 @@ struct StyleModifier: ViewModifier {
         
         case .lessonCardTitle:
             content
-                .font(.headline)
+                .font(.headline.weight(.regular))   // was .headline (semibold)
                 .foregroundColor(theme.foreground)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
         case .hotTopicCardTitle:
             content
-                .font(.subheadline.weight(.bold))
+                .font(.subheadline.weight(.regular)) // was .subheadline.weight(.bold)
                 .foregroundColor(theme.foreground)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
         case .dailyTipCardTitle:
             content
-                .font(.callout)
+                .font(.callout.weight(.regular))     // was .callout (semibold by default on some devices)
                 .foregroundColor(theme.foreground)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
+
 
         case .subscriptionCardTitle:
             content.font(.title3.bold())

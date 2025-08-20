@@ -219,3 +219,16 @@ private struct FairyTipPopupView: View {
         .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 }
+struct PlayButtonView: View {
+    @Environment(\.theme) var theme: Theme
+    
+    var body: some View {
+        ZStack {
+            Circle().fill(theme.primary)
+            Image(systemName: "play.fill")
+                .foregroundColor(theme.primaryText)
+                .font(.system(size: 20))
+        }
+        .frame(width: 50, height: 50)
+    }
+}

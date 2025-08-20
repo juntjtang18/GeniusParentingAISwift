@@ -27,13 +27,8 @@ struct HotTopicCardView: View {
 
                     Spacer()
 
-                    ZStack {
-                        Circle().fill(theme.accent)
-                        Image(systemName: "play.fill")
-                            .foregroundColor(theme.background)
-                            .font(.system(size: 20))
-                    }
-                    .frame(width: 50, height: 50)
+                    PlayButtonView()
+
                 }
                 .style(.courseCard) // This style handles padding and background
             }
