@@ -8,11 +8,12 @@ class ThemeManager: ObservableObject {
     init() {
         // 1. To add a new theme, just add its ID string here.
         let themeIDs = [
-            "OceanBreeze",
-            "SunsetCoral",
-            "ForestNight",
-            "SoftPastel",
-            "SoftBlue"
+            //"OceanBreeze",
+            //"SunsetCoral",
+            //"ForestNight",
+            //"SoftPastel",
+            //"SoftBlue",
+            "WarmPurple"
         ]
 
         // 2. Dynamically create the themes from the list of IDs.

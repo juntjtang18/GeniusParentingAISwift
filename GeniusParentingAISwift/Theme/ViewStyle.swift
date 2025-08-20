@@ -13,11 +13,9 @@ enum ViewStyle {
 // 2. Conform exactly to ViewModifier—including @MainActor.
 @MainActor
 struct StyleModifier: ViewModifier {
-    // 2a. Existential protocols work without the `any` keyword here.
     @Environment(\.theme) var theme: Theme
     let style: ViewStyle
 
-    // 2b. Signature must match the protocol’s @MainActor requirement.
     @ViewBuilder
     func body(content: Content) -> some View {
         switch style {
@@ -42,17 +40,17 @@ struct StyleModifier: ViewModifier {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(theme.primary)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(theme.accentSecond)
                 .clipShape(Capsule())
 
         case .secondaryButton:
             content
-                .foregroundColor(theme.secondary)
+                .foregroundColor(theme.foreground)
 
         case .themedTextField:
             content
                 .padding()
-                .background(theme.secondary.opacity(0.2))
+                .background(theme.foreground.opacity(0.2))
                 .cornerRadius(10)
                 .foregroundColor(theme.foreground)
         
@@ -60,7 +58,7 @@ struct StyleModifier: ViewModifier {
             content
                 .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(theme.cardBackground.opacity(0.7))
+                .background(theme.background.opacity(0.7))
                 
         case .homeSectionTitle:
             content
@@ -68,7 +66,6 @@ struct StyleModifier: ViewModifier {
                 .foregroundColor(theme.foreground)
                 .padding(.horizontal)
         
-        // --- ADDED: Definitions for the new home card title styles ---
         case .lessonCardTitle:
             content
                 .font(.headline)
@@ -87,78 +84,71 @@ struct StyleModifier: ViewModifier {
             content
                 .font(.callout)
                 .foregroundColor(theme.foreground)
-                .lineLimit(3) // Allow more lines for tips
+                .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
-        // ... (other styles remain unchanged)
         case .subscriptionCardTitle:
-            content
-                .font(.title3.bold())
+            content.font(.title3.bold())
 
         case .subscriptionCardButton:
-            content
-                .font(.subheadline)
+            content.font(.subheadline)
         
         case .subscriptionCardFeatureTitle:
-            content
-                .font(.subheadline)
+            content.font(.subheadline)
 
         case .subscriptionCardFeatureItem:
-            content
-                .font(.callout)
+            content.font(.callout)
         
         case .subscriptionPlanBadge:
             content
                 .font(.caption.bold())
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(theme.secondary)
+                .background(theme.foreground)
                 .foregroundColor(.white)
                 .clipShape(Capsule())
         }
     }
 }
 
-// 3. Extension remains the same.
+// 3. Extension
 extension View {
     func style(_ style: ViewStyle) -> some View {
         self.modifier(StyleModifier(style: style))
     }
 }
 
-// A new, dedicated modifier for the subscription card's container style.
-struct SubscriptionCardStyle: ViewModifier {
-    let isHighlighted: Bool
+// MARK: - Home Card Styles
+struct NewLessonCardStyle: ViewModifier {
+    @Environment(\.theme) var theme: Theme
+    @Environment(\.appDimensions) var dims
+
+    // Single source of truth for sizing
+    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
+    private var cardHeight: CGFloat { cardWidth * 0.62 }
 
     func body(content: Content) -> some View {
         content
-            .padding(25)
-            .background(isHighlighted ? Color(UIColor.systemGray6) : Color(UIColor.systemBackground))
-            .cornerRadius(20)
-            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+            .frame(width: cardWidth, height: cardHeight)
+            .background(theme.accentBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 15))
+            .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
     }
 }
-
-extension View {
-    func subscriptionCardStyle(isHighlighted: Bool) -> some View {
-        self.modifier(SubscriptionCardStyle(isHighlighted: isHighlighted))
-    }
-}
-
-
-// MARK: - Home Card Styles
-// ADDED: New ViewModifiers for each home screen card type.
 
 struct LessonCardStyle: ViewModifier {
     @Environment(\.theme) var theme: Theme
+    @Environment(\.appDimensions) var dims
+
+    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
+    private var cardHeight: CGFloat { cardWidth * 0.62 }
+
     func body(content: Content) -> some View {
         content
-            // MODIFIED: Changed fixed width to 85% of screen width.
-            .frame(width: UIScreen.main.bounds.width * 0.85, height: 250)
-            .background(theme.cardBackground)
-            .cornerRadius(15)
+            .frame(width: cardWidth, height: cardHeight)
+            .background(theme.background)
+            .clipShape(RoundedRectangle(cornerRadius: 15))
             .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
-            .clipped()
     }
 }
 
@@ -167,14 +157,9 @@ struct HotTopicCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: 300, height: 250)
-            .background(theme.cardBackground)
-            .cornerRadius(15)
-            .overlay(
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(theme.accent.opacity(0.7), lineWidth: 2)
-            )
+            .background(theme.background)
+            .clipShape(RoundedRectangle(cornerRadius: 15))
             .shadow(color: theme.accent.opacity(0.3), radius: 6, x: 0, y: 5)
-            .clipped()
     }
 }
 
@@ -183,21 +168,15 @@ struct DailyTipCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: 300, height: 250)
-            .background(theme.cardBackground)
-            .cornerRadius(25) // More rounded
+            .background(theme.background)
+            .clipShape(RoundedRectangle(cornerRadius: 25))
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            .clipped()
     }
 }
 
 extension View {
-    func lessonCardStyle() -> some View {
-        self.modifier(LessonCardStyle())
-    }
-    func hotTopicCardStyle() -> some View {
-        self.modifier(HotTopicCardStyle())
-    }
-    func dailyTipCardStyle() -> some View {
-        self.modifier(DailyTipCardStyle())
-    }
+    func newLessonCardStyle() -> some View { self.modifier(NewLessonCardStyle()) }
+    func lessonCardStyle() -> some View { self.modifier(LessonCardStyle()) }
+    func hotTopicCardStyle() -> some View { self.modifier(HotTopicCardStyle()) }
+    func dailyTipCardStyle() -> some View { self.modifier(DailyTipCardStyle()) }
 }

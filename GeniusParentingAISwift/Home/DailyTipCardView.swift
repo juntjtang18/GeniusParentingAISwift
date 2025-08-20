@@ -13,7 +13,7 @@ struct DailyTipCardView: View {
                     if let iconMedia = tip.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                         CachedAsyncImage(url: imageUrl)
                     } else {
-                        theme.cardBackground
+                        theme.background
                             .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                     }
                 }

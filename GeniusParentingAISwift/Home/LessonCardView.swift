@@ -1,43 +1,50 @@
-// GeniusParentingAISwift/Home/LessonCardView.swift
+// LessonCardView.swift
 import SwiftUI
 
 struct LessonCardView: View {
     @Environment(\.theme) var theme: Theme
+    @Environment(\.appDimensions) private var dims
     let lesson: LessonCourse
 
+    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
+    private var cardHeight: CGFloat { cardWidth * 0.62 }
+
     var body: some View {
-        GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 0) {
-                // --- IMAGE SECTION ---
-                Group {
-                    if let iconMedia = lesson.attributes.icon_image?.data, let imageUrl = URL(string: iconMedia.attributes.url) {
-                        CachedAsyncImage(url: imageUrl)
-                    } else {
-                        theme.cardBackground
-                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
-                    }
+        VStack(alignment: .leading, spacing: 0) {
+            // IMAGE
+            Group {
+                if let iconMedia = lesson.attributes.icon_image?.data,
+                   let imageUrl = URL(string: iconMedia.attributes.url) {
+                    CachedAsyncImage(url: imageUrl)
+                        .scaledToFill()
+                } else {
+                    theme.background
+                        .overlay(Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray))
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
-                .clipped()
-
-                // --- TITLE SECTION ---
-                HStack(alignment: .center) {
-                    Text(lesson.attributes.title)
-                        .style(.lessonCardTitle) // <-- USE THE NEW STYLE
-
-                    Spacer()
-
-                    ZStack {
-                        Circle().fill(theme.accent)
-                        Image(systemName: "play.fill")
-                            .foregroundColor(theme.cardBackground)
-                            .font(.system(size: 20))
-                    }
-                    .frame(width: 50, height: 50)
-                }
-                .style(.courseCard) // This style handles padding and background
             }
+            .frame(height: cardHeight * 0.7)
+            .clipped()
+
+            // TITLE ROW
+            HStack(alignment: .center) {
+                Text(lesson.attributes.title)
+                    .style(.lessonCardTitle)
+                    .foregroundColor(theme.primaryText)
+
+                Spacer()
+
+                ZStack {
+                    Circle().fill(theme.primaryText)
+                    Image(systemName: "play.fill")
+                        .foregroundColor(theme.primary)
+                        .font(.system(size: 20))
+                }
+                .frame(width: 50, height: 50)
+            }
+            .style(.courseCard)
         }
-        .lessonCardStyle() // <-- USE THE NEW CONTAINER STYLE
+        .newLessonCardStyle()
     }
 }

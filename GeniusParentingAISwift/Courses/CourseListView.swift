@@ -23,7 +23,7 @@ struct CourseCardView: View {
                     if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                         CachedAsyncImage(url: imageUrl)
                     } else {
-                        theme.cardBackground
+                        theme.background
                             .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                     }
                 }
@@ -57,7 +57,7 @@ struct CourseCardView: View {
                     Circle()
                         .fill(isLocked ? .gray : theme.accent) // Use gray color for locked courses.
                     Image(systemName: "play.fill")
-                        .foregroundColor(theme.cardBackground)
+                        .foregroundColor(theme.background)
                         .font(.system(size: 20))
                 }
                 .frame(width: 50, height: 50)

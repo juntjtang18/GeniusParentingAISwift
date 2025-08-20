@@ -5,11 +5,8 @@ import KeychainAccess
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Binding var isLoggedIn: Bool
-    let logoutAction: () -> Void // To receive the logout function
+    let logoutAction: () -> Void
     
-    // --- MODIFIED: The MainView now owns the ViewModel ---
-    // Because MainView is re-created for each user via .id(), this StateObject
-    // is guaranteed to be a new, clean instance for each new user session.
     @StateObject private var profileViewModel = ProfileViewModel()
     
     @State private var selectedTab: Int = 0
@@ -29,6 +26,10 @@ struct MainView: View {
 
     var body: some View {
         ZStack {
+            // ADDED: Set the theme background as the bottom layer of the view
+            themeManager.currentTheme.background
+                .ignoresSafeArea()
+
             TabView(selection: $selectedTab) {
                 homeTab
                     .tabItem {
@@ -58,7 +59,6 @@ struct MainView: View {
                     }
                     .tag(3)
             }
-            .accentColor(themeManager.currentTheme.accent)
             .onAppear {
                 updateUnselectedTabItemColor()
             }
@@ -81,10 +81,9 @@ struct MainView: View {
                     .zIndex(1)
             }
 
-            // --- MODIFIED: Pass the new viewModel to the SideMenuView ---
             SideMenuView(
                 isShowing: $isSideMenuShowing,
-                profileViewModel: profileViewModel, // Pass the viewModel down
+                profileViewModel: profileViewModel,
                 isShowingProfileSheet: $isShowingProfileSheet,
                 isShowingLanguageSheet: $isShowingLanguageSheet,
                 isShowingSettingSheet: $isShowingSettingSheet,
@@ -100,18 +99,16 @@ struct MainView: View {
             .ignoresSafeArea()
             .zIndex(2)
             
-            // --- MODIFIED: Pass the new viewModel to the ProfileView ---
             if isShowingProfileSheet {
                 ProfileView(
                     isLoggedIn: $isLoggedIn,
-                    viewModel: profileViewModel, // Pass the viewModel down
+                    viewModel: profileViewModel,
                     isPresented: $isShowingProfileSheet
                 )
                 .transition(.move(edge: .leading))
                 .zIndex(3)
             }
             
-            // Other sheets remain the same...
             if isShowingLanguageSheet {
                 LanguagePickerView(selectedLanguage: $selectedLanguage, isPresented: $isShowingLanguageSheet)
                     .transition(.move(edge: .leading))
@@ -142,6 +139,7 @@ struct MainView: View {
                     .zIndex(3)
             }
         }
+        .tint(themeManager.currentTheme.primary)
         .animation(.easeInOut, value: isSideMenuShowing)
         .animation(.easeInOut, value: isShowingProfileSheet)
         .animation(.easeInOut, value: isShowingLanguageSheet)
@@ -154,7 +152,7 @@ struct MainView: View {
     
     private func updateUnselectedTabItemColor() {
         let theme = themeManager.currentTheme
-        let colorName = "ColorSchemes/\(theme.id)/\(theme.id)Text"
+        let colorName = "ColorSchemes/\(theme.id)/\(theme.id)Foreground"
         UITabBar.appearance().unselectedItemTintColor = UIColor(named: colorName)
     }
     
@@ -243,5 +241,6 @@ struct LanguagePickerView: View {
 struct MainView_Previews: PreviewProvider {
     static var previews: some View {
         MainView(isLoggedIn: .constant(true), logoutAction: {})
+            .environmentObject(ThemeManager())
     }
 }

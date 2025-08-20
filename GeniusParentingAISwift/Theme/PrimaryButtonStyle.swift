@@ -9,7 +9,7 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding()
             .frame(maxWidth: .infinity)
             // 2. Use theme colors
-            .background(theme.primary)
+            .background(theme.foreground)
             .foregroundColor(theme.foreground)
             .clipShape(Capsule())
             // 3. Add a subtle effect for when the button is pressed

@@ -12,7 +12,7 @@ struct ThemedTextFieldStyle: TextFieldStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(theme.secondary, lineWidth: 1) // Use a border color
+                    .stroke(theme.foreground, lineWidth: 1) // Use a border color
             )
             .foregroundColor(theme.foreground) // Set the text color
     }

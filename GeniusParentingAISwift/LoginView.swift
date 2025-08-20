@@ -29,13 +29,14 @@ struct LoginView: View {
                     theme.background.ignoresSafeArea()
                     
                     VStack(spacing: 20) {
-                        Text("Welcome to Genius Parenting AI")
-                            .font(.largeTitle)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
+                        Image("login-image")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 150)
+                            .padding(.bottom, 20)
 
                         // Email
-                        TextField("Email", text: $email)
+                        TextField("", text: $email, prompt: Text("Email").foregroundColor(theme.foreground.opacity(0.6)))
                             .font(.system(size: 20))
                             .autocapitalization(.none)
                             .keyboardType(.emailAddress)
@@ -52,7 +53,7 @@ struct LoginView: View {
                             .disabled(isLoading)
 
                         // Password
-                        SecureField("Password", text: $password)
+                        SecureField("", text: $password, prompt: Text("Password").foregroundColor(theme.foreground.opacity(0.6)))
                             .font(.system(size: 20))
                             .autocapitalization(.none)
                             .padding(.horizontal, 18)
@@ -118,8 +119,8 @@ struct LoginView: View {
                                     .font(.headline)
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .background(theme.accent)
-                                    .foregroundColor(theme.background)
+                                    .background(theme.primary)
+                                    .foregroundColor(theme.primaryText)
                                     .clipShape(Capsule())
                             }
                             .disabled(isLoading || !agreeToTerms || !agreeToPrivacy)
@@ -129,6 +130,7 @@ struct LoginView: View {
                         Button(action: { currentView = .signup }) {
                             Text("Don't have an account? Sign Up")
                                 .foregroundColor(theme.accent)
+                                .backgroundStyle(theme.accentBackground)
                         }
                         .padding()
                     }

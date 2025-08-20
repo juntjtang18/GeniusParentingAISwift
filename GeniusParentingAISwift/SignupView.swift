@@ -7,100 +7,134 @@ struct SignupView: View {
     @Environment(\.theme) var theme: Theme
     @Binding var isLoggedIn: Bool
     @Binding var currentView: LoginView.ViewState
+    @State private var username = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var confirmPassword = ""
     @State private var errorMessage = ""
-    @State private var isLoading = false // To show a loading indicator
+    @State private var isLoading = false
 
     let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
-        VStack(spacing: 20) {
-            HStack {
+        // CHANGED: Root view is now a ZStack to match LoginView's structure for vertical centering.
+        ZStack {
+            theme.background.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                Image("login-image")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 150)
+                    .padding(.vertical, 20)
+
+                TextField("User Name", text: $username)
+                    .font(.system(size: 20))
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .padding(.horizontal, 18)
+                    .frame(height: 50)
+                    .background(theme.inputBoxBackground)
+                    .foregroundColor(theme.foreground)
+                    .clipShape(Capsule())
+                    .padding(.horizontal)
+                    .disabled(isLoading)
+
+                TextField("Email", text: $email)
+                    .font(.system(size: 20))
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding(.horizontal, 18)
+                    .frame(height: 50)
+                    .background(theme.inputBoxBackground)
+                    .foregroundColor(theme.foreground)
+                    .clipShape(Capsule())
+                    .padding(.horizontal)
+                    .disabled(isLoading)
+
+                SecureField("Password", text: $password)
+                    .font(.system(size: 20))
+                    .padding(.horizontal, 18)
+                    .frame(height: 50)
+                    .background(theme.inputBoxBackground)
+                    .foregroundColor(theme.foreground)
+                    .clipShape(Capsule())
+                    .padding(.horizontal)
+                    .disabled(isLoading)
+                
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                }
+
+                if isLoading {
+                    ProgressView()
+                        .padding()
+                }
+                
+                Button(action: { Task { await signup() } }) {
+                    Text("Sign Up")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(theme.primary)
+                        .foregroundColor(theme.primaryText)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal)
+                .disabled(isLoading)
+
+
                 Button(action: {
                     currentView = .login
                 }) {
-                    Image(systemName: "chevron.left")
-                    Text("Back")
+                    Text("Already have an account? Login")
                 }
-                .buttonStyle(LinkStyleButtonStyle()) // Use link style for back button
-                .padding()
-                Spacer()
-            }
+                .buttonStyle(LinkStyleButtonStyle())
+                .padding(.top)
 
-            Text("Sign Up for Genius Parenting AI")
-                .font(.largeTitle)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-                .foregroundColor(theme.foreground)
-
-            TextField("Email", text: $email)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
-                .padding(.horizontal)
-                .disabled(isLoading)
-
-            SecureField("Password", text: $password)
-                .padding(.horizontal)
-                .disabled(isLoading)
-
-            SecureField("Confirm Password", text: $confirmPassword)
-                .padding(.horizontal)
-                .disabled(isLoading)
-
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundColor(.red)
+                Button(action: {
+                    // TODO: Implement Google Sign-In action
+                }) {
+                    HStack {
+                        Image("google-logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                        Text("Continue with Google")
+                            .font(.headline)
+                            .foregroundColor(theme.accent)
+                    }
                     .padding()
-            }
-
-            if isLoading {
-                ProgressView()
-                    .padding()
-            }
-
-            Button(action: {
-                Task {
-                   await signup()
-                }
-            }) {
-                Text("Sign Up")
                     .frame(maxWidth: .infinity)
+                    .background(theme.accentBackground)
+                    .cornerRadius(25)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 25)
+                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                    )
+                }
+                .padding(.horizontal)
+                .padding(.top, 10)
+                
+                // REMOVED: The Spacer that was pushing content to the top is gone.
             }
-            .buttonStyle(PrimaryButtonStyle()) // Use the main button style
-            .padding(.horizontal)
-            .disabled(isLoading)
-
-            Button(action: {
-                currentView = .login
-            }) {
-                Text("Already have an account? Log In")
-            }
-            .buttonStyle(LinkStyleButtonStyle()) // Use link style
             .padding()
         }
-        .textFieldStyle(ThemedTextFieldStyle())
-        .padding()
-        .background(theme.background.ignoresSafeArea()) // Ensure background is set
     }
 
     func signup() async {
         guard !isLoading else { return }
         
         errorMessage = ""
-        guard !email.isEmpty, !password.isEmpty else {
+        guard !username.isEmpty, !email.isEmpty, !password.isEmpty else {
             errorMessage = "Please fill in all fields"
             return
         }
-        guard password == confirmPassword else {
-            errorMessage = "Passwords do not match"
-            return
-        }
-
+        
         isLoading = true
         
-        let payload = RegistrationPayload(username: email, email: email, password: password)
+        let payload = RegistrationPayload(username: username, email: email, password: password)
 
         do {
             let authResponse = try await NetworkManager.shared.signup(payload: payload)

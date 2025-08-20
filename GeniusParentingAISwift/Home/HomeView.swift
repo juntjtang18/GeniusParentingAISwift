@@ -5,31 +5,41 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @Binding var selectedLanguage: String
     @Binding var isSideMenuShowing: Bool
-    
+    @Environment(\.theme) var theme: Theme
+    @Environment(\.appDimensions) var dims
+
     @State private var selectedTip: Tip? = nil
+
+    // Single source of truth (same math as NewLessonCardStyle)
+    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
+    private var cardHeight: CGFloat { cardWidth * 0.62 }
+    private let shadowAllowance: CGFloat = 12
 
     var body: some View {
         ScrollView {
-            // Level 1: VStack (Main Container)
             VStack(alignment: .leading, spacing: 10) {
                 
-                // --- Today's Lesson Section ---
                 Text("Today's Lesson")
                     .style(.homeSectionTitle)
                     .padding(.bottom, 5)
 
-                // Level 2: ScrollView (Horizontal)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    // Level 3: LazyHStack
                     LazyHStack(spacing: 15) {
                         if viewModel.isLoading {
-                            ProgressView().frame(width: 300, height: 250)
+                            ProgressView().frame(width: cardWidth, height: cardHeight)
                         } else if viewModel.todaysLessons.isEmpty {
-                            Text("No lessons for today.").frame(width: 300, height: 250).multilineTextAlignment(.center)
+                            Text("No lessons for today.")
+                                .frame(width: cardWidth, height: cardHeight)
+                                .multilineTextAlignment(.center)
                         } else {
-                            // Level 4: Card Views
                             ForEach(viewModel.todaysLessons) { lesson in
-                                NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: lesson.id, isSideMenuShowing: $isSideMenuShowing)) {
+                                NavigationLink(
+                                    destination: ShowACourseView(
+                                        selectedLanguage: $selectedLanguage,
+                                        courseId: lesson.id,
+                                        isSideMenuShowing: $isSideMenuShowing
+                                    )
+                                ) {
                                     LessonCardView(lesson: lesson)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -37,7 +47,8 @@ struct HomeView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .frame(height: 250)
+                    .padding(.vertical, shadowAllowance / 2)
+                    .frame(height: cardHeight + shadowAllowance)
                 }
                 .padding(.bottom, 20)
 
@@ -51,10 +62,18 @@ struct HomeView: View {
                         if viewModel.isLoadingHotTopics {
                             ProgressView().frame(width: 300, height: 250)
                         } else if viewModel.hotTopics.isEmpty {
-                            Text("No hot topics available.").frame(width: 300, height: 250).multilineTextAlignment(.center)
+                            Text("No hot topics available.")
+                                .frame(width: 300, height: 250)
+                                .multilineTextAlignment(.center)
                         } else {
                             ForEach(viewModel.hotTopics) { topic in
-                                NavigationLink(destination: TopicView(selectedLanguage: $selectedLanguage, topicId: topic.id, isSideMenuShowing: $isSideMenuShowing)) {
+                                NavigationLink(
+                                    destination: TopicView(
+                                        selectedLanguage: $selectedLanguage,
+                                        topicId: topic.id,
+                                        isSideMenuShowing: $isSideMenuShowing
+                                    )
+                                ) {
                                     HotTopicCardView(topic: topic)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -62,7 +81,8 @@ struct HomeView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .frame(height: 250)
+                    .padding(.vertical, shadowAllowance / 2)
+                    .frame(height: 250 + shadowAllowance)
                 }
                 .padding(.bottom, 20)
 
@@ -76,31 +96,27 @@ struct HomeView: View {
                         if viewModel.isLoadingDailyTips {
                             ProgressView().frame(width: 300, height: 250)
                         } else if viewModel.dailyTips.isEmpty {
-                            Text("No daily tips available.").frame(width: 300, height: 250).multilineTextAlignment(.center)
+                            Text("No daily tips available.")
+                                .frame(width: 300, height: 250)
+                                .multilineTextAlignment(.center)
                         } else {
                             ForEach(viewModel.dailyTips) { tip in
                                 DailyTipCardView(tip: tip)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
-                                        withAnimation(.spring()) {
-                                            self.selectedTip = tip
-                                        }
+                                        withAnimation(.spring()) { self.selectedTip = tip }
                                     }
                             }
                         }
                     }
                     .padding(.horizontal)
-                    .frame(height: 250)
+                    .padding(.vertical, shadowAllowance / 2)
+                    .frame(height: 250 + shadowAllowance)
                 }
             }
             .padding(.vertical)
         }
-        .background(
-            Image("background1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
-        )
+        .background(theme.background)
         .overlay {
             if let tip = selectedTip {
                 FairyTipPopupView(tip: tip, isPresented: Binding(
@@ -132,6 +148,7 @@ struct HomeView: View {
         }
     }
 }
+
 
 // The FairyTipPopupView does not need any changes.
 private struct FairyTipPopupView: View {

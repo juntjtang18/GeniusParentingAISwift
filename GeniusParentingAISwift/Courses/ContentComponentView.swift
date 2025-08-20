@@ -68,7 +68,7 @@ private struct ImageView: View {
                 .frame(minHeight: 200)
                 
                 if let caption = media.attributes.caption, !caption.isEmpty {
-                    Text(caption).font(.caption).foregroundColor(theme.secondary).italic().padding(.top, 2)
+                    Text(caption).font(.caption).foregroundColor(theme.foreground).italic().padding(.top, 2)
                 }
             } else {
                 Text("Invalid Image URL").foregroundColor(.red)
@@ -127,7 +127,7 @@ private struct VideoView: View {
                 }
 
                 if let caption = media.attributes.caption, !caption.isEmpty {
-                    Text(caption).font(.caption).foregroundColor(theme.secondary).italic().padding(.top, 2)
+                    Text(caption).font(.caption).foregroundColor(theme.foreground).italic().padding(.top, 2)
                 }
             } else {
                 Text("Invalid Video URL").foregroundColor(.red)
@@ -160,7 +160,7 @@ private struct ExternalVideoView: View {
             }
 
             if let caption = item.caption, !caption.isEmpty {
-                Text(caption).font(.caption).foregroundColor(theme.secondary).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
+                Text(caption).font(.caption).foregroundColor(theme.foreground).italic().frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
             }
         }
     }
