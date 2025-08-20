@@ -45,9 +45,9 @@ struct LoginView: View {
                             .frame(height: 50)
                             .background(theme.inputBoxBackground)
                             .foregroundColor(theme.foreground)         // text color
-                            //.overlay(
-                            //    Capsule().stroke(theme.border.opacity(0.15), lineWidth: 1) // subtle hairline
-                            //)
+                            .overlay(
+                                Capsule().stroke(theme.border, lineWidth: 1) // subtle hairline
+                            )
                             .clipShape(Capsule())
                             .padding(.horizontal)
                             .disabled(isLoading)
@@ -61,7 +61,7 @@ struct LoginView: View {
                             .background(theme.inputBoxBackground)
                             .foregroundColor(theme.foreground)
                             .overlay(
-                                Capsule().stroke(theme.border.opacity(0.15), lineWidth: 1)
+                                Capsule().stroke(theme.border, lineWidth: 1)
                             )
                             .clipShape(Capsule())
                             .padding(.horizontal)
@@ -121,6 +121,9 @@ struct LoginView: View {
                                     .frame(maxWidth: .infinity)
                                     .background(theme.primary)
                                     .foregroundColor(theme.primaryText)
+                                    .overlay(
+                                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                                    )
                                     .clipShape(Capsule())
                             }
                             .disabled(isLoading || !agreeToTerms || !agreeToPrivacy)

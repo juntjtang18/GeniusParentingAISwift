@@ -35,6 +35,9 @@ struct SignupView: View {
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
                     .foregroundColor(theme.foreground)
+                    .overlay(
+                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                    )
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
@@ -47,6 +50,9 @@ struct SignupView: View {
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
                     .foregroundColor(theme.foreground)
+                    .overlay(
+                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                    )
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
@@ -57,6 +63,9 @@ struct SignupView: View {
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
                     .foregroundColor(theme.foreground)
+                    .overlay(
+                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                    )
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
@@ -79,6 +88,9 @@ struct SignupView: View {
                         .frame(maxWidth: .infinity)
                         .background(theme.primary)
                         .foregroundColor(theme.primaryText)
+                        .overlay(
+                            Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
+                        )
                         .clipShape(Capsule())
                 }
                 .padding(.horizontal)
@@ -111,7 +123,7 @@ struct SignupView: View {
                     .cornerRadius(25)
                     .overlay(
                         RoundedRectangle(cornerRadius: 25)
-                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                            .stroke(theme.border, lineWidth: 1)
                     )
                 }
                 .padding(.horizontal)
