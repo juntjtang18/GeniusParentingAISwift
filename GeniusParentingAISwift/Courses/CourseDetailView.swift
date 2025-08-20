@@ -1,6 +1,7 @@
 // GeniusParentingAISwift/Courses/CourseDetailView.swift
 import SwiftUI
 import AVKit
+import Combine
 
 struct ShowACourseView: View {
     @Environment(\.theme) var theme: Theme
@@ -221,65 +222,76 @@ private struct VideoBlock: View {
     let url: URL
 
     @State private var player: AVPlayer?
-    @State private var endObserver: NSObjectProtocol?
     @State private var pauseTask: Task<Void, Never>?
+    
+    @State private var isPaused = true
+    @State private var playerStatusCancellable: AnyCancellable?
+    
+    // NEW: State to track if the initial play has happened.
+    @State private var hasBeenPlayedOnce = false
 
     var body: some View {
-        VideoPlayer(player: player)
-            .onAppear { setupPlayer() }
-            .onDisappear { teardown() }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(16/9, contentMode: .fit)
-            .background(Color.black)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        ZStack {
+            VideoPlayer(player: player)
+                // The native player is only interactive AFTER the first play.
+                .allowsHitTesting(hasBeenPlayedOnce)
+
+            // Show the custom button only if the video is paused AND it's the first play.
+            if isPaused && !hasBeenPlayedOnce {
+                Button(action: {
+                    player?.play()
+                    // This is the key: once tapped, we permanently hide the overlay.
+                    hasBeenPlayedOnce = true
+                }) {
+                    Image(systemName: "play.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .foregroundColor(.white.opacity(0.8))
+                        .background(Circle().fill(Color.black.opacity(0.2)))
+                }
+            }
+        }
+        .onAppear { setupPlayer() }
+        .onDisappear { teardown() }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(16/9, contentMode: .fit)
+        .background(Color.black)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Setup / Cleanup
 
     private func setupPlayer() {
-        pauseTask?.cancel()
-
-        let finalPlayer: AVPlayer
-        if let p = player,
-           let asset = p.currentItem?.asset as? AVURLAsset,
-           asset.url == url {
-            finalPlayer = p
-        } else {
-            let item = AVPlayerItem(url: url)
-            let newPlayer = AVPlayer(playerItem: item)
-            player = newPlayer
-            finalPlayer = newPlayer
+        if player == nil {
+            player = AVPlayer(url: url)
         }
         
-        attachEndObserver(to: finalPlayer)
-        finalPlayer.isMuted = true
-        finalPlayer.play()
+        // This observer is still needed to track the paused state for our `if` condition.
+        playerStatusCancellable = player?.publisher(for: \.timeControlStatus)
+            .sink { status in
+                self.isPaused = (status != .playing)
+            }
+        
+        // This is the essential "play-then-pause" logic to prevent a blank screen.
+        pauseTask?.cancel()
+        player?.isMuted = true
+        player?.play()
         
         pauseTask = Task {
             do {
-                try await Task.sleep(for: .seconds(3))
-                finalPlayer.pause()
+                try await Task.sleep(for: .seconds(2))
+                if !Task.isCancelled {
+                    player?.pause()
+                }
             } catch {}
         }
     }
 
-    private func attachEndObserver(to player: AVPlayer) {
-        endObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
-            queue: .main
-        ) { _ in
-            player.seek(to: .zero)
-        }
-    }
-
     private func teardown() {
+        playerStatusCancellable?.cancel()
         pauseTask?.cancel()
-        if let token = endObserver {
-            NotificationCenter.default.removeObserver(token)
-            endObserver = nil
-        }
         player?.pause()
     }
 }
