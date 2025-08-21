@@ -6,7 +6,9 @@ struct ProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var isShowingEditView = false
     @Binding var isPresented: Bool
-
+    @State private var isShowingOnboarding = false
+    @State private var onboardingDidComplete = false
+    
     private let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
     var body: some View {
@@ -95,10 +97,18 @@ struct ProfileView: View {
                                         }
                                     }
                                     .padding(.vertical, 4)
+                                    Button("Retake Personality Test") {
+                                        isShowingOnboarding = true
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
                                 } else {
                                     Text("No personality result saved yet.")
                                         .foregroundColor(.secondary)
-                                }
+
+                                    Button("Start Personality Test") {
+                                        isShowingOnboarding = true
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())                                }
                             }
                         } else {
                             Section {
@@ -133,6 +143,18 @@ struct ProfileView: View {
                     Task {
                         await viewModel.fetchUserProfile()
                     }
+                }
+            }
+            .fullScreenCover(isPresented: $isShowingOnboarding) {
+                // Show the onboarding flow. It will set didComplete = true when done.
+                OnboardingFlowView(didComplete: $onboardingDidComplete)
+            }
+            .onChange(of: onboardingDidComplete) { completed in
+                if completed {
+                    // Dismiss the onboarding and refresh the profile
+                    isShowingOnboarding = false
+                    onboardingDidComplete = false
+                    Task { await viewModel.fetchUserProfile() }
                 }
             }
         }
