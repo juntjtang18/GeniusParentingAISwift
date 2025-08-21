@@ -52,11 +52,6 @@ private struct DimensionsProvider<Content: View>: View {
 struct GeniusParentingAISwiftApp: App {
     @State private var isLoggedIn = false
     @State private var isCheckingToken = true
-    
-    // This uses UserDefaults to store a boolean.
-    // The key in UserDefaults will be "hasCompletedPersonalityTest".
-    @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
-    
     @StateObject private var speechManager = SpeechManager()
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var storeManager = StoreManager.shared
@@ -72,20 +67,9 @@ struct GeniusParentingAISwiftApp: App {
                     if isCheckingToken {
                         ProgressView("Checking Login Status...")
                     } else if isLoggedIn, let user = SessionManager.shared.currentUser {
-                        // Step 1: Always have MainView ready for a logged-in user.
                         MainView(isLoggedIn: $isLoggedIn, logoutAction: logout)
                             .id(user.id)
-                            // Step 2: Present the onboarding flow as a modal cover.
-                            .fullScreenCover(isPresented: $hasCompletedPersonalityTest.inverted) {
-                                // This is the view that will be presented.
-                                // It uses the same binding to dismiss itself when done.
-                                OnboardingFlowView(didComplete: $hasCompletedPersonalityTest)
-                            }
-                        
-                        // --- END: NEW MODAL LOGIC ---
-
                     } else {
-                        // If not logged in, show the login view.
                         LoginView(isLoggedIn: $isLoggedIn)
                     }
                 }

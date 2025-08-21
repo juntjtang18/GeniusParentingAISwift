@@ -188,3 +188,61 @@ class StrapiService {
         }
     }
 }
+
+
+extension StrapiService {
+
+    /// Fetch all personality results (optionally for a given locale)
+    func fetchPersonalityResults(
+        locale: String? = nil,
+        page: Int = 1,
+        pageSize: Int = 25
+    ) async throws -> StrapiListResponse<PersonalityResult> {
+
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Fetching personality results. locale=\(locale ?? "nil"), page=\(page)")
+
+        var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/personality-results")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "pagination[page]", value: String(page)),
+            URLQueryItem(name: "pagination[pageSize]", value: String(pageSize)),
+            URLQueryItem(name: "sort", value: "createdAt:asc")
+        ]
+        if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
+        components.queryItems = queryItems
+
+        do {
+            let response: StrapiListResponse<PersonalityResult> = try await NetworkManager.shared.fetchDirect(from: components.url!)
+            logger.info("[StrapiService::\(functionName)] - Received \(response.data?.count ?? 0) results.")
+            return response
+        } catch {
+            logger.error("[StrapiService::\(functionName)] - Error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    /// Fetch a single personality result by its `ps_id` (your mapping key)
+    func fetchPersonalityResult(psId: String, locale: String? = nil) async throws -> PersonalityResult? {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Fetching personality result by ps_id=\(psId), locale=\(locale ?? "nil")")
+
+        var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/personality-results")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "filters[ps_id][$eq]", value: psId),
+            URLQueryItem(name: "pagination[page]", value: "1"),
+            URLQueryItem(name: "pagination[pageSize]", value: "1")
+        ]
+        if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
+        components.queryItems = queryItems
+
+        do {
+            let response: StrapiListResponse<PersonalityResult> = try await NetworkManager.shared.fetchDirect(from: components.url!)
+            let item = response.data?.first
+            logger.info("[StrapiService::\(functionName)] - Found item? \(item != nil)")
+            return item
+        } catch {
+            logger.error("[StrapiService::\(functionName)] - Error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+}

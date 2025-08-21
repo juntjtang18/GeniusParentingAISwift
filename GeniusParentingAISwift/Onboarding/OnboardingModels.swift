@@ -29,3 +29,36 @@ struct QuizResult {
     let description: String
     let powerTip: String
 }
+// MARK: - Personality Results (from Strapi)
+
+struct PersonalityResult: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: PersonalityResultAttributes
+}
+
+struct PersonalityResultAttributes: Codable, Hashable {
+    let title: String
+    let description: String
+    let powerTip: String
+    let createdAt: String
+    let updatedAt: String
+    let locale: String?
+    let psId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title, description, locale, createdAt, updatedAt
+        case powerTip = "power_tip"
+        case psId = "ps_id"
+    }
+}
+
+// Convenience bridge so UI that expects QuizResult can still work
+extension QuizResult {
+    init(from result: PersonalityResult) {
+        self.init(
+            title: result.attributes.title,
+            description: result.attributes.description,
+            powerTip: result.attributes.powerTip
+        )
+    }
+}

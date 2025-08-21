@@ -16,7 +16,45 @@ class OnboardingViewModel: ObservableObject {
     @Published var currentQuestionIndex = 0
     @Published var userSelections: [String: String] = [:] // [QuestionID: AnswerID]
     @Published var quizCompleted = false
+    @Published var remoteResults: [PersonalityResult] = []
+    @Published var isLoadingResults = false
+    @Published var loadError: String?
 
+    @MainActor
+    func loadPersonalityResults(locale: String = "en") async {
+        guard !isLoadingResults else { return }
+        isLoadingResults = true
+        loadError = nil
+        do {
+            let list = try await StrapiService.shared.fetchPersonalityResults(locale: locale)
+            self.remoteResults = list.data ?? []
+        } catch {
+            self.loadError = error.localizedDescription
+        }
+        isLoadingResults = false
+    }
+
+    // Example mapping: dominant choice A/B/C/D → ps_id "1"..."4"
+    private func inferredPSId() -> String {
+        let counts = ["A","B","C","D"].reduce(into: [String:Int]()) { acc, k in
+            acc[k] = userSelections.values.filter { $0 == k }.count
+        }
+        let best = counts.max { $0.value < $1.value }?.key ?? "A"
+        switch best { case "A": return "1"; case "B": return "2"; case "C": return "3"; case "D": return "4"; default: return "1" }
+    }
+
+    var result: QuizResult {
+        if let match = remoteResults.first(where: { $0.attributes.psId == inferredPSId() }) {
+            return QuizResult(from: match)
+        }
+        // Fallback to your current hardcoded result if API not loaded yet
+        return QuizResult(
+            title: "You're the Mindful Mixer",
+            description: "Calm-ish. Thoughtful. Reflective.\nYou pause before yelling. You talk things out. You're raising an emotionally smart little human.",
+            powerTip: "Not everything needs a deep convo—sometimes a funny face works faster."
+        )
+    }
+    
     // Your list of questions. Based on your mockups.
     let questions: [Question] = [
         Question(questionText: "Your kid just spilled juice everywhere. What do you do first?", answers: [
@@ -48,17 +86,6 @@ class OnboardingViewModel: ObservableObject {
 
     var currentQuestion: Question {
         questions[currentQuestionIndex]
-    }
-    
-    // The final result is determined here.
-    // For now, it's hardcoded, but you can add logic to calculate it based on answers.
-    var result: QuizResult {
-        // TODO: Implement your logic to determine the result based on `userSelections`
-        return QuizResult(
-            title: "You're the Mindful Mixer",
-            description: "Calm-ish. Thoughtful. Reflective.\nYou pause before yelling. You talk things out. You're raising an emotionally smart little human.",
-            powerTip: "Not everything needs a deep convo—sometimes a funny face works faster."
-        )
     }
 
     func selectAnswer(_ answer: Answer) {

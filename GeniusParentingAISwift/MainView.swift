@@ -1,22 +1,6 @@
 import SwiftUI
 import KeychainAccess
 
-// MARK: - Local persistence for personality test state
-private enum PersonalityPrefs {
-    private static let completedKey = "gp.personality.completed"
-    private static let suppressedKey = "gp.personality.reminderSuppressed"
-
-    static var hasCompleted: Bool {
-        get { UserDefaults.standard.bool(forKey: completedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: completedKey) }
-    }
-
-    static var reminderSuppressed: Bool {
-        get { UserDefaults.standard.bool(forKey: suppressedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: suppressedKey) }
-    }
-}
-
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Binding var isLoggedIn: Bool
@@ -24,7 +8,9 @@ struct MainView: View {
     
     @StateObject private var profileViewModel = ProfileViewModel()
     @State private var selectedTab: Int = 0
-    
+    @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
+    @AppStorage("personalityReminderSuppressed") private var personalityReminderSuppressed = false
+
     // Existing sheets
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
@@ -35,13 +21,9 @@ struct MainView: View {
     @State private var isShowingTermsSheet = false
     @State private var isShowingSubscriptionSheet = false
 
-    // Side menu
     @State private var isSideMenuShowing = false
-
-    // NEW: Personality test UX
     @State private var showPersonalityPrompt = false
     @State private var showOnboarding = false
-    @State private var onboardingDidComplete = false
     @State private var didCheckReminderOnce = false
 
     var body: some View {
@@ -169,32 +151,19 @@ struct MainView: View {
 
         // NEW: One-time reminder alert
         .alert("Try the 30-sec Personality Test?", isPresented: $showPersonalityPrompt) {
-            Button("Not now") {
-                PersonalityPrefs.reminderSuppressed = true
-                showPersonalityPrompt = false
-            }
-            Button("Take the test") {
-                showPersonalityPrompt = false
-                showOnboarding = true
-            }
+            Button("Not now") { personalityReminderSuppressed = true; showPersonalityPrompt = false }
+            Button("Take the test") { showPersonalityPrompt = false; showOnboarding = true }
+
         } message: {
             Text("This helps tailor tips and lessons to you.")
         }
 
-        // NEW: Launch your existing onboarding flow
-        .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
-            // If user swipes down, do nothing special
-        }) {
-            OnboardingFlowView(didComplete: $onboardingDidComplete)
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingFlowView(didComplete: $hasCompletedPersonalityTest)
                 .environmentObject(themeManager)
         }
-
-        // NEW: When onboarding says it’s done, mark complete and dismiss
-        .onChange(of: onboardingDidComplete) { done in
-            if done {
-                PersonalityPrefs.hasCompleted = true
-                showOnboarding = false
-            }
+        .onChange(of: hasCompletedPersonalityTest) { done in
+            if done { showOnboarding = false }
         }
     }
     
@@ -220,9 +189,7 @@ struct MainView: View {
         guard !didCheckReminderOnce else { return }
         didCheckReminderOnce = true
 
-        let shouldPrompt =
-            !PersonalityPrefs.hasCompleted &&
-            !PersonalityPrefs.reminderSuppressed
+        let shouldPrompt = !hasCompletedPersonalityTest && !personalityReminderSuppressed
 
         if shouldPrompt {
             // Slight delay so we don’t clash with first layout/animations

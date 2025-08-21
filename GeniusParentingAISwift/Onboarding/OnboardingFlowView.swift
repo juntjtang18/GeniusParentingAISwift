@@ -20,7 +20,7 @@ struct OnboardingFlowView: View {
 
     @State private var currentStep: OnboardingStep = .intro
     @StateObject private var viewModel = OnboardingViewModel()
-    
+
     var body: some View {
         ZStack {
             // Use the background color from your theme
@@ -201,7 +201,8 @@ struct QuestionnaireView: View {
 struct OnboardingResultsView: View {
     let result: QuizResult
     var onComplete: () -> Void
-    
+    @Environment(\.dismiss) private var dismiss   // ← add this
+
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
@@ -244,9 +245,12 @@ struct OnboardingResultsView: View {
             
             Spacer()
             
-            Button("Watch My Parenting Tip Video", action: onComplete)
-                .buttonStyle(PrimaryButtonStyle())
-            
+            Button("Watch My Parenting Tip Video") {
+                            print("Final button tapped. Setting didComplete to true.")
+                            onComplete()   // ← call the closure (sets the binding in the parent)
+                            dismiss()      // ← then close the fullscreen cover immediately
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
             Spacer()
         }
         .padding()
