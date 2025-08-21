@@ -70,6 +70,36 @@ struct ProfileView: View {
                                 }
                                 .disabled(true)
                             }
+                            Section(header: Text("Personality Profile")) {
+                                if let relation = profile.personality_result,
+                                   let result = relation.data {
+
+                                    let attrs = result.attributes
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(attrs.title)
+                                            .font(.headline)
+                                        Text(attrs.description)
+                                            .font(.body)
+                                            .foregroundColor(.secondary)
+                                        if !attrs.powerTip.isEmpty {
+                                            Divider().padding(.vertical, 4)
+                                            HStack(alignment: .top, spacing: 8) {
+                                                Image(systemName: "lightbulb")
+                                                Text(attrs.powerTip)
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .accessibilityElement(children: .combine)
+                                            .accessibilityLabel("Power tip")
+                                            .accessibilityValue(attrs.powerTip)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                } else {
+                                    Text("No personality result saved yet.")
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         } else {
                             Section {
                                 Text("No profile details found. Please complete your profile.")

@@ -11,9 +11,10 @@
 import Foundation
 
 // Represents a single answer option for a question
-struct Answer: Identifiable, Hashable {
-    let id: String // e.g., "A", "B", "C", "D"
-    let text: String
+struct Answer: Identifiable, Codable, Hashable {
+    let id: Int              // <-- Use Strapi’s numeric ID here
+    let ans_id: String
+    let ans_text: String
 }
 
 // Represents a single question with its possible answers
@@ -28,6 +29,8 @@ struct QuizResult {
     let title: String
     let description: String
     let powerTip: String
+    // NEW
+    let imageURL: URL?
 }
 // MARK: - Personality Results (from Strapi)
 
@@ -45,8 +48,11 @@ struct PersonalityResultAttributes: Codable, Hashable {
     let locale: String?
     let psId: String?
 
+    // NEW: reuse StrapiRelation<Media> from Models.swift
+    let image: StrapiRelation<Media>?    // ← add this
+
     enum CodingKeys: String, CodingKey {
-        case title, description, locale, createdAt, updatedAt
+        case title, description, locale, createdAt, updatedAt, image
         case powerTip = "power_tip"
         case psId = "ps_id"
     }
@@ -55,10 +61,51 @@ struct PersonalityResultAttributes: Codable, Hashable {
 // Convenience bridge so UI that expects QuizResult can still work
 extension QuizResult {
     init(from result: PersonalityResult) {
+        let path = result.attributes.image?.data?.attributes.url
+        let absoluteURL: URL? = {
+            guard let path else { return nil }
+            if path.hasPrefix("http") { return URL(string: path) }
+            return URL(string: Config.strapiBaseUrl + path)
+        }()
+
         self.init(
             title: result.attributes.title,
             description: result.attributes.description,
-            powerTip: result.attributes.powerTip
+            powerTip: result.attributes.powerTip,
+            imageURL: absoluteURL
         )
+    }
+}
+// MARK: - Strapi: Personality Questions
+
+/// Strapi entry: /api/pers-questions
+struct PersQuestion: Codable, Identifiable {
+    let id: Int
+    let attributes: Attributes
+    struct Attributes: Codable {
+        let order: Int
+        let question: String
+        let answer: [PersAnswerRaw]? // populated via populate[answer]=*
+        let createdAt: String?
+        let updatedAt: String?
+        let locale: String?
+    }
+}
+
+
+struct PersAnswerRaw: Codable, Hashable, Identifiable {
+    let id: Int
+    let ans_id: String
+    let ans_text: String
+}
+
+
+// Bridge Strapi → UI
+extension Question {
+    init(from s: PersQuestion) {
+        let answers = (s.attributes.answer ?? []).map {
+            Answer(id: $0.id, ans_id: $0.ans_id, ans_text: $0.ans_text)
+        }
+        self.init(questionText: s.attributes.question, answers: answers)
     }
 }

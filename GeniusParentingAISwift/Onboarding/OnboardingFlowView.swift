@@ -58,6 +58,8 @@ struct OnboardingFlowView: View {
         }
         .task {
             await viewModel.loadPersonalityResults(locale: "en")
+            await viewModel.loadPersonalityQuestions(locale: "en")
+            await viewModel.loadPersonalityResults(locale: "en")
         }
         .onChange(of: viewModel.quizCompleted) { completed in
             // When the view model marks the quiz as complete, show the results.
@@ -143,62 +145,70 @@ struct OnboardingStartTestView: View {
 struct QuestionnaireView: View {
     @ObservedObject var viewModel: OnboardingViewModel
     var onSkip: () -> Void
-    
     @EnvironmentObject var themeManager: ThemeManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            Text("Question \(viewModel.currentQuestionIndex + 1)")
-                .font(.title).bold()
-                .frame(maxWidth: .infinity, alignment: .center)
 
-            Text(viewModel.currentQuestion.questionText)
-                .font(.title3)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.horizontal)
-            
-            // Answer options
-            ForEach(viewModel.currentQuestion.answers) { answer in
-                Button(action: {
-                    viewModel.selectAnswer(answer)
-                }) {
-                    HStack(spacing: 20) {
-                        Text(answer.id)
-                            .font(.headline)
-                            .padding(.horizontal)
-                        
-                        Rectangle()
-                            .fill(Color.primary.opacity(0.5))
-                            .frame(width: 1)
-                        
-                        Text(answer.text)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Spacer()
+    var body: some View {
+        if viewModel.isLoadingQuestions {
+            VStack { Spacer(); ProgressView("Loading questions…"); Spacer() }
+                .padding()
+        } else if let err = viewModel.questionsError {
+            VStack(spacing: 12) {
+                Text("Failed to load questions").font(.headline)
+                Text(err).font(.footnote).foregroundColor(.secondary)
+                Button("Retry") { Task { await viewModel.loadPersonalityQuestions(locale: "en") } }
+                    .buttonStyle(PrimaryButtonStyle())
+            }.padding()
+        } else if viewModel.questions.isEmpty {
+            VStack { Spacer(); Text("No questions available."); Spacer() }.padding()
+        } else {
+            // ——— your original questionnaire UI ———
+            VStack(alignment: .leading, spacing: 30) {
+                Text("Question \(viewModel.currentQuestionIndex + 1)")
+                    .font(.title).bold()
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                Text(viewModel.currentQuestion.questionText)
+                    .font(.title3)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal)
+
+                ForEach(viewModel.currentQuestion.answers) { answer in
+                    Button(action: { viewModel.selectAnswer(answer) }) {
+                        HStack(spacing: 20) {
+                            Text(answer.ans_id)     // ← letter badge
+                                .font(.headline)
+                                .padding(.horizontal)
+
+                            Rectangle()
+                                .fill(Color.primary.opacity(0.5))
+                                .frame(width: 1)
+
+                            Text(answer.ans_text)   // ← display text
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Spacer()
+                        }
+                        .padding()
+                        .frame(minHeight: 80)
+                        .background(themeManager.currentTheme.background)
+                        .foregroundColor(themeManager.currentTheme.accent)
+                        .cornerRadius(12)
                     }
-                    .padding()
-                    .frame(minHeight: 80)
-                    .background(themeManager.currentTheme.background)
-                    .foregroundColor(themeManager.currentTheme.accent)
-                    .cornerRadius(12)
+                }
+                Spacer()
+                HStack {
+                    Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questions.count)")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Button("Skip Test >", action: onSkip)
+                        .foregroundColor(themeManager.currentTheme.accent)
                 }
             }
-            
-            Spacer()
-            
-            HStack {
-                Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questions.count)")
-                    .foregroundColor(.secondary)
-                Spacer()
-                Button("Skip Test >", action: onSkip)
-                    .foregroundColor(themeManager.currentTheme.accent)
-            }
+            .padding()
         }
-        .padding()
     }
 }
-
 
 // MARK: - Results Screen (image_caf2c2.png)
 struct OnboardingResultsView: View {
@@ -227,15 +237,24 @@ struct OnboardingResultsView: View {
                     .font(.headline)
                 
                 // Placeholder for the image
-                Image("family_funny_faces") // Add this image to your Asset Catalog
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
-                
+                if let url = result.imageURL {
+                    CachedAsyncImage(url: url)       // uses your ImageCache for performance
+                        .aspectRatio(contentMode: .fit)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                } else {
+                    Image("family_funny_faces")      // fallback asset
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                }
                 Text(result.powerTip)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)

@@ -58,7 +58,36 @@ struct ProfileEditView: View {
                 Section(header: Text("Preferences")) {
                     Toggle("Email Notifications", isOn: $editableConsent)
                 }
+                Section(header: Text("Personality Profile")) {
+                    if let relation = viewModel.user?.user_profile?.personality_result,
+                       let result = relation.data {
 
+                        let attrs = result.attributes
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(attrs.title)
+                                .font(.headline)
+                            Text(attrs.description)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                            if !attrs.powerTip.isEmpty {
+                                Divider().padding(.vertical, 4)
+                                HStack(alignment: .top, spacing: 8) {
+                                    Image(systemName: "lightbulb")
+                                    Text(attrs.powerTip)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        Text("To change your result, retake the personality test.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("No personality result saved yet.")
+                            .foregroundColor(.secondary)
+                    }
+                }
                 Section(header: Text("Family Information")) {
                     ForEach($editableChildren) { $child in
                         ChildEditRow(child: $child)

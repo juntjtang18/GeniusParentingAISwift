@@ -24,11 +24,13 @@ struct UserProfile: Codable, Identifiable, Hashable {
     let consentForEmailNotice: Bool?
     let children: [Child]?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
+    let personality_result: StrapiRelation<PersonalityResult>?   // 👈 add this
 
     enum CodingKeys: String, CodingKey {
         case id, children, locale
         case consentForEmailNotice
         case users_permissions_user = "users_permissions_user"
+        case personality_result     = "personality_result"       // 👈 add this
     }
 }
 
@@ -56,6 +58,7 @@ public struct UserProfileAttributes: Codable {
     let locale: String?
     let consentForEmailNotice: Bool
     let children: [Child]?
+    let personality_result: StrapiRelation<PersonalityResult>?
 }
 
 /// The payload for updating a user's account (`PUT /api/users/:id`).
@@ -69,8 +72,9 @@ public struct ProfileUpdatePayload: Codable {
 }
 
 public struct ProfileUpdateData: Codable {
-    let consentForEmailNotice: Bool
-    let children: [ChildPayload]
+    let consentForEmailNotice: Bool?
+    let children: [ChildPayload]?
+    let personality_result: Int?                                  // 👈
 }
 
 public struct ChildPayload: Codable {

@@ -7,7 +7,11 @@ import Foundation
 struct CommentPostPayload: Codable {
     let data: CommentPostData
 }
-
+// Payload for updating only the personality_result relation
+struct ProfileResultUpdatePayload: Codable {
+    let data: DataBody
+    struct DataBody: Codable { let personality_result: Int }
+}
 struct CommentPostData: Codable {
     let message: String
     let post: Int
@@ -63,7 +67,26 @@ class StrapiService {
             throw error
         }
     }
+    
+    func updateUserPersonalityResult(personalityResultId: Int) async throws -> UserProfileApiResponse {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Updating personality_result to id \(personalityResultId).")
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/user-profiles/mine")!
 
+        // Build payload with just the relation; server whitelists allowed fields
+        let payload = ProfileUpdatePayload(
+          data: ProfileUpdateData(consentForEmailNotice: nil, children: nil, personality_result: personalityResultId)
+        )
+
+        // If you don't want to send other fields, consider making them optional in ProfileUpdateData
+        // and initializing with nil / empty to avoid overwriting server data.
+
+        let response: UserProfileApiResponse =
+            try await NetworkManager.shared.put(to: url, body: payload)
+        logger.info("[StrapiService::\(functionName)] - Update success.")
+        return response
+    }
+    
     func updateUserAccount(userId: Int, payload: UserUpdatePayload) async throws -> StrapiUser {
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Updating user account for ID \(userId).")
@@ -191,58 +214,87 @@ class StrapiService {
 
 
 extension StrapiService {
-
+    
     /// Fetch all personality results (optionally for a given locale)
     func fetchPersonalityResults(
         locale: String? = nil,
         page: Int = 1,
         pageSize: Int = 25
     ) async throws -> StrapiListResponse<PersonalityResult> {
-
+        
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Fetching personality results. locale=\(locale ?? "nil"), page=\(page)")
-
+        
         var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/personality-results")!
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "pagination[page]", value: String(page)),
             URLQueryItem(name: "pagination[pageSize]", value: String(pageSize)),
-            URLQueryItem(name: "sort", value: "createdAt:asc")
+            URLQueryItem(name: "sort", value: "createdAt:asc"),
+            URLQueryItem(name: "populate[image]", value: "*") // ✅ ensure media is returned
         ]
         if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
         components.queryItems = queryItems
 
-        do {
-            let response: StrapiListResponse<PersonalityResult> = try await NetworkManager.shared.fetchDirect(from: components.url!)
-            logger.info("[StrapiService::\(functionName)] - Received \(response.data?.count ?? 0) results.")
-            return response
-        } catch {
-            logger.error("[StrapiService::\(functionName)] - Error: \(error.localizedDescription)")
-            throw error
-        }
-    }
+        let response: StrapiListResponse<PersonalityResult> =
+            try await NetworkManager.shared.fetchDirect(from: components.url!)
+        logger.info("[StrapiService::\(functionName)] - Received \(response.data?.count ?? 0) results.")
 
+        // ✅ Log title/ps_id and image.url for each record
+        (response.data ?? []).forEach { item in
+            let path = item.attributes.image?.data?.attributes.url ?? "nil"
+            logger.info("[StrapiService::\(functionName)] - id=\(item.id), ps_id=\(item.attributes.psId ?? "nil"), title='\(item.attributes.title)', image='\(path)'")
+        }
+
+        return response
+    }
+    
     /// Fetch a single personality result by its `ps_id` (your mapping key)
     func fetchPersonalityResult(psId: String, locale: String? = nil) async throws -> PersonalityResult? {
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Fetching personality result by ps_id=\(psId), locale=\(locale ?? "nil")")
-
+        
         var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/personality-results")!
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "filters[ps_id][$eq]", value: psId),
             URLQueryItem(name: "pagination[page]", value: "1"),
-            URLQueryItem(name: "pagination[pageSize]", value: "1")
+            URLQueryItem(name: "pagination[pageSize]", value: "1"),
+            URLQueryItem(name: "populate[image]", value: "*") // ✅ ensure media is returned
         ]
         if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
         components.queryItems = queryItems
 
-        do {
-            let response: StrapiListResponse<PersonalityResult> = try await NetworkManager.shared.fetchDirect(from: components.url!)
-            let item = response.data?.first
-            logger.info("[StrapiService::\(functionName)] - Found item? \(item != nil)")
-            return item
-        } catch {
-            logger.error("[StrapiService::\(functionName)] - Error: \(error.localizedDescription)")
-            throw error
-        }
+        let response: StrapiListResponse<PersonalityResult> =
+            try await NetworkManager.shared.fetchDirect(from: components.url!)
+        let item = response.data?.first
+        logger.info("[StrapiService::\(functionName)] - Found item? \(item != nil). image='\(item?.attributes.image?.data?.attributes.url ?? "nil")'")
+        return item
+    }
+    
+    func fetchPersonalityQuestions(
+        locale: String? = nil,
+        page: Int = 1,
+        pageSize: Int = 50
+    ) async throws -> StrapiListResponse<PersQuestion> {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Fetching personality questions. locale=\(locale ?? "nil")")
+
+        var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/pers-questions")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "sort", value: "order:asc"),
+            URLQueryItem(name: "pagination[page]", value: String(page)),
+            URLQueryItem(name: "pagination[pageSize]", value: String(pageSize)),
+            // 👇 ensure Strapi returns the embedded component array
+            URLQueryItem(name: "populate[answer]", value: "*")
+            // If you want to strictly request certain fields instead of *:
+            // URLQueryItem(name: "populate[answer][fields][0]", value: "code"),
+            // URLQueryItem(name: "populate[answer][fields][1]", value: "text"),
+        ]
+        if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
+        components.queryItems = queryItems
+
+        let resp: StrapiListResponse<PersQuestion> =
+            try await NetworkManager.shared.fetchDirect(from: components.url!)
+        logger.info("[StrapiService::\(functionName)] - Received \(resp.data?.count ?? 0) questions.")
+        return resp
     }
 }

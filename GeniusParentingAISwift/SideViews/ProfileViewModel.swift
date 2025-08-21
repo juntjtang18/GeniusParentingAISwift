@@ -34,7 +34,8 @@ class ProfileViewModel: ObservableObject {
                 locale: decodedData.attributes.locale,
                 consentForEmailNotice: decodedData.attributes.consentForEmailNotice,
                 children: decodedData.attributes.children,
-                users_permissions_user: nil
+                users_permissions_user: nil,
+                personality_result: decodedData.attributes.personality_result   // ✅ new
             )
             
             // Update the user object and assign it back to the SessionManager's property.
@@ -66,7 +67,7 @@ class ProfileViewModel: ObservableObject {
             }
             
             let childrenPayload = children.map { ChildPayload(id: $0.serverId, name: $0.name, age: $0.age, gender: $0.gender) }
-            let profileData = ProfileUpdateData(consentForEmailNotice: consent, children: childrenPayload)
+            let profileData = ProfileUpdateData(consentForEmailNotice: consent, children: childrenPayload, personality_result: nil)
             let profilePayload = ProfileUpdatePayload(data: profileData)
             _ = try await StrapiService.shared.updateUserProfile(payload: profilePayload)
             
