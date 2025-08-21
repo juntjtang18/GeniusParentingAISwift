@@ -1,6 +1,21 @@
-// GeniusParentingAISwift/MainView.swift
 import SwiftUI
 import KeychainAccess
+
+// MARK: - Local persistence for personality test state
+private enum PersonalityPrefs {
+    private static let completedKey = "gp.personality.completed"
+    private static let suppressedKey = "gp.personality.reminderSuppressed"
+
+    static var hasCompleted: Bool {
+        get { UserDefaults.standard.bool(forKey: completedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: completedKey) }
+    }
+
+    static var reminderSuppressed: Bool {
+        get { UserDefaults.standard.bool(forKey: suppressedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: suppressedKey) }
+    }
+}
 
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -8,10 +23,9 @@ struct MainView: View {
     let logoutAction: () -> Void
     
     @StateObject private var profileViewModel = ProfileViewModel()
-    
     @State private var selectedTab: Int = 0
     
-    // State management for sheets
+    // Existing sheets
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
     @State private var isShowingProfileSheet = false
@@ -21,14 +35,18 @@ struct MainView: View {
     @State private var isShowingTermsSheet = false
     @State private var isShowingSubscriptionSheet = false
 
-    // State for the side menu
+    // Side menu
     @State private var isSideMenuShowing = false
+
+    // NEW: Personality test UX
+    @State private var showPersonalityPrompt = false
+    @State private var showOnboarding = false
+    @State private var onboardingDidComplete = false
+    @State private var didCheckReminderOnce = false
 
     var body: some View {
         ZStack {
-            // ADDED: Set the theme background as the bottom layer of the view
-            themeManager.currentTheme.background
-                .ignoresSafeArea()
+            themeManager.currentTheme.background.ignoresSafeArea()
 
             TabView(selection: $selectedTab) {
                 homeTab
@@ -61,6 +79,7 @@ struct MainView: View {
             }
             .onAppear {
                 updateUnselectedTabItemColor()
+                maybeShowPersonalityPromptOnce()
             }
             .onChange(of: themeManager.currentTheme.id) { _ in
                 updateUnselectedTabItemColor()
@@ -68,14 +87,13 @@ struct MainView: View {
             .fullScreenCover(isPresented: $isShowingSubscriptionSheet) {
                 SubscriptionView(isPresented: $isShowingSubscriptionSheet)
             }
+            // … your existing overlays for side menu and sheets stay the same …
             
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
                     .onTapGesture {
-                        withAnimation(.easeInOut) {
-                            isSideMenuShowing = false
-                        }
+                        withAnimation(.easeInOut) { isSideMenuShowing = false }
                     }
                     .transition(.opacity)
                     .zIndex(1)
@@ -148,6 +166,36 @@ struct MainView: View {
         .animation(.easeInOut, value: isShowingPrivacySheet)
         .animation(.easeInOut, value: isShowingTermsSheet)
         .animation(.easeInOut, value: isShowingSubscriptionSheet)
+
+        // NEW: One-time reminder alert
+        .alert("Try the 30-sec Personality Test?", isPresented: $showPersonalityPrompt) {
+            Button("Not now") {
+                PersonalityPrefs.reminderSuppressed = true
+                showPersonalityPrompt = false
+            }
+            Button("Take the test") {
+                showPersonalityPrompt = false
+                showOnboarding = true
+            }
+        } message: {
+            Text("This helps tailor tips and lessons to you.")
+        }
+
+        // NEW: Launch your existing onboarding flow
+        .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
+            // If user swipes down, do nothing special
+        }) {
+            OnboardingFlowView(didComplete: $onboardingDidComplete)
+                .environmentObject(themeManager)
+        }
+
+        // NEW: When onboarding says it’s done, mark complete and dismiss
+        .onChange(of: onboardingDidComplete) { done in
+            if done {
+                PersonalityPrefs.hasCompleted = true
+                showOnboarding = false
+            }
+        }
     }
     
     private func updateUnselectedTabItemColor() {
@@ -159,16 +207,32 @@ struct MainView: View {
     private var menuToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: {
-                withAnimation(.easeInOut) {
-                    isSideMenuShowing.toggle()
-                }
+                withAnimation(.easeInOut) { isSideMenuShowing.toggle() }
             }) {
                 Image(systemName: "line.3.horizontal")
                     .font(.title3)
             }
         }
     }
+
+    // NEW: Only check once when MainView first appears after login
+    private func maybeShowPersonalityPromptOnce() {
+        guard !didCheckReminderOnce else { return }
+        didCheckReminderOnce = true
+
+        let shouldPrompt =
+            !PersonalityPrefs.hasCompleted &&
+            !PersonalityPrefs.reminderSuppressed
+
+        if shouldPrompt {
+            // Slight delay so we don’t clash with first layout/animations
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showPersonalityPrompt = true
+            }
+        }
+    }
     
+    // Tabs unchanged
     private var homeTab: some View {
         NavigationView {
             HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
@@ -192,9 +256,7 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
-                            selectedTab = 0
-                        }) {
+                        Button(action: { selectedTab = 0 }) {
                             Image(systemName: "chevron.left")
                             Text("Home")
                         }
@@ -244,3 +306,5 @@ struct MainView_Previews: PreviewProvider {
             .environmentObject(ThemeManager())
     }
 }
+
+
