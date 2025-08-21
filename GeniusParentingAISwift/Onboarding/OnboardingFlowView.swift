@@ -50,8 +50,16 @@ struct OnboardingFlowView: View {
                 OnboardingResultsView(
                     result: viewModel.result,
                     onComplete: {
-                        print("Final button tapped. Setting didComplete to true.")
-                        didComplete = true
+                        Task {
+                            // Save the newly chosen result to the user's profile
+                            do {
+                                try await viewModel.persistFinalResultToProfile(locale: "en")
+                            } catch {
+                                print("[OnboardingFlowView] Failed to persist result: \(error.localizedDescription)")
+                            }
+                            print("Final button tapped. Setting didComplete to true.")
+                            didComplete = true
+                        }
                     }
                 )
             }

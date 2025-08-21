@@ -24,6 +24,7 @@ class OnboardingViewModel: ObservableObject {
     @Published var questions: [Question] = []
     @Published var isLoadingQuestions = false
     @Published var questionsError: String?
+    @Published var selectedResult: PersonalityResult?   // holds the chosen result with image
 
     // Load Strapi results (unchanged)
     @MainActor
@@ -129,13 +130,31 @@ class OnboardingViewModel: ObservableObject {
 
     // 3) Use Strapi-backed results when available
     var result: QuizResult {
+        // Prefer the single fetched result (comes with image populated)
+        if let selected = selectedResult {
+            let path = selected.attributes.image?.data?.attributes.url
+            let base = Config.strapiBaseUrl.hasSuffix("/") ? String(Config.strapiBaseUrl.dropLast()) : Config.strapiBaseUrl
+            let url: URL? = {
+                guard let p = path else { return nil }
+                if p.hasPrefix("http") { return URL(string: p) }
+                return URL(string: base + p)
+            }()
+
+            return QuizResult(
+                title: selected.attributes.title,
+                description: selected.attributes.description,
+                powerTip: selected.attributes.powerTip,
+                imageURL: url
+            )
+        }
+
+        // Fallback: use the lightweight list (may not include image)
         let letter = decideLetterByRules()
         let psId = psIdForLetter(letter)
         logger.info("[OnboardingVM] decideLetterByRules -> \(letter), mapping to ps_id=\(psId)")
 
         if let match = remoteResults.first(where: { $0.attributes.psId == psId }) {
             let path = match.attributes.image?.data?.attributes.url
-            // normalize base url (avoid double slashes)
             let base = Config.strapiBaseUrl.hasSuffix("/") ? String(Config.strapiBaseUrl.dropLast()) : Config.strapiBaseUrl
             let url: URL? = {
                 guard let p = path else { return nil }
@@ -159,6 +178,53 @@ class OnboardingViewModel: ObservableObject {
             powerTip: "Not everything needs a deep convo—sometimes a funny face works faster.",
             imageURL: nil
         )
+    }
+    // Persist the final (chosen) result to the user's profile in Strapi.
+    // Uses the numeric Strapi id of the selected result.
+    // Tries selectedResult first (already fetched with image); falls back to the list or a single fetch.
+    @MainActor
+    func persistFinalResultToProfile(locale: String = "en") async throws {
+        let letter = decideLetterByRules()
+        let psId = psIdForLetter(letter)
+        logger.info("[OnboardingVM] persistFinalResultToProfile -> letter=\(letter), ps_id=\(psId)")
+
+        // 1) If we already fetched the single result with image, use that id
+        if let selected = selectedResult {
+            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: selected.id)
+            logger.info("[OnboardingVM] Profile updated with selectedResult.id=\(selected.id)")
+            return
+        }
+
+        // 2) If not, try to find it in the list we already loaded (no image, but has numeric id)
+        if let match = remoteResults.first(where: { $0.attributes.psId == psId }) {
+            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: match.id)
+            logger.info("[OnboardingVM] Profile updated with match.id=\(match.id)")
+            return
+        }
+
+        // 3) Fallback: fetch the single result by ps_id (includes image) and take its id
+        if let fetched = try await StrapiService.shared.fetchPersonalityResult(psId: psId, locale: locale) {
+            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: fetched.id)
+            logger.info("[OnboardingVM] Profile updated with fetched.id=\(fetched.id)")
+            return
+        }
+
+        logger.error("[OnboardingVM] Could not determine a result id to persist.")
+        throw NSError(domain: "Onboarding", code: -1, userInfo: [NSLocalizedDescriptionKey: "Could not determine result to save."])
+    }
+    @MainActor
+    func prepareResultForDisplay(locale: String = "en") async {
+        let letter = decideLetterByRules()
+        let psId = psIdForLetter(letter)
+        logger.info("[OnboardingVM] prepareResultForDisplay -> letter=\(letter), ps_id=\(psId)")
+        do {
+            if let single = try await StrapiService.shared.fetchPersonalityResult(psId: psId, locale: locale) {
+                self.selectedResult = single
+                logger.info("[OnboardingVM] selectedResult id=\(single.id) title='\(single.attributes.title)' image='\(single.attributes.image?.data?.attributes.url ?? "nil")'")
+            }
+        } catch {
+            logger.error("[OnboardingVM] Failed to load selected result: \(error.localizedDescription)")
+        }
     }
 
 }
