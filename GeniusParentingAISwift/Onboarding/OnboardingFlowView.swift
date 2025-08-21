@@ -56,6 +56,9 @@ struct OnboardingFlowView: View {
                 )
             }
         }
+        .task {
+            await viewModel.loadPersonalityResults(locale: "en")
+        }
         .onChange(of: viewModel.quizCompleted) { completed in
             // When the view model marks the quiz as complete, show the results.
             if completed {

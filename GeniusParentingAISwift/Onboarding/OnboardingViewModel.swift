@@ -4,8 +4,6 @@
 //
 //  Created by James Tang on 2025/8/20.
 //
-
-
 // OnboardingViewModel.swift
 
 import Foundation
@@ -43,18 +41,6 @@ class OnboardingViewModel: ObservableObject {
         switch best { case "A": return "1"; case "B": return "2"; case "C": return "3"; case "D": return "4"; default: return "1" }
     }
 
-    var result: QuizResult {
-        if let match = remoteResults.first(where: { $0.attributes.psId == inferredPSId() }) {
-            return QuizResult(from: match)
-        }
-        // Fallback to your current hardcoded result if API not loaded yet
-        return QuizResult(
-            title: "You're the Mindful Mixer",
-            description: "Calm-ish. Thoughtful. Reflective.\nYou pause before yelling. You talk things out. You're raising an emotionally smart little human.",
-            powerTip: "Not everything needs a deep convo—sometimes a funny face works faster."
-        )
-    }
-    
     // Your list of questions. Based on your mockups.
     let questions: [Question] = [
         Question(questionText: "Your kid just spilled juice everywhere. What do you do first?", answers: [
@@ -107,4 +93,65 @@ class OnboardingViewModel: ObservableObject {
         quizCompleted = true
         print("User skipped the test.")
     }
+    
+    
+    // 1) Decide the letter by your rules
+    private func decideLetterByRules() -> String {
+        // Count A/B/C/D
+        let all = Array(userSelections.values)
+        let a = all.filter { $0 == "A" }.count
+        let b = all.filter { $0 == "B" }.count
+        let c = all.filter { $0 == "C" }.count
+        let d = all.filter { $0 == "D" }.count
+
+        // Mostly X’s = count >= 3
+        if a >= 3 { return "A" }
+        if b >= 3 { return "B" }
+        if c >= 3 { return "C" }
+        if d >= 3 { return "D" }
+
+        // Explicit 2+2 ties (your specified precedence)
+        if a == 2 && b == 2 { return "A" } // A > B
+        if b == 2 && c == 2 { return "B" } // B > C
+        if c == 2 && d == 2 { return "C" } // C > D
+        if a == 2 && d == 2 { return "A" } // A > D
+
+        // Any other 2+2 (e.g., A+C or B+D): pick earliest by A > B > C > D
+        if [a,b,c,d].contains(2), [a,b,c,d].filter({ $0 == 2 }).count == 2 {
+            for letter in ["A","B","C","D"] {
+                let count = (letter == "A" ? a : letter == "B" ? b : letter == "C" ? c : d)
+                if count == 2 { return letter }
+            }
+        }
+
+        // Full tie / fallback → Mindful Mixer (A first in order)
+        return "A"
+    }
+
+    // 2) Map letter → Strapi ps_id ("1"..."4")
+    private func psIdForLetter(_ letter: String) -> String {
+        switch letter {
+        case "A": return "1" // Mindful Mixer
+        case "B": return "2" // Respectful Rock
+        case "C": return "3" // Creative Flow
+        case "D": return "4" // Chill Guardian
+        default:  return "1"
+        }
+    }
+
+    // 3) Use Strapi-backed results when available
+    var result: QuizResult {
+        let letter = decideLetterByRules()
+        let psId = psIdForLetter(letter)
+        if let match = remoteResults.first(where: { $0.attributes.psId == psId }) {
+            return QuizResult(from: match)
+        }
+        // Fallback while network loads: safe default to A
+        return QuizResult(
+            title: "You're the Mindful Mixer",
+            description: "Calm-ish. Thoughtful. Reflective.\nYou pause before yelling. You talk things out. You're raising an emotionally smart little human.",
+            powerTip: "Not everything needs a deep convo—sometimes a funny face works faster."
+        )
+    }
+
 }
