@@ -21,7 +21,7 @@ struct SignupView: View {
             theme.background.ignoresSafeArea()
 
             VStack(spacing: 20) {
-                Image("login-image")
+                Image("applogo-\(theme.id)")
                     .resizable()
                     .scaledToFit()
                     .frame(height: 150)
@@ -102,7 +102,8 @@ struct SignupView: View {
                 }) {
                     Text("Already have an account? Login")
                 }
-                .buttonStyle(LinkStyleButtonStyle())
+                //.buttonStyle(LinkStyleButtonStyle())
+                .foregroundColor(theme.accentThird)
                 .padding(.top)
 
                 Button(action: {

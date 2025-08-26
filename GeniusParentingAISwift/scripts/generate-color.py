@@ -6,7 +6,34 @@ import sys
 
 # 1) Your schemes with Light + Dark hex values
 schemes = {
-
+    "SoftBlue": {
+        "Light": {
+            "Foreground":   "#FFFFFF",
+            "Background":   "#264CAB",
+            "AccentBackground": "#FFFFFF",
+            "Accent":       "#333333",
+            "AccentSecond": "#FFFFFF",
+            "AccentThird": "#FFFFFF",
+            "Border":       "#FFFFFF",
+            "InputBoxForeground": "#333333",
+            "InputBoxBackground": "#FFFFFF",
+            "Primary":     "#40E0D0",
+            "PrimaryText": "#333333",
+        },
+        "Dark": {
+            "Foreground":   "#F5F5F5",
+            "Background":   "#15202B",
+            "AccentBackground": "#797E84",
+            "Accent":       "#F5F5F5",
+            "AccentSecond": "#39424A",
+            "AccentThird":  "#FFFFFF",
+            "Border":       "#39424A",
+            "InputBoxForeground": "#F5F5F5",
+            "InputBoxBackground": "#39424A",
+            "Primary":     "#A4E5D9",
+            "PrimaryText": "#F5F5F5",
+        },
+    },
     "WarmPurple": {
         "Light": {
             "Foreground":   "#4A4A4A",
@@ -14,7 +41,9 @@ schemes = {
             "AccentBackground": "#FFFFFF",
             "Accent":       "#000000",
             "AccentSecond": "#FFFFFF",
+            "AccentThird": "#FFFFFF",
             "Border":       "#E5E5E5",
+            "InputBoxForeground": "#333333",
             "InputBoxBackground": "#FFFFFF",
             "Primary":     "#A35FA3",
             "PrimaryText": "#FFFFFF",
@@ -26,7 +55,9 @@ schemes = {
             "AccentBackground": "#797E84",
             "Accent":       "#FFFFFF",
             "AccentSecond": "#000000",
+            "AccentThird": "#FFFFFF",
             "Border":       "#797E84",
+            "InputBoxForeground": "#39424A",
             "InputBoxBackground": "#797E84",
             "Primary":     "#A4E5D9",
             "PrimaryText": "#000000",

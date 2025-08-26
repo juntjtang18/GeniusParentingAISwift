@@ -30,7 +30,7 @@ struct LessonCardView: View {
             HStack(alignment: .center) {
                 Text(lesson.attributes.title)
                     .font(.subheadline.weight(.regular)) // was .subheadline.weight(.bold)
-                    .foregroundColor(theme.foreground)
+                    .foregroundColor(theme.accent)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
@@ -41,7 +41,7 @@ struct LessonCardView: View {
             .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
             // MODIFIED: Changed alignment from .top to .center to vertically center the content.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .background(theme.background.opacity(0.7))
+            .background(theme.accentBackground.opacity(1))
         }
         .frame(width: cardWidth, height: cardHeight)
         .background(theme.accentBackground)

@@ -34,8 +34,10 @@ private struct TextView: View {
                         else { speechManager.speak(textData, language: language) }
                     }
                 }) {
-                    Image(systemName: speechManager.isSpeaking ? "stop.circle.fill" : "play.circle.fill")
-                        .resizable().frame(width: 28, height: 28).foregroundColor(theme.accent)
+                    Image(systemName: speechManager.isSpeaking ? "stop.circle.fill" : "speaker.wave.2.fill")
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .foregroundColor(theme.foreground)
                 }
             }
         }
@@ -209,7 +211,7 @@ private struct QuizView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let question = item.question, !question.isEmpty {
-                Text(question).font(.headline).padding(.bottom, 5)
+                Text(question).font(.headline).foregroundColor(theme.foreground).padding(.bottom, 5)
             }
             
             if let options = item.options?.value {
@@ -262,10 +264,10 @@ private struct QuizOptionView: View {
                 }
             }
             .font(.headline)
-            .foregroundColor(theme.foreground)
+            .foregroundColor(theme.inputBoxForeground)
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(UIColor.secondarySystemBackground))
+            .background(theme.inputBoxBackground)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8).stroke(isSelected ? theme.accent : Color.clear, lineWidth: 2)

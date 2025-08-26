@@ -22,25 +22,45 @@ struct ShowACourseView: View {
                     .foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let course = viewModel.course {
                 let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                HStack {
-                    if let iconMedia = course.iconImageMedia {
-                        if let imgUrl = URL(string: iconMedia.attributes.url) {
-                            AsyncImage(url: imgUrl) { phase in
-                                switch phase {
-                                case .empty: ProgressView().frame(width: 30, height: 30)
-                                case .success(let img): img.resizable().aspectRatio(contentMode: .fill).frame(width: 30, height: 30).clipShape(Circle())
-                                case .failure: Image(systemName: "photo.circle.fill").resizable().scaledToFit().frame(width: 30, height: 30).foregroundColor(.gray)
-                                @unknown default: EmptyView().frame(width: 30, height: 30)
-                                }
-                            }
-                        } else {
-                            Image(systemName: "exclamationmark.circle.fill").resizable().scaledToFit().frame(width: 30, height: 30).foregroundColor(.orange)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Course title
+                    Text("Course \(course.id): \(displayTitle)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(theme.foreground) // highlight color like in screenshot
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading) // force left edge
+
+                    
+                    // Optional transcript/play controls (like screenshot)
+                    //if let duration = course.estimatedDuration {
+                    /*
+                        HStack(spacing: 12) {
+                            Image(systemName: "play.circle.fill")
+                                .foregroundColor(theme.accent)
+                            Text("Play transcript")
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                     
+                            //Spacer()
+                            //Text("\(duration) min")
+                            //    .font(.caption)
+                            //    .foregroundColor(.secondary)
                         }
-                    } else { Image(systemName: "book.fill").resizable().scaledToFit().frame(width: 30, height: 30) }
-                    Text(displayTitle).font(.headline).lineLimit(2).minimumScaleFactor(0.8)
-                    Spacer()
+                        .padding(.vertical, 6)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(.gray.opacity(0.2)),
+                            alignment: .bottom
+                        )
+                     */
+                    //}
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.top)
+
 
                 let pages = groupContentIntoPages(content: course.content ?? [])
                 if !pages.isEmpty && pages.indices.contains(currentPageIndex) {

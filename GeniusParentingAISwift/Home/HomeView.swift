@@ -31,6 +31,7 @@ struct HomeView: View {
                 Text("Today's Lesson")
                     .style(.homeSectionTitle)
                     .padding(.bottom, 5)
+                    .foregroundColor(theme.foreground)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 15) {

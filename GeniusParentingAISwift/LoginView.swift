@@ -29,14 +29,14 @@ struct LoginView: View {
                     theme.background.ignoresSafeArea()
                     
                     VStack(spacing: 20) {
-                        Image("login-image")
+                        Image("applogo-\(theme.id)")
                             .resizable()
                             .scaledToFit()
                             .frame(height: 150)
                             .padding(.bottom, 20)
 
                         // Email
-                        TextField("", text: $email, prompt: Text("Email").foregroundColor(theme.foreground.opacity(0.6)))
+                        TextField("", text: $email, prompt: Text("Email").foregroundColor(theme.inputBoxForeground.opacity(0.6)))
                             .font(.system(size: 20))
                             .autocapitalization(.none)
                             .keyboardType(.emailAddress)
@@ -44,7 +44,7 @@ struct LoginView: View {
                             .padding(.horizontal, 18)
                             .frame(height: 50)
                             .background(theme.inputBoxBackground)
-                            .foregroundColor(theme.foreground)         // text color
+                            //.foregroundColor(theme.inputBoxForeground)         // text color
                             .overlay(
                                 Capsule().stroke(theme.border, lineWidth: 2) // subtle hairline
                             )
@@ -53,13 +53,13 @@ struct LoginView: View {
                             .disabled(isLoading)
 
                         // Password
-                        SecureField("", text: $password, prompt: Text("Password").foregroundColor(theme.foreground.opacity(0.6)))
+                        SecureField("", text: $password, prompt: Text("Password").foregroundColor(theme.inputBoxForeground.opacity(0.6)))
                             .font(.system(size: 20))
                             .autocapitalization(.none)
                             .padding(.horizontal, 18)
                             .frame(height: 50)
                             .background(theme.inputBoxBackground)
-                            .foregroundColor(theme.foreground)
+                            //.foregroundColor(theme.inputBoxForeground)
                             .overlay(
                                 Capsule().stroke(theme.border, lineWidth: 2)
                             )
@@ -87,13 +87,13 @@ struct LoginView: View {
                                 HStack(spacing: 8) {
                                     Button { agreeToTerms.toggle() } label: {
                                         Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(theme.accent)
+                                            .foregroundColor(theme.accentThird)
                                     }
                                     .buttonStyle(.plain)
 
                                     Text("Terms of Service")
                                         .font(.caption)
-                                        .foregroundColor(theme.accent)
+                                        .foregroundColor(theme.accentThird)
                                         .onTapGesture { showingTermsOfService = true }
                                 }
 
@@ -101,13 +101,13 @@ struct LoginView: View {
                                 HStack(spacing: 8) {
                                     Button { agreeToPrivacy.toggle() } label: {
                                         Image(systemName: agreeToPrivacy ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(theme.accent)
+                                            .foregroundColor(theme.accentThird)
                                     }
                                     .buttonStyle(.plain)
 
                                     Text("Privacy Policy")
                                         .font(.caption)
-                                        .foregroundColor(theme.accent)
+                                        .foregroundColor(theme.accentThird)
                                         .onTapGesture { showingPrivacyPolicy = true }
                                 }
                             }
@@ -132,7 +132,7 @@ struct LoginView: View {
                         
                         Button(action: { currentView = .signup }) {
                             Text("Don't have an account? Sign Up")
-                                .foregroundColor(theme.accent)
+                                .foregroundColor(theme.accentThird)
                                 .backgroundStyle(theme.accentBackground)
                         }
                         .padding()

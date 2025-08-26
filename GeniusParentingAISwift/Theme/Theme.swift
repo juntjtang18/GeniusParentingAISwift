@@ -9,11 +9,13 @@ protocol Theme {
     var background: Color { get }
     var accent: Color { get }
     var border: Color { get }
+    var inputBoxForeground: Color { get }
     var inputBoxBackground: Color { get }
     
     // NEW colors from the script
     var accentBackground: Color { get }
     var accentSecond: Color { get }
+    var accentThird: Color { get }
     var primary: Color { get }
     var primaryText: Color { get }
 }
@@ -29,12 +31,13 @@ struct AppTheme: Theme {
     var background: Color         { color(for: "Background") }
     var accent: Color             { color(for: "Accent") }
     var border: Color             { color(for: "Border") }
+    var inputBoxForeground: Color { color(for: "InputBoxForeground") }
     var inputBoxBackground: Color { color(for: "InputBoxBackground") }
 
     // NEW properties
     var accentBackground: Color   { color(for: "AccentBackground") }
     var accentSecond: Color       { color(for: "AccentSecond") }
-    
+    var accentThird: Color        { color(for: "AccentThird")}
     // FIXED: Changed "Primary" to "primary" to match the Python script's key.
     var primary: Color            { color(for: "Primary") }
     var primaryText: Color        { color(for: "PrimaryText") }

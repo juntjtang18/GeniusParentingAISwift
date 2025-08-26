@@ -12,7 +12,7 @@ class ThemeManager: ObservableObject {
             //"SunsetCoral",
             //"ForestNight",
             //"SoftPastel",
-            //"SoftBlue",
+            "SoftBlue",
             "WarmPurple"
         ]
 
