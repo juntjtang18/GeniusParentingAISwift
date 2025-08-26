@@ -12,6 +12,8 @@ import SwiftUI
 
 // This is the main container that manages the entire onboarding sequence.
 struct OnboardingFlowView: View {
+    @Environment(\.theme) var currentTheme: Theme
+
     // This enum helps us track which screen to show.
     enum OnboardingStep {
         case intro, startTest, questionnaire, results
@@ -26,7 +28,7 @@ struct OnboardingFlowView: View {
             // Use the background color from your theme
             // Note: You'll need access to your ThemeManager for this to work.
             // For now, we'll use a placeholder.
-            Color(UIColor.systemGray6).ignoresSafeArea()
+            //Color(UIColor.systemGray6).ignoresSafeArea()
 
             switch currentStep {
             case .intro:
@@ -64,6 +66,7 @@ struct OnboardingFlowView: View {
                 )
             }
         }
+        .background(currentTheme.background)
         .task {
             await viewModel.loadPersonalityResults(locale: "en")
             await viewModel.loadPersonalityQuestions(locale: "en")
@@ -80,6 +83,7 @@ struct OnboardingFlowView: View {
 
 // MARK: - Welcome Screen (image_caf1ee.png)
 struct OnboardingIntroView: View {
+    @Environment(\.theme) var currentTheme: Theme
     var onKnowMeBetter: () -> Void
     var onSkip: () -> Void
     
@@ -96,17 +100,18 @@ struct OnboardingIntroView: View {
             Text("Welcome to\nGenius Parenting")
                 .font(.largeTitle).bold()
                 .multilineTextAlignment(.center)
+                .foregroundColor(currentTheme.foreground)
             
             Text("Your AI-powered partner in building trust, love, and resilience in parenting.")
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+                .foregroundColor(currentTheme.foreground)
             
             Spacer()
             
             Text("You already know your child best. In 30 seconds, help us know you — so your parenting support is as smart and unique as you are.")
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
+                .foregroundColor(currentTheme.foreground)
+
             VStack(spacing: 12) {
                 Button("Know me Better", action: onKnowMeBetter)
                     .buttonStyle(PrimaryButtonStyle())
@@ -117,6 +122,7 @@ struct OnboardingIntroView: View {
             Spacer()
         }
         .padding()
+        .background(currentTheme.background)
     }
 }
 
@@ -135,6 +141,7 @@ struct OnboardingStartTestView: View {
             Spacer()
             Text("Great! Let's get to know you better. This will only take 30 seconds.")
                 .font(.title2).bold()
+                .foregroundColor(themeManager.currentTheme.foreground)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
@@ -172,11 +179,13 @@ struct QuestionnaireView: View {
             // ——— your original questionnaire UI ———
             VStack(alignment: .leading, spacing: 30) {
                 Text("Question \(viewModel.currentQuestionIndex + 1)")
+                    .foregroundColor(themeManager.currentTheme.foreground)
                     .font(.title).bold()
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 Text(viewModel.currentQuestion.questionText)
                     .font(.title3)
+                    .foregroundColor(themeManager.currentTheme.foreground)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal)
 
@@ -199,7 +208,7 @@ struct QuestionnaireView: View {
                         }
                         .padding()
                         .frame(minHeight: 80)
-                        .background(themeManager.currentTheme.background)
+                        .background(themeManager.currentTheme.accentSecond)
                         .foregroundColor(themeManager.currentTheme.accent)
                         .cornerRadius(12)
                     }
@@ -207,10 +216,10 @@ struct QuestionnaireView: View {
                 Spacer()
                 HStack {
                     Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questions.count)")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(themeManager.currentTheme.foreground)
                     Spacer()
                     Button("Skip Test >", action: onSkip)
-                        .foregroundColor(themeManager.currentTheme.accent)
+                        .foregroundColor(themeManager.currentTheme.foreground)
                 }
             }
             .padding()
@@ -230,14 +239,16 @@ struct OnboardingResultsView: View {
         VStack(spacing: 24) {
             Spacer()
             Text("Results")
+                .foregroundColor(themeManager.currentTheme.foreground)
                 .font(.title2).bold()
             
             Text(result.title)
                 .font(.largeTitle).bold()
-                .foregroundColor(themeManager.currentTheme.accent)
+                .foregroundColor(themeManager.currentTheme.foreground)
                 .multilineTextAlignment(.center)
             
             Text(result.description)
+                .foregroundColor(themeManager.currentTheme.foreground)
                 .multilineTextAlignment(.center)
             
             VStack {

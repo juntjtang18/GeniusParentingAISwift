@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct PostCardView: View {
+    @Environment(\.theme) var currentTheme: Theme
     @ObservedObject var viewModel: PostRowViewModel
     @State private var isShowingCommentView = false
 
@@ -75,7 +76,6 @@ struct PostCardView: View {
                     .padding(12)
             }
         }
-        .background(Color(UIColor.secondarySystemGroupedBackground))
         .cornerRadius(10)
         .fullScreenCover(isPresented: $isShowingCommentView) {
             CommentView(post: viewModel.post)

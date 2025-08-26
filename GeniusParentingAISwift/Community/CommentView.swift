@@ -27,7 +27,6 @@ struct CommentView: View {
                         .padding(.horizontal)
                 }
             }
-            .background(theme.background)
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -137,11 +136,13 @@ private struct CommentInputArea: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+                /*
                 Spacer()
                 Button(action: {}) {
                     Image(systemName: "pencil")
                 }
                 .foregroundColor(.secondary)
+                 */
             }
 
             // Input field

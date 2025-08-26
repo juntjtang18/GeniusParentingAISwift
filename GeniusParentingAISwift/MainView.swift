@@ -1,6 +1,8 @@
 import SwiftUI
 import KeychainAccess
-
+final class MainTabRouter: ObservableObject {
+    @Published var selectedTab: Int = 0
+}
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Binding var isLoggedIn: Bool
@@ -10,6 +12,7 @@ struct MainView: View {
     @State private var selectedTab: Int = 0
     @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
     @AppStorage("personalityReminderSuppressed") private var personalityReminderSuppressed = false
+    @StateObject private var tabRouter = MainTabRouter()      // ⬅️ add
 
     // Existing sheets
     @State private var selectedLanguage = "en"
@@ -30,7 +33,8 @@ struct MainView: View {
         ZStack {
             themeManager.currentTheme.background.ignoresSafeArea()
 
-            TabView(selection: $selectedTab) {
+            // 2) Bind TabView to the router
+            TabView(selection: $tabRouter.selectedTab) {
                 homeTab
                     .tabItem {
                         Image("button-home").renderingMode(.template)
@@ -59,17 +63,17 @@ struct MainView: View {
                     }
                     .tag(3)
             }
+            .environmentObject(tabRouter)   // ⬅️ this is the line you asked about
             .onAppear {
-                updateUnselectedTabItemColor()
+                updateTabBarAppearance()
                 maybeShowPersonalityPromptOnce()
             }
             .onChange(of: themeManager.currentTheme.id) { _ in
-                updateUnselectedTabItemColor()
+                updateTabBarAppearance()
             }
             .fullScreenCover(isPresented: $isShowingSubscriptionSheet) {
                 SubscriptionView(isPresented: $isShowingSubscriptionSheet)
             }
-            // … your existing overlays for side menu and sheets stay the same …
             
             if isSideMenuShowing {
                 Color.black.opacity(0.4)
@@ -148,16 +152,12 @@ struct MainView: View {
         .animation(.easeInOut, value: isShowingPrivacySheet)
         .animation(.easeInOut, value: isShowingTermsSheet)
         .animation(.easeInOut, value: isShowingSubscriptionSheet)
-
-        // NEW: One-time reminder alert
         .alert("Try the 30-sec Personality Test?", isPresented: $showPersonalityPrompt) {
             Button("Not now") { personalityReminderSuppressed = true; showPersonalityPrompt = false }
             Button("Take the test") { showPersonalityPrompt = false; showOnboarding = true }
-
         } message: {
             Text("This helps tailor tips and lessons to you.")
         }
-
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlowView(didComplete: $hasCompletedPersonalityTest)
                 .environmentObject(themeManager)
@@ -167,10 +167,19 @@ struct MainView: View {
         }
     }
     
-    private func updateUnselectedTabItemColor() {
+    private func updateTabBarAppearance() {
         let theme = themeManager.currentTheme
         let colorName = "ColorSchemes/\(theme.id)/\(theme.id)Foreground"
+        let backgroundColorName = "ColorSchemes/\(theme.id)/\(theme.id)Background"
+        
         UITabBar.appearance().unselectedItemTintColor = UIColor(named: colorName)
+        
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(named: backgroundColorName)
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     private var menuToolbar: some ToolbarContent {
@@ -199,23 +208,28 @@ struct MainView: View {
         }
     }
     
-    // Tabs unchanged
     private var homeTab: some View {
         NavigationView {
             HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
+                .toolbarBackground(themeManager.currentTheme.background, for: .tabBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
-    
+
     private var courseTab: some View {
         NavigationStack {
             CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
+                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
-    
+
     private var aiTab: some View {
         NavigationView {
             AIView()
@@ -230,16 +244,22 @@ struct MainView: View {
                     }
                     menuToolbar
                 }
+                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
-    
+
     private var communityTab: some View {
         NavigationView {
             CommunityView()
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
+                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
@@ -266,12 +286,9 @@ struct LanguagePickerView: View {
     }
 }
 
-
 struct MainView_Previews: PreviewProvider {
     static var previews: some View {
         MainView(isLoggedIn: .constant(true), logoutAction: {})
             .environmentObject(ThemeManager())
     }
 }
-
-

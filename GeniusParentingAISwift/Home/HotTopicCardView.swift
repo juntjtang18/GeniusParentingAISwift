@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct HotTopicCardView: View {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     let topic: Topic
 
     var body: some View {
@@ -13,7 +13,7 @@ struct HotTopicCardView: View {
                     if let iconMedia = topic.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                         CachedAsyncImage(url: imageUrl)
                     } else {
-                        theme.background
+                        currentTheme.background
                             .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                     }
                 }
@@ -23,7 +23,11 @@ struct HotTopicCardView: View {
                 // --- TITLE SECTION ---
                 HStack(alignment: .center) {
                     Text(topic.title)
-                        .style(.hotTopicCardTitle) // <-- USE THE NEW STYLE
+                        .font(.subheadline.weight(.regular)) // was .subheadline.weight(.bold)
+                        .foregroundColor(currentTheme.accent)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
 
                     Spacer()
 

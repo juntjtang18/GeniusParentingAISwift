@@ -43,7 +43,9 @@ private struct DimensionsProvider<Content: View>: View {
             )
             content()
                 .environment(\.appDimensions, dims)
-                // Keep your existing safe-area behavior as-is at call-sites.
+                // ⬇️ ensure the wrapped content (your ZStack) fills the screen
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .ignoresSafeArea() // optional: match your existing safe-area behavior
         }
     }
 }

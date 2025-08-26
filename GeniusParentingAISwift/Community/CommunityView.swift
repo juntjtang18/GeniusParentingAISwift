@@ -2,12 +2,15 @@
 import SwiftUI
 
 struct CommunityView: View {
+    @Environment(\.theme) var currentTheme: Theme
     @StateObject private var viewModel = CommunityViewModel()
     @State private var isShowingAddPostView = false
 
     var body: some View {
-        // FIXED: Removed the redundant NavigationView wrapper.
         ZStack {
+            // ✅ Outermost background from theme, fills safe areas too
+            currentTheme.background.ignoresSafeArea()
+
             VStack {
                 if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
                     ProgressView("Loading Community...")
@@ -19,34 +22,42 @@ struct CommunityView: View {
                     List {
                         ForEach(viewModel.postRowViewModels) { rowViewModel in
                             PostCardView(viewModel: rowViewModel)
+                                // --- Card chrome (gives the view its own background) ---
+                                .padding(12)
+                                .background(currentTheme.accentBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(currentTheme.border.opacity(0.12), lineWidth: 1)
+                                )
+                                // --- List cosmetics ---
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                 .listRowSeparator(.hidden)
-                                .padding(.vertical, 8)
+                                .listRowBackground(Color.clear) // keep the row transparent so the screen bg shows around the card
                                 .onAppear {
                                     viewModel.fetchMorePostsIfNeeded(currentItem: rowViewModel)
                                 }
                         }
+
                         if viewModel.isLoadingMore {
                             ProgressView()
                                 .frame(maxWidth: .infinity)
                                 .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                         }
                     }
-                    .listStyle(PlainListStyle())
-                    .refreshable {
-                        await viewModel.initialLoad()
-                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)        // so your outer theme bg is visible
+                    .background(Color.clear)
                 }
             }
-            // FIXED: Navigation properties are now set in MainView for consistency.
-            
+
             // Floating Action Button
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    Button(action: {
-                        isShowingAddPostView = true
-                    }) {
+                    Button(action: { isShowingAddPostView = true }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 56))
                             .foregroundColor(.accentColor)
@@ -62,11 +73,24 @@ struct CommunityView: View {
             }
         }
         .sheet(isPresented: $isShowingAddPostView, onDismiss: {
-            Task {
-                await viewModel.initialLoad()
-            }
+            Task { await viewModel.initialLoad() }
         }) {
             AddPostView(communityViewModel: viewModel)
+        }
+        // ✅ iOS 15 fallback: make UITableView background transparent
+        .onAppear {
+            if #available(iOS 16.0, *) {
+                // no-op; .scrollContentBackground(.hidden) handles it
+            } else {
+                UITableView.appearance().backgroundColor = .clear
+            }
+        }
+        .onDisappear {
+            if #available(iOS 16.0, *) {
+                // no-op
+            } else {
+                UITableView.appearance().backgroundColor = .systemBackground
+            }
         }
     }
 }

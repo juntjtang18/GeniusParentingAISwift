@@ -29,7 +29,7 @@ struct SecondaryButtonStyle: ButtonStyle {
             .font(.headline)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.clear)
+            .background(theme.accentBackground)
             .foregroundColor(theme.accent)
             .clipShape(Capsule())
             .overlay(

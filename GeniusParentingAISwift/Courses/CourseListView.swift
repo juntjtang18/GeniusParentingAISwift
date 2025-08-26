@@ -4,7 +4,7 @@ import KeychainAccess
 
 // MARK: - Course Card View
 struct CourseCardView: View {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     let course: Course
     let selectedLanguage: String
     private let cardHeight: CGFloat = 250
@@ -23,11 +23,12 @@ struct CourseCardView: View {
                     if let iconMedia = course.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                         CachedAsyncImage(url: imageUrl)
                     } else {
-                        theme.background
+                        currentTheme.background
                             .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
                     }
                 }
                 .frame(height: cardHeight * 0.7)
+                .background(currentTheme.background)
                 .frame(maxWidth: .infinity)
                 .clipped()
 
@@ -55,9 +56,9 @@ struct CourseCardView: View {
                 // Play Button
                 ZStack {
                     Circle()
-                        .fill(isLocked ? .gray : theme.accent) // Use gray color for locked courses.
+                        .fill(isLocked ? .gray : currentTheme.background) // Use gray color for locked courses.
                     Image(systemName: "play.fill")
-                        .foregroundColor(theme.background)
+                        .foregroundColor(currentTheme.foreground)
                         .font(.system(size: 20))
                 }
                 .frame(width: 50, height: 50)
@@ -65,7 +66,8 @@ struct CourseCardView: View {
             .frame(height: cardHeight * 0.3)
             .style(.courseCard)
         }
-        .background(theme.background)
+        .background(currentTheme.accentBackground)
+        //.foregroundColor(currentTheme.accent)
         .frame(height: cardHeight)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
@@ -180,21 +182,25 @@ struct CollapsibleCategoryView: View {
     }
 }
 
-// MARK: - Main Course List View
+// MARK: - Main Course List View (refactored for picker + category list)
 struct CourseView: View {
     @Environment(\.theme) var theme: Theme
     @StateObject private var viewModel = CourseViewModel()
     @Binding var selectedLanguage: String
     @Binding var isSideMenuShowing: Bool
 
+    @State private var selectedCategory: CategoryData? = nil
+
     var body: some View {
-        VStack {
+        Group {
             if !viewModel.initialLoadCompleted && viewModel.categories.isEmpty {
                 ProgressView("Loading Categories...")
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 15) {
                     Text("Error: \(errorMessage)")
-                        .foregroundColor(.red).multilineTextAlignment(.center).padding(.horizontal)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                     Button("Retry") {
                         Task {
                             viewModel.initialLoadCompleted = false
@@ -208,34 +214,261 @@ struct CourseView: View {
                     .foregroundColor(.white)
                     .shadow(radius: 2)
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 25) {
-                        ForEach(viewModel.categories) { category in
-                            CollapsibleCategoryView(
-                                category: category,
-                                viewModel: viewModel,
-                                selectedLanguage: $selectedLanguage
-                            )
+                // Two modes: picker vs list
+                if let cat = selectedCategory {
+                    CategoryListScreen(
+                        category: cat,
+                        viewModel: viewModel,
+                        selectedLanguage: $selectedLanguage,
+                        onBack: { withAnimation { selectedCategory = nil } }
+                    )
+                } else {
+                    CategoryPickerScreen(
+                        categories: viewModel.categories,
+                        onPick: { category in
+                            withAnimation { selectedCategory = category }
+                            Task { await viewModel.fetchCourses(for: category.id) }
                         }
-                    }
-                    .padding()
+                    )
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            Image("background1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
-        )
+        .background(theme.background)
         .navigationDestination(for: Int.self) { courseId in
-            ShowACourseView(selectedLanguage: $selectedLanguage, courseId: courseId, isSideMenuShowing: $isSideMenuShowing)
+            ShowACourseView(
+                selectedLanguage: $selectedLanguage,
+                courseId: courseId,
+                isSideMenuShowing: $isSideMenuShowing
+            )
         }
         .onAppear {
-            Task {
-                await viewModel.initialFetch()
+            Task { await viewModel.initialFetch() }
+        }
+    }
+}
+
+
+// MARK: - Picker Screen (blue header + hero image + blue section with tiles)
+private struct CategoryPickerScreen: View {
+    let categories: [CategoryData]
+    let onPick: (CategoryData) -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // Top blue banner
+                VStack(alignment: .leading, spacing: 6) {
+                    (
+                        Text("GenParenting ")
+                            .font(.title2).bold()
+                            .foregroundColor(.white)
+                        +
+                        Text("Courses")
+                            .font(.title2).bold()
+                            .foregroundColor(.white)
+                    )
+
+                    Text("Simple guidance every step of the way.")
+                        .font(.callout)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 18)
+                .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+
+                // Hero image (from asset: "family")
+                Image("family")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 190)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.horizontal, 14)
+                    .padding(.top, 12)
+                    .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+
+                // Blue section containing white rounded tiles
+                VStack(spacing: 14) {
+                    ForEach(categories) { cat in
+                        CategoryTileButton(category: cat) {
+                            onPick(cat)
+                        }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 18)
+                .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+
+                Spacer(minLength: 20)
             }
         }
     }
 }
+
+
+
+private struct CategoryTileButton: View {
+    let category: CategoryData
+    let action: () -> Void
+
+    // Pick asset image based on index or name.
+    // Adjust mapping logic as you like.
+    private var leadingImageName: String {
+        switch category.attributes.name.lowercased() {
+        case let n where n.contains("foundation"):
+            return "course-category1"
+        case let n where n.contains("member"):
+            return "course-category2"
+        case let n where n.contains("tool"):
+            return "course-category3"
+        default:
+            return "course-category1"
+        }
+    }
+
+    // Simple subtitle placeholder (replace with real field if available)
+    private var subtitleText: String {
+        switch category.attributes.name.lowercased() {
+        case let n where n.contains("foundation"):
+            return "Easy steps to guide parents through"
+        case let n where n.contains("member"):
+            return "Unlock exclusive courses"
+        case let n where n.contains("tool"):
+            return "Everything parents need, in one place"
+        default:
+            return "Tap to explore"
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+
+                // Left icon block from asset
+                Image(leadingImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                // Title + subtitle
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category.attributes.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+
+                    Text(subtitleText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
+            .padding(16)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+
+
+// MARK: - Category List Screen (courses of selected category)
+private struct CategoryListScreen: View {
+    @Environment(\.theme) var currentTheme: Theme
+    let category: CategoryData
+    @ObservedObject var viewModel: CourseViewModel
+    @Binding var selectedLanguage: String
+    let onBack: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Category title
+                Text(category.attributes.name)
+                    .font(.title3).bold()
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                // Courses list
+                Group {
+                    if let courses = viewModel.coursesByCategoryID[category.id] {
+                        LazyVStack(spacing: 18) {
+                            ForEach(courses) { course in
+                                NavigationLink(
+                                    destination: ShowACourseView(
+                                        selectedLanguage: $selectedLanguage,
+                                        courseId: course.id,
+                                        isSideMenuShowing: .constant(false)
+                                    )
+                                ) {
+                                    CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                }
+                            }
+                        }
+                    } else if viewModel.loadingCategoryIDs.contains(category.id) {
+                        HStack { Spacer(); ProgressView(); Spacer() }
+                            .frame(height: 120)
+                    } else {
+                        Color.clear.frame(height: 1)
+                            .onAppear {
+                                Task { await viewModel.fetchCourses(for: category.id) }
+                            }
+                    }
+                }
+                .padding(.top, 6)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+        }
+        .navigationTitle(category.attributes.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            // keep your existing leading back
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: onBack) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Courses")
+                    }
+                }
+            }
+            // keep your existing trailing items (refresh/menu) here...
+        }
+        .tint(currentTheme.foreground) // buttons adopt theme color (iOS 15+)
+        .onAppear {
+            // Title color via UINavigationBarAppearance
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = .clear
+
+            // Convert SwiftUI.Color -> UIColor safely
+            let titleColor = UIColor(currentTheme.foreground)
+            appearance.titleTextAttributes = [.foregroundColor: titleColor]
+            appearance.largeTitleTextAttributes = [.foregroundColor: titleColor]
+
+            // Apply
+            let navBar = UINavigationBar.appearance()
+            navBar.standardAppearance = appearance
+            navBar.compactAppearance = appearance
+            navBar.scrollEdgeAppearance = appearance
+        }
+        .onDisappear {
+            // (Optional) reset to system default when leaving this screen
+            let reset = UINavigationBarAppearance()
+            reset.configureWithDefaultBackground()
+            UINavigationBar.appearance().standardAppearance = reset
+            UINavigationBar.appearance().compactAppearance = reset
+            UINavigationBar.appearance().scrollEdgeAppearance = reset
+        }
+    }
+}
+

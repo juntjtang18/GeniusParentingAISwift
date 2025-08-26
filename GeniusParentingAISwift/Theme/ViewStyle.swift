@@ -7,13 +7,13 @@ enum ViewStyle {
          subscriptionCardTitle, subscriptionCardButton, subscriptionCardFeatureTitle, subscriptionCardFeatureItem,
          subscriptionPlanBadge,
          // ADDED: New text styles for home screen cards
-         lessonCardTitle, hotTopicCardTitle, dailyTipCardTitle
+         lessonCardTitle, dailyTipCardTitle
 }
 
 // 2. Conform exactly to ViewModifier—including @MainActor.
 @MainActor
 struct StyleModifier: ViewModifier {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     let style: ViewStyle
 
     @ViewBuilder
@@ -22,68 +22,62 @@ struct StyleModifier: ViewModifier {
         case .title:
             content
                 .font(.largeTitle)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
 
         case .body:
             content
                 .font(.body)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
         
         case .caption:
             content
                 .font(.caption)
-                .foregroundColor(theme.foreground.opacity(0.8))
+                .foregroundColor(currentTheme.foreground.opacity(0.8))
 
         case .primaryButton:
             content
                 .font(.headline)
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(theme.primary)
-                .foregroundColor(theme.accentSecond)
+                .background(currentTheme.primary)
+                .foregroundColor(currentTheme.accentSecond)
                 .clipShape(Capsule())
 
         case .secondaryButton:
             content
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
 
         case .themedTextField:
             content
                 .padding()
-                .background(theme.foreground.opacity(0.2))
+                .background(currentTheme.foreground.opacity(0.2))
                 .cornerRadius(10)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
         
         case .courseCard:
             content
                 .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(theme.background.opacity(0.7))
+                .background(currentTheme.accentBackground.opacity(1))
+                .foregroundColor(currentTheme.accent)
                 
         case .homeSectionTitle:
             content
                 .font(.title2.bold())
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
                 .padding(.horizontal)
         
         case .lessonCardTitle:
             content
                 .font(.headline.weight(.regular))   // was .headline (semibold)
-                .foregroundColor(theme.foreground)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-
-        case .hotTopicCardTitle:
-            content
-                .font(.subheadline.weight(.regular)) // was .subheadline.weight(.bold)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
         case .dailyTipCardTitle:
             content
                 .font(.callout.weight(.regular))     // was .callout (semibold by default on some devices)
-                .foregroundColor(theme.foreground)
+                .foregroundColor(currentTheme.foreground)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
@@ -105,7 +99,7 @@ struct StyleModifier: ViewModifier {
                 .font(.caption.bold())
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(theme.foreground)
+                .background(currentTheme.foreground)
                 .foregroundColor(.white)
                 .clipShape(Capsule())
         }
@@ -121,7 +115,7 @@ extension View {
 
 // MARK: - Home Card Styles
 struct NewLessonCardStyle: ViewModifier {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     @Environment(\.appDimensions) var dims
 
     // Single source of truth for sizing
@@ -131,14 +125,14 @@ struct NewLessonCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: cardWidth, height: cardHeight)
-            .background(theme.accentBackground)
+            .background(currentTheme.accentBackground)
             .clipShape(RoundedRectangle(cornerRadius: 15))
             .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
     }
 }
 
 struct LessonCardStyle: ViewModifier {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     @Environment(\.appDimensions) var dims
 
     private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
@@ -147,29 +141,29 @@ struct LessonCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: cardWidth, height: cardHeight)
-            .background(theme.background)
+            .background(currentTheme.background)
             .clipShape(RoundedRectangle(cornerRadius: 15))
             .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
     }
 }
 
 struct HotTopicCardStyle: ViewModifier {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     func body(content: Content) -> some View {
         content
             .frame(width: 300, height: 250)
-            .background(theme.background)
+            .background(currentTheme.background)
             .clipShape(RoundedRectangle(cornerRadius: 15))
-            .shadow(color: theme.accent.opacity(0.3), radius: 6, x: 0, y: 5)
+            .shadow(color: currentTheme.accent.opacity(0.3), radius: 6, x: 0, y: 5)
     }
 }
 
 struct DailyTipCardStyle: ViewModifier {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     func body(content: Content) -> some View {
         content
             .frame(width: 300, height: 250)
-            .background(theme.background)
+            .background(currentTheme.background)
             .clipShape(RoundedRectangle(cornerRadius: 25))
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
