@@ -98,7 +98,7 @@ struct HomeView: View {
                             )
                         } label: {
                             FeatureCard(
-                                systemImage: "flame.fill",
+                                icon: Image("hottopic-icon"), // Changed to use asset image
                                 title: "Hot Topics",
                                 tint: theme.primary
                             )
@@ -112,7 +112,7 @@ struct HomeView: View {
                             )
                         } label: {
                             FeatureCard(
-                                systemImage: "checkmark.seal.fill",
+                                icon: Image("tip-icon"), // Changed to use asset image
                                 title: "Tips",
                                 tint: theme.primary
                             )
@@ -123,7 +123,7 @@ struct HomeView: View {
                             tabRouter.selectedTab = 3   // same as tapping the Community tab
                         } label: {
                             FeatureCard(
-                                systemImage: "person.3.fill",
+                                icon: Image("community-icon"), // Changed to use asset image
                                 title: "Community",
                                 tint: theme.primary
                             )
@@ -196,11 +196,11 @@ private struct WelcomeRow: View {
 }
 
 
-// Rounded search field
 private struct SearchBar: View {
     @Binding var text: String
     var placeholder: String = "Search"
     var onSubmit: () -> Void = {}
+    @Environment(\.theme) var currentTheme: Theme // Access theme
 
     var body: some View {
         HStack(spacing: 8) {
@@ -212,14 +212,16 @@ private struct SearchBar: View {
                 .disableAutocorrection(true)
                 .submitLabel(.search)
                 .onSubmit(onSubmit)
+                .foregroundColor(currentTheme.inputBoxForeground) // Set text color
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(.systemBackground))
+        .background(currentTheme.inputBoxBackground) // Set background color
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
     }
 }
+
 
 // Section title with optional trailing action ("See All")
 private struct SectionHeader: View {
@@ -255,31 +257,33 @@ private struct FeatureGrid<Content: View>: View {
 }
 
 private struct FeatureCard: View {
-    let systemImage: String
+    @Environment(\.theme) var currentTheme: Theme // Added @Environment for theme
+    let icon: Image
     let title: String
     let tint: Color
 
     var body: some View {
         VStack(spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.title2)
+            icon
+                .resizable()
+                .scaledToFit()
+                .frame(width: 35, height: 35) // Set a fixed size for the icon
                 .padding(12)
-                .background(tint.opacity(0.15))
+                .background(currentTheme.accentBackground) // Changed background to use the 'tint' color directly
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             Text(title)
                 .font(.footnote.weight(.semibold))
                 .foregroundColor(.primary)
+                .multilineTextAlignment(.center) // Center text to fit better in square
         }
-        //.frame(maxWidth: .infinity)
-        .frame(width: 120, height: 100) // You can adjust these values as needed
-        .padding(.vertical, 14)
-        .background(Color(.systemBackground))
+        .padding(.horizontal, 5) // Added a small horizontal padding to keep text from edges
+        .frame(width: 100, height: 100) // Explicitly set fixed width and height for the card itself
+        .background(currentTheme.accentBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .shadow(color: .gray.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
-
 
 
 // The FairyTipPopupView does not need any changes.

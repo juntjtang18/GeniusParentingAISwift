@@ -9,7 +9,7 @@ struct LessonCardView: View {
     let cardHeight: CGFloat
 
     // Keep the image a fixed portion of the card height.
-    private var imageHeight: CGFloat { cardHeight * 0.65 }
+    private var imageHeight: CGFloat { cardHeight * 0.75 }
 
     var body: some View {
         VStack(spacing: 0) {

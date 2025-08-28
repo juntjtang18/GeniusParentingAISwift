@@ -8,7 +8,7 @@ struct SideMenuView: View {
     @Binding var isShowingProfileSheet: Bool
     @Binding var isShowingLanguageSheet: Bool
     @Binding var isShowingSettingSheet: Bool
-    @Binding var isShowingThemeSheet: Bool
+    // Removed: @Binding var isShowingThemeSheet: Bool // No longer needed
     let logoutAction: () -> Void
     @Binding var isShowingPrivacySheet: Bool
     @Binding var isShowingTermsSheet: Bool
@@ -47,12 +47,15 @@ struct SideMenuView: View {
                 
                 Divider()
 
+                // Commented out the Theme selection button
+                /*
                 Button(action: { handleMenuSelection { isShowingThemeSheet = true } }) {
                     Label("Change Theme", systemImage: "paintbrush.fill")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
+                */
 
                 Button(action: { handleMenuSelection { isShowingSettingSheet = true } }) {
                     Label("Setting", systemImage: "gear")
@@ -114,7 +117,7 @@ struct SideMenuView_Previews: PreviewProvider {
             isShowingProfileSheet: .constant(false),
             isShowingLanguageSheet: .constant(false),
             isShowingSettingSheet: .constant(false),
-            isShowingThemeSheet: .constant(false),
+            // Removed: isShowingThemeSheet: .constant(false), // No longer needed
             logoutAction: {},
             isShowingPrivacySheet: .constant(false),
             isShowingTermsSheet: .constant(false),

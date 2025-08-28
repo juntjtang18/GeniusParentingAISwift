@@ -160,6 +160,7 @@ struct AIView: View {
 
 // The MessageView and RoundedCorner extensions remain unchanged.
 struct MessageView: View {
+    @Environment(\.theme) var currentTheme: Theme // Access theme within MessageView
     let message: ChatMessage
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -182,8 +183,8 @@ struct MessageView: View {
                 Text(message.content)
                     .font(.subheadline)
                     .padding(12)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
+                    .background(currentTheme.accentBackground) // Changed background for user messages
+                    .foregroundColor(currentTheme.accent)      // Changed foreground for user messages
                     .cornerRadius(18, corners: [.topLeft, .topRight, .bottomLeft])
                 Image(systemName: "person.circle.fill")
                     .font(.system(size: 35))

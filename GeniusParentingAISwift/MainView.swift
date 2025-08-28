@@ -71,15 +71,49 @@ struct MainView: View {
             }
             .background(Color.clear) // Keep background clear for TabView to show gradient below
             .environmentObject(tabRouter)   // ⬅️ this is the line you asked about
-            /*
             .onAppear {
-                updateTabBarAppearance()
+                // Configure UITabBarAppearance for a solid background to cover the gradient
+                let appearance = UITabBarAppearance()
+                appearance.configureWithOpaqueBackground() // Use opaque background
+                appearance.backgroundColor = UIColor(themeManager.currentTheme.background) // Set to a solid background color
+                appearance.shadowColor = .clear // Remove any shadow line if not desired
+                
+                // Set the text color for selected and unselected states using theme colors
+                let selectedItemColor = UIColor(themeManager.currentTheme.primary) // Example: use theme's primary for selected
+                let unselectedItemColor = UIColor(themeManager.currentTheme.foreground.opacity(0.6)) // Example: use theme's foreground for unselected
+
+                appearance.stackedLayoutAppearance.selected.iconColor = selectedItemColor
+                appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: selectedItemColor]
+                
+                appearance.stackedLayoutAppearance.normal.iconColor = unselectedItemColor
+                appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: unselectedItemColor]
+
+                UITabBar.appearance().standardAppearance = appearance
+                UITabBar.appearance().scrollEdgeAppearance = appearance
+                //UITabBar.appearance().compactAppearance = appearance // For compact height scenarios
+                
                 maybeShowPersonalityPromptOnce()
             }
             .onChange(of: themeManager.currentTheme.id) { _ in
-                updateTabBarAppearance()
+                // Re-apply appearance when theme changes
+                let appearance = UITabBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = UIColor(themeManager.currentTheme.background)
+                appearance.shadowColor = .clear
+                
+                let selectedItemColor = UIColor(themeManager.currentTheme.primary)
+                let unselectedItemColor = UIColor(themeManager.currentTheme.foreground.opacity(0.6))
+
+                appearance.stackedLayoutAppearance.selected.iconColor = selectedItemColor
+                appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: selectedItemColor]
+                
+                appearance.stackedLayoutAppearance.normal.iconColor = unselectedItemColor
+                appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: unselectedItemColor]
+
+                UITabBar.appearance().standardAppearance = appearance
+                UITabBar.appearance().scrollEdgeAppearance = appearance
+                //UITabBar.appearance().compactAppearance = appearance
             }
-            */
             .fullScreenCover(isPresented: $isShowingSubscriptionSheet) {
                 SubscriptionView(isPresented: $isShowingSubscriptionSheet)
             }
@@ -100,7 +134,7 @@ struct MainView: View {
                 isShowingProfileSheet: $isShowingProfileSheet,
                 isShowingLanguageSheet: $isShowingLanguageSheet,
                 isShowingSettingSheet: $isShowingSettingSheet,
-                isShowingThemeSheet: $isShowingThemeSheet,
+                //isShowingThemeSheet: $isShowingThemeSheet,
                 logoutAction: logoutAction,
                 isShowingPrivacySheet: $isShowingPrivacySheet,
                 isShowingTermsSheet: $isShowingTermsSheet,
@@ -152,7 +186,6 @@ struct MainView: View {
                     .zIndex(3)
             }
         }
-        //.tint(themeManager.currentTheme.primary)
         .animation(.easeInOut, value: isSideMenuShowing)
         .animation(.easeInOut, value: isShowingProfileSheet)
         .animation(.easeInOut, value: isShowingLanguageSheet)
@@ -177,24 +210,6 @@ struct MainView: View {
         .appGradientBackground()
     }
     
-    /*
-    private func updateTabBarAppearance() {
-        // Commented out the lines that customize the UITabBar background and unselected item tint.
-        // This will revert the bottom toolbar (UITabBar) to its default system appearance.
-        let theme = themeManager.currentTheme
-        let colorName = "ColorSchemes/\(theme.id)/\(theme.id)Foreground"
-        let backgroundColorName = "ColorSchemes/\(theme.id)/\(theme.id)Background"
-        
-        // UITabBar.appearance().unselectedItemTintColor = UIColor(named: colorName)
-        
-        // let appearance = UITabBarAppearance()
-        // appearance.configureWithOpaqueBackground()
-        // appearance.backgroundColor = UIColor(named: backgroundColorName)
-        
-        // UITabBar.appearance().standardAppearance = appearance
-        // UITabBar.appearance().scrollEdgeAppearance = appearance
-    }
-    */
     private var menuToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: {
@@ -206,7 +221,6 @@ struct MainView: View {
         }
     }
 
-    // NEW: Only check once when MainView first appears after login
     private func maybeShowPersonalityPromptOnce() {
         guard !didCheckReminderOnce else { return }
         didCheckReminderOnce = true
@@ -214,7 +228,6 @@ struct MainView: View {
         let shouldPrompt = !hasCompletedPersonalityTest && !personalityReminderSuppressed
 
         if shouldPrompt {
-            // Slight delay so we don’t clash with first layout/animations
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 showPersonalityPrompt = true
             }
@@ -225,9 +238,9 @@ struct MainView: View {
         NavigationView {
             HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 // Set toolbar background to clear for transparency
-                //.toolbarBackground(Color.clear, for: .navigationBar)
-                //.toolbarBackground(.visible, for: .navigationBar)
-                //.toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(Color.clear, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
@@ -240,9 +253,9 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
                 // Set toolbar background to clear for transparency
-                //.toolbarBackground(Color.clear, for: .navigationBar)
-                //.toolbarBackground(.visible, for: .navigationBar)
-                //.toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(Color.clear, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 
@@ -253,20 +266,13 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
             
                 .toolbar {
-                    /*
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: { selectedTab = 0 }) {
-                            Image(systemName: "chevron.left")
-                            Text("Home")
-                        }
-                    }*/
                     menuToolbar
                 }
             
                 // Set toolbar background to clear for transparency
-                //.toolbarBackground(Color.clear, for: .navigationBar)
-                //.toolbarBackground(.visible, for: .navigationBar)
-                //.toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(Color.clear, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
@@ -278,9 +284,9 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
                 // Set toolbar background to clear for transparency
-                //.toolbarBackground(Color.clear, for: .navigationBar)
-                //.toolbarBackground(.visible, for: .navigationBar)
-                //.toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(Color.clear, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
     }
