@@ -8,9 +8,13 @@ struct CommunityView: View {
 
     var body: some View {
         ZStack {
-            // ✅ Outermost background from theme, fills safe areas too
-            currentTheme.background.ignoresSafeArea()
-
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea() // Ensure the gradient fills the entire screen
+             
             VStack {
                 if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
                     ProgressView("Loading Community...")

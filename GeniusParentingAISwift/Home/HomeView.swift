@@ -271,7 +271,8 @@ private struct FeatureCard: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundColor(.primary)
         }
-        .frame(maxWidth: .infinity)
+        //.frame(maxWidth: .infinity)
+        .frame(width: 120, height: 100) // You can adjust these values as needed
         .padding(.vertical, 14)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

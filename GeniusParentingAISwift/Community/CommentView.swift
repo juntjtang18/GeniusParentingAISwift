@@ -4,7 +4,7 @@ import SwiftUI
 struct CommentView: View {
     @StateObject private var viewModel: CommentViewModel
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
 
     init(post: Post) {
         _viewModel = StateObject(wrappedValue: CommentViewModel(post: post))
@@ -14,6 +14,13 @@ struct CommentView: View {
         NavigationView {
             // The entire view is now a single scrollable container
             ScrollView {
+                LinearGradient(
+                    colors: [currentTheme.background, currentTheme.background2],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea() // Ensure the gradient fills the entire screen
+                 
                 VStack(alignment: .leading, spacing: 0) {
                     PostContentView(post: viewModel.post)
                         .padding()

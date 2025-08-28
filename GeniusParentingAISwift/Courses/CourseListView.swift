@@ -97,7 +97,8 @@ struct CollapsibleCategoryView: View {
                    let imageUrl = URL(string: headerMedia.attributes.url) {
                     CachedAsyncImage(url: imageUrl).aspectRatio(contentMode: .fill)
                 } else {
-                    Rectangle().fill(LinearGradient(gradient: Gradient(colors: [.purple, .blue]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    // Use theme gradient for the header if no image
+                    Rectangle().fill(LinearGradient(colors: [currentTheme.background, currentTheme.background2], startPoint: .topLeading, endPoint: .bottomTrailing))
                 }
                 LinearGradient(gradient: Gradient(colors: [.black.opacity(0.6), .clear, .black.opacity(0.7)]), startPoint: .top, endPoint: .bottom)
                 HStack {
@@ -111,7 +112,7 @@ struct CollapsibleCategoryView: View {
                 .padding()
             }
             .frame(height: 80)
-            .background(currentTheme.background)
+            .background(Color.clear) // Changed to clear to let background gradient show
             .cornerRadius(15)
             .contentShape(Rectangle())
             .clipped()
@@ -192,49 +193,58 @@ struct CourseView: View {
     @State private var selectedCategory: CategoryData? = nil
 
     var body: some View {
-        Group {
-            if !viewModel.initialLoadCompleted && viewModel.categories.isEmpty {
-                ProgressView("Loading Categories...")
-            } else if let errorMessage = viewModel.errorMessage {
-                VStack(spacing: 15) {
-                    Text("Error: \(errorMessage)")
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    Button("Retry") {
-                        Task {
-                            viewModel.initialLoadCompleted = false
-                            await viewModel.initialFetch()
+        ZStack { // Added ZStack for the gradient background
+            LinearGradient(
+                colors: [theme.background, theme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            Group {
+                if !viewModel.initialLoadCompleted && viewModel.categories.isEmpty {
+                    ProgressView("Loading Categories...")
+                } else if let errorMessage = viewModel.errorMessage {
+                    VStack(spacing: 15) {
+                        Text("Error: \(errorMessage)")
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button("Retry") {
+                            Task {
+                                viewModel.initialLoadCompleted = false
+                                await viewModel.initialFetch()
+                            }
                         }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
-                }
-            } else if viewModel.categories.isEmpty {
-                Text("No courses available.")
-                    .foregroundColor(.white)
-                    .shadow(radius: 2)
-            } else {
-                // Two modes: picker vs list
-                if let cat = selectedCategory {
-                    CategoryListScreen(
-                        category: cat,
-                        viewModel: viewModel,
-                        selectedLanguage: $selectedLanguage,
-                        onBack: { withAnimation { selectedCategory = nil } }
-                    )
+                } else if viewModel.categories.isEmpty {
+                    Text("No courses available.")
+                        .foregroundColor(.white)
+                        .shadow(radius: 2)
                 } else {
-                    CategoryPickerScreen(
-                        categories: viewModel.categories,
-                        onPick: { category in
-                            withAnimation { selectedCategory = category }
-                            Task { await viewModel.fetchCourses(for: category.id) }
-                        }
-                    )
+                    // Two modes: picker vs list
+                    if let cat = selectedCategory {
+                        CategoryListScreen(
+                            category: cat,
+                            viewModel: viewModel,
+                            selectedLanguage: $selectedLanguage,
+                            onBack: { withAnimation { selectedCategory = nil } }
+                        )
+                    } else {
+                        CategoryPickerScreen(
+                            categories: viewModel.categories,
+                            onPick: { category in
+                                withAnimation { selectedCategory = category }
+                                Task { await viewModel.fetchCourses(for: category.id) }
+                            }
+                        )
+                    }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Removed .background(theme.background) here as gradient is now in ZStack
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(theme.background)
         .navigationDestination(for: Int.self) { courseId in
             ShowACourseView(
                 selectedLanguage: $selectedLanguage,
@@ -258,7 +268,7 @@ private struct CategoryPickerScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Top blue banner
+                // Top banner: Now uses theme gradient
                 VStack(alignment: .leading, spacing: 6) {
                     (
                         Text("GenParenting ")
@@ -278,7 +288,8 @@ private struct CategoryPickerScreen: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 18)
-                .background(currentTheme.background)
+                .background(LinearGradient(colors: [currentTheme.background, currentTheme.background2], startPoint: .top, endPoint: .bottom))
+
 
                 // Hero image — full width, no rounded corners, no overlap
                 Image("family")
@@ -289,7 +300,7 @@ private struct CategoryPickerScreen: View {
                     .clipped()                 // crop overflow but keep square corners
                     .padding(.bottom, 12)      // space before tiles
 
-                // Blue section containing white rounded tiles
+                // Section containing white rounded tiles: Now uses theme gradient
                 VStack(spacing: 14) {
                     ForEach(categories) { cat in
                         CategoryTileButton(category: cat) { onPick(cat) }
@@ -299,7 +310,7 @@ private struct CategoryPickerScreen: View {
                 .padding(.top, 15)
                 .padding(.bottom, 18)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+                .background(LinearGradient(colors: [currentTheme.background, currentTheme.background2], startPoint: .top, endPoint: .bottom))
 
 
                 Spacer(minLength: 20)
@@ -391,46 +402,56 @@ private struct CategoryListScreen: View {
     let onBack: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Category title
-                Text(category.attributes.name)
-                    .font(.title3).bold()
-                    .foregroundColor(currentTheme.foreground)
-                    .padding(.top, 4)
+        // ZStack here is to ensure the gradient covers the whole screen if this is presented directly
+        ZStack {
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea() // Ensure the gradient fills the entire safe area
 
-                // Courses list
-                Group {
-                    if let courses = viewModel.coursesByCategoryID[category.id] {
-                        LazyVStack(spacing: 18) {
-                            ForEach(courses) { course in
-                                NavigationLink(
-                                    destination: ShowACourseView(
-                                        selectedLanguage: $selectedLanguage,
-                                        courseId: course.id,
-                                        isSideMenuShowing: .constant(false)
-                                    )
-                                ) {
-                                    CourseCardView(course: course, selectedLanguage: selectedLanguage)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Category title
+                    Text(category.attributes.name)
+                        .font(.title3).bold()
+                        .foregroundColor(currentTheme.foreground)
+                        .padding(.top, 4)
+
+                    // Courses list
+                    Group {
+                        if let courses = viewModel.coursesByCategoryID[category.id] {
+                            LazyVStack(spacing: 18) {
+                                ForEach(courses) { course in
+                                    NavigationLink(
+                                        destination: ShowACourseView(
+                                            selectedLanguage: $selectedLanguage,
+                                            courseId: course.id,
+                                            isSideMenuShowing: .constant(false)
+                                        )
+                                    ) {
+                                        CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                    }
                                 }
                             }
+                        } else if viewModel.loadingCategoryIDs.contains(category.id) {
+                            HStack { Spacer(); ProgressView(); Spacer() }
+                                .frame(height: 120)
+                        } else {
+                            Color.clear.frame(height: 1)
+                                .onAppear {
+                                    Task { await viewModel.fetchCourses(for: category.id) }
+                                }
                         }
-                    } else if viewModel.loadingCategoryIDs.contains(category.id) {
-                        HStack { Spacer(); ProgressView(); Spacer() }
-                            .frame(height: 120)
-                    } else {
-                        Color.clear.frame(height: 1)
-                            .onAppear {
-                                Task { await viewModel.fetchCourses(for: category.id) }
-                            }
                     }
+                    .padding(.top, 6)
                 }
-                .padding(.top, 6)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
-        }
+        } // End of ZStack
         .navigationTitle(category.attributes.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -446,7 +467,7 @@ private struct CategoryListScreen: View {
             }
             // keep your existing trailing items (refresh/menu) here...
         }
-        .tint(currentTheme.accent) // buttons adopt theme color (iOS 15+)
+        //.tint(currentTheme.accent) // buttons adopt theme color (iOS 15+)
         /*
         .onAppear {
             // Title color via UINavigationBarAppearance
@@ -477,4 +498,3 @@ private struct CategoryListScreen: View {
          */
     }
 }
-

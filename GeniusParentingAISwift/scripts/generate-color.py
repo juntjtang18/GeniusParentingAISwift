@@ -24,7 +24,7 @@ schemes = {
         "Dark": {
             "Foreground":   "#F5F5F5",
             "Background":   "#15202B",
-            "Background2":  "#8977FF",            
+            "Background2":  "#15202B",            
             "AccentBackground": "#797E84",
             "Accent":       "#F5F5F5",
             "AccentSecond": "#39424A",
