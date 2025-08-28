@@ -26,8 +26,12 @@ struct LoginView: View {
         Group {
             if currentView == .login {
                 ZStack {
-                    theme.background.ignoresSafeArea()
-                    
+                    //theme.background.ignoresSafeArea()
+                    LinearGradient(
+                        colors: [theme.background, theme.background2],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
                     VStack(spacing: 20) {
                         Image("applogo-\(theme.id)")
                             .resizable()
@@ -139,6 +143,12 @@ struct LoginView: View {
                     }
                     .padding()
                 }
+                .toolbarBackground(
+                    LinearGradient(colors: [theme.background2, theme.background],
+                                   startPoint: .top, endPoint: .bottom),
+                    for: .navigationBar
+                )
+                .toolbarBackground(.visible, for: .navigationBar)
             } else if currentView == .signup {
                 SignupView(isLoggedIn: $isLoggedIn, currentView: $currentView)
             }

@@ -311,3 +311,25 @@ class CommentAttributes: Codable, Hashable {
             lhs.parent_comment == rhs.parent_comment
     }
 }
+
+// MARK: - Course Progress Models
+struct CourseProgress: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: Attributes
+
+    struct Attributes: Codable, Hashable {
+        let status: String
+        let source: String
+        let priority: Int?
+        let personality_rank: Int?
+        let total_units: Int
+        let completed_units: Int
+        let current_unit_uuid: String?
+        let last_activity_at: String?
+        let completed_at: String?
+        let createdAt: String
+        let updatedAt: String
+        let percent: Double?
+        let course: StrapiRelation<Course>?
+    }
+}

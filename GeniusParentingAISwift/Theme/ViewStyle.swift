@@ -77,7 +77,7 @@ struct StyleModifier: ViewModifier {
         case .dailyTipCardTitle:
             content
                 .font(.callout.weight(.regular))     // was .callout (semibold by default on some devices)
-                .foregroundColor(currentTheme.foreground)
+                .foregroundColor(currentTheme.accent)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
@@ -163,7 +163,7 @@ struct DailyTipCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: 300, height: 250)
-            .background(currentTheme.background)
+            .background(currentTheme.accentBackground)
             .clipShape(RoundedRectangle(cornerRadius: 25))
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }

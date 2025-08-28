@@ -7,6 +7,7 @@ protocol Theme {
     // Updated color roles
     var foreground: Color { get }
     var background: Color { get }
+    var background2: Color { get }
     var accent: Color { get }
     var border: Color { get }
     var inputBoxForeground: Color { get }
@@ -29,6 +30,7 @@ struct AppTheme: Theme {
     // Properties now match the Python script's definitions
     var foreground: Color         { color(for: "Foreground") }
     var background: Color         { color(for: "Background") }
+    var background2: Color        { color(for: "Background2")}
     var accent: Color             { color(for: "Accent") }
     var border: Color             { color(for: "Border") }
     var inputBoxForeground: Color { color(for: "InputBoxForeground") }

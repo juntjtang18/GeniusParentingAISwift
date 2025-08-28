@@ -36,9 +36,9 @@ struct CourseCardView: View {
                 if isLocked {
                     Image(systemName: "lock.fill")
                         .font(.title2)
-                        .foregroundColor(.white)
+                        .foregroundColor(currentTheme.accent)
                         .padding(8)
-                        .background(Color.black.opacity(0.5))
+                        .background(currentTheme.accentBackground.opacity(0.5))
                         .clipShape(Circle())
                         .padding(10)
                 }
@@ -67,7 +67,6 @@ struct CourseCardView: View {
             .style(.courseCard)
         }
         .background(currentTheme.accentBackground)
-        //.foregroundColor(currentTheme.accent)
         .frame(height: cardHeight)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
@@ -78,6 +77,7 @@ struct CourseCardView: View {
 
 // MARK: - Collapsible Category View
 struct CollapsibleCategoryView: View {
+    @Environment(\.theme) var currentTheme: Theme
     let category: CategoryData
     @ObservedObject var viewModel: CourseViewModel
     @Binding var selectedLanguage: String
@@ -111,7 +111,7 @@ struct CollapsibleCategoryView: View {
                 .padding()
             }
             .frame(height: 80)
-            .background(Color.secondary)
+            .background(currentTheme.background)
             .cornerRadius(15)
             .contentShape(Rectangle())
             .clipped()
@@ -251,6 +251,7 @@ struct CourseView: View {
 
 // MARK: - Picker Screen (blue header + hero image + blue section with tiles)
 private struct CategoryPickerScreen: View {
+    @Environment(\.theme) var currentTheme: Theme
     let categories: [CategoryData]
     let onPick: (CategoryData) -> Void
 
@@ -262,44 +263,44 @@ private struct CategoryPickerScreen: View {
                     (
                         Text("GenParenting ")
                             .font(.title2).bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(currentTheme.foreground)
                         +
                         Text("Courses")
                             .font(.title2).bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(currentTheme.foreground)
                     )
 
                     Text("Simple guidance every step of the way.")
                         .font(.callout)
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(currentTheme.foreground.opacity(0.9))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 18)
-                .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+                .background(currentTheme.background)
 
-                // Hero image (from asset: "family")
+                // Hero image — full width, no rounded corners, no overlap
                 Image("family")
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 190)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .padding(.horizontal, 14)
-                    .padding(.top, 12)
-                    .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+                    .clipped()                 // crop overflow but keep square corners
+                    .padding(.bottom, 12)      // space before tiles
 
                 // Blue section containing white rounded tiles
                 VStack(spacing: 14) {
                     ForEach(categories) { cat in
-                        CategoryTileButton(category: cat) {
-                            onPick(cat)
-                        }
+                        CategoryTileButton(category: cat) { onPick(cat) }
                     }
                 }
                 .padding(.horizontal, 14)
-                .padding(.vertical, 18)
+                .padding(.top, 15)
+                .padding(.bottom, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(red: 27/255, green: 74/255, blue: 175/255))
+
 
                 Spacer(minLength: 20)
             }
@@ -310,6 +311,8 @@ private struct CategoryPickerScreen: View {
 
 
 private struct CategoryTileButton: View {
+    @Environment(\.theme) var currentTheme: Theme
+
     let category: CategoryData
     let action: () -> Void
 
@@ -357,19 +360,19 @@ private struct CategoryTileButton: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(category.attributes.name)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(currentTheme.accent)
                         .lineLimit(1)
 
                     Text(subtitleText)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(currentTheme.accent)
                         .lineLimit(2)
                 }
 
                 Spacer()
             }
             .padding(16)
-            .background(Color(.systemBackground))
+            .background(currentTheme.accentBackground)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         }
@@ -393,7 +396,7 @@ private struct CategoryListScreen: View {
                 // Category title
                 Text(category.attributes.name)
                     .font(.title3).bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(currentTheme.foreground)
                     .padding(.top, 4)
 
                 // Courses list
@@ -443,12 +446,14 @@ private struct CategoryListScreen: View {
             }
             // keep your existing trailing items (refresh/menu) here...
         }
-        .tint(currentTheme.foreground) // buttons adopt theme color (iOS 15+)
+        .tint(currentTheme.accent) // buttons adopt theme color (iOS 15+)
+        /*
         .onAppear {
             // Title color via UINavigationBarAppearance
             let appearance = UINavigationBarAppearance()
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = .clear
+            //appearance.backgroundColor = .clear
+            appearance.backgroundColor = UIColor(currentTheme.background)
 
             // Convert SwiftUI.Color -> UIColor safely
             let titleColor = UIColor(currentTheme.foreground)
@@ -469,6 +474,7 @@ private struct CategoryListScreen: View {
             UINavigationBar.appearance().compactAppearance = reset
             UINavigationBar.appearance().scrollEdgeAppearance = reset
         }
+         */
     }
 }
 

@@ -31,7 +31,13 @@ struct MainView: View {
 
     var body: some View {
         ZStack {
-            themeManager.currentTheme.background.ignoresSafeArea()
+            // Apply the gradient to the ZStack directly, making it the base layer
+            LinearGradient(
+                colors: [themeManager.currentTheme.background, themeManager.currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea() // Ensure the gradient fills the entire safe area
 
             // 2) Bind TabView to the router
             TabView(selection: $tabRouter.selectedTab) {
@@ -63,6 +69,7 @@ struct MainView: View {
                     }
                     .tag(3)
             }
+            .background(Color.clear) // Keep background clear for TabView to show gradient below
             .environmentObject(tabRouter)   // ⬅️ this is the line you asked about
             .onAppear {
                 updateTabBarAppearance()
@@ -165,6 +172,7 @@ struct MainView: View {
         .onChange(of: hasCompletedPersonalityTest) { done in
             if done { showOnboarding = false }
         }
+        .appGradientBackground()
     }
     
     private func updateTabBarAppearance() {
@@ -176,6 +184,9 @@ struct MainView: View {
         
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
+        // Here we'll need to handle the gradient for the tab bar background if desired,
+        // but for now, let's keep it simple to ensure the main view works.
+        // For a gradient tab bar, you'd typically render it as a custom view.
         appearance.backgroundColor = UIColor(named: backgroundColorName)
         
         UITabBar.appearance().standardAppearance = appearance
@@ -211,7 +222,13 @@ struct MainView: View {
     private var homeTab: some View {
         NavigationView {
             HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
-                .toolbarBackground(themeManager.currentTheme.background, for: .tabBar)
+                // The HomeView itself will now handle its gradient background.
+                // We ensure navigation bar also has gradient background.
+                .toolbarBackground(
+                                LinearGradient(colors: [themeManager.currentTheme.background, themeManager.currentTheme.background2],
+                                               startPoint: .top, endPoint: .bottom),
+                                for: .navigationBar
+                            )
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
@@ -221,10 +238,16 @@ struct MainView: View {
     private var courseTab: some View {
         NavigationStack {
             CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
+                .background(Color.clear) // Ensure CourseView's background is clear to show the gradient from MainView
                 .navigationTitle("Courses")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
-                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                // Apply gradient to the navigation bar for CourseView as well
+                .toolbarBackground(
+                                LinearGradient(colors: [themeManager.currentTheme.background, themeManager.currentTheme.background2],
+                                               startPoint: .top, endPoint: .bottom),
+                                for: .navigationBar
+                            )
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
@@ -244,7 +267,12 @@ struct MainView: View {
                     }
                     menuToolbar
                 }
-                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                // Apply gradient to the navigation bar for AIView
+                .toolbarBackground(
+                                LinearGradient(colors: [themeManager.currentTheme.background, themeManager.currentTheme.background2],
+                                               startPoint: .top, endPoint: .bottom),
+                                for: .navigationBar
+                            )
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
@@ -257,7 +285,12 @@ struct MainView: View {
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { menuToolbar }
-                .toolbarBackground(themeManager.currentTheme.background, for: .navigationBar)
+                // Apply gradient to the navigation bar for CommunityView
+                .toolbarBackground(
+                                LinearGradient(colors: [themeManager.currentTheme.background, themeManager.currentTheme.background2],
+                                               startPoint: .top, endPoint: .bottom),
+                                for: .navigationBar
+                            )
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }

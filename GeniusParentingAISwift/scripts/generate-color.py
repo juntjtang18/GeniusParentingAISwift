@@ -10,6 +10,7 @@ schemes = {
         "Light": {
             "Foreground":   "#FFFFFF",
             "Background":   "#264CAB",
+            "Background2":  "#8977FF",            
             "AccentBackground": "#FFFFFF",
             "Accent":       "#333333",
             "AccentSecond": "#FFFFFF",
@@ -23,6 +24,7 @@ schemes = {
         "Dark": {
             "Foreground":   "#F5F5F5",
             "Background":   "#15202B",
+            "Background2":  "#8977FF",            
             "AccentBackground": "#797E84",
             "Accent":       "#F5F5F5",
             "AccentSecond": "#39424A",
@@ -38,6 +40,7 @@ schemes = {
         "Light": {
             "Foreground":   "#4A4A4A",
             "Background":   "#FAF9F6",
+            "Background2":  "#8977FF",            
             "AccentBackground": "#FFFFFF",
             "Accent":       "#000000",
             "AccentSecond": "#FFFFFF",
@@ -52,6 +55,7 @@ schemes = {
         "Dark": {
             "Foreground":   "#F0F0F0",
             "Background":   "#15202B",
+            "Background2":  "#8977FF",            
             "AccentBackground": "#797E84",
             "Accent":       "#FFFFFF",
             "AccentSecond": "#000000",

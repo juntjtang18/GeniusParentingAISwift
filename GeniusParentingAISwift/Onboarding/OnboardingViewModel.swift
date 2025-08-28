@@ -37,8 +37,8 @@ class OnboardingViewModel: ObservableObject {
             self.remoteResults = list.data ?? []
             logger.info("[OnboardingVM] Loaded \(self.remoteResults.count) results.")   // ← add self
             self.remoteResults.forEach { r in                                            // ← add self
-                logger.info("[OnboardingVM] result id=\(r.id) ps_id=\(r.attributes.psId ?? "nil") title='\(r.attributes.title)' image='\(r.attributes.image?.data?.attributes.url ?? "nil")'")
-            }
+                let img = r.attributes.image?.data?.attributes.url ?? "nil"
+                logger.info("[OnboardingVM] result id=\(r.id) ps_id=\(r.attributes.psId) title='\(r.attributes.title)' image='\(img)'")            }
         } catch {
             self.loadError = error.localizedDescription
             logger.error("[OnboardingVM] Failed loading results: \(error.localizedDescription)")
@@ -190,21 +190,21 @@ class OnboardingViewModel: ObservableObject {
 
         // 1) If we already fetched the single result with image, use that id
         if let selected = selectedResult {
-            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: selected.id)
+            _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: selected.id)
             logger.info("[OnboardingVM] Profile updated with selectedResult.id=\(selected.id)")
             return
         }
 
         // 2) If not, try to find it in the list we already loaded (no image, but has numeric id)
         if let match = remoteResults.first(where: { $0.attributes.psId == psId }) {
-            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: match.id)
+            _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: match.id)
             logger.info("[OnboardingVM] Profile updated with match.id=\(match.id)")
             return
         }
 
         // 3) Fallback: fetch the single result by ps_id (includes image) and take its id
         if let fetched = try await StrapiService.shared.fetchPersonalityResult(psId: psId, locale: locale) {
-            try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: fetched.id)
+            _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: fetched.id)
             logger.info("[OnboardingVM] Profile updated with fetched.id=\(fetched.id)")
             return
         }

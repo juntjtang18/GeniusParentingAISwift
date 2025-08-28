@@ -17,6 +17,19 @@ struct CommentPostData: Codable {
     let post: Int
 }
 
+struct ReadRequestPayload: Codable {
+    struct DataBody: Codable {
+        let unit_uuid: String
+        let event_type: String?
+        let dwell_ms: Int?
+        let session_id: String?
+        let event_id: String?
+        let client_ts: String?
+    }
+    let data: DataBody
+}
+
+
 /// A service layer for interacting with the Strapi backend API.
 class StrapiService {
     
@@ -242,7 +255,7 @@ extension StrapiService {
         // ✅ Log title/ps_id and image.url for each record
         (response.data ?? []).forEach { item in
             let path = item.attributes.image?.data?.attributes.url ?? "nil"
-            logger.info("[StrapiService::\(functionName)] - id=\(item.id), ps_id=\(item.attributes.psId ?? "nil"), title='\(item.attributes.title)', image='\(path)'")
+            logger.info("[StrapiService::\(functionName)] - id=\(item.id), ps_id=\(item.attributes.psId), title='\(item.attributes.title)', image='\(path)'")
         }
 
         return response
@@ -296,5 +309,74 @@ extension StrapiService {
             try await NetworkManager.shared.fetchDirect(from: components.url!)
         logger.info("[StrapiService::\(functionName)] - Received \(resp.data?.count ?? 0) questions.")
         return resp
+    }
+}
+
+
+// MARK: - Helpers
+extension StrapiService {
+    private static func throwIfNotOK(_ response: URLResponse, data: Data) throws {
+        guard let http = response as? HTTPURLResponse else { return }
+        guard (200..<300).contains(http.statusCode) else {
+            // Try to surface Strapi error message
+            if let str = String(data: data, encoding: .utf8) {
+                throw NSError(domain: "StrapiService",
+                              code: http.statusCode,
+                              userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode): \(str)"])
+            }
+            throw NSError(domain: "StrapiService",
+                          code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])
+        }
+    }
+}
+
+// MARK: - Recommendations & Read Logging
+extension StrapiService {
+
+    /// GET /api/my-recommend-course
+    /// Returns: StrapiListResponse<CourseProgress>
+    func fetchRecommendedCourses() async throws -> StrapiListResponse<CourseProgress> {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Fetching recommended courses.")
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/my-recommend-course")!
+        let resp: StrapiListResponse<CourseProgress> = try await NetworkManager.shared.fetchDirect(from: url)
+        logger.info("[StrapiService::\(functionName)] - Received \(resp.data?.count ?? 0) items.")
+        return resp
+    }
+
+    /// POST /api/me/courses/:courseId/read
+    /// Returns: StrapiSingleResponse<CourseProgress>
+    @discardableResult
+    func logCourseRead(
+        courseId: Int,
+        unitUUID: String,
+        dwellMS: Int? = nil,
+        eventType: String = "page_view",
+        sessionID: String? = nil,
+        eventID: String? = nil,
+        clientTS: Date? = Date()
+    ) async throws -> StrapiSingleResponse<CourseProgress> {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Log read for course \(courseId), unit \(unitUUID).")
+
+        let isoTS = clientTS.map { ISO8601DateFormatter().string(from: $0) }
+        let payload = ReadRequestPayload(
+            data: .init(
+                unit_uuid: unitUUID,
+                event_type: eventType,
+                dwell_ms: dwellMS,
+                session_id: sessionID,
+                event_id: eventID,
+                client_ts: isoTS
+            )
+        )
+
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/me/courses/\(courseId)/read")!
+        let result: StrapiSingleResponse<CourseProgress> =
+            try await NetworkManager.shared.post(to: url, body: payload)
+
+        logger.info("[StrapiService::\(functionName)] - Progress now \(result.data.attributes.completed_units)/\(result.data.attributes.total_units).")
+        return result
     }
 }

@@ -1,18 +1,16 @@
 //
-//  Answer.swift
+//  OnboardingModels.swift
 //  GeniusParentingAISwift
 //
 //  Created by James Tang on 2025/8/20.
 //
 
-
-// OnboardingModels.swift
-
 import Foundation
+import SwiftUI // Assuming this is needed for your project
 
 // Represents a single answer option for a question
 struct Answer: Identifiable, Codable, Hashable {
-    let id: Int              // <-- Use Strapi’s numeric ID here
+    let id: Int
     let ans_id: String
     let ans_text: String
 }
@@ -29,33 +27,7 @@ struct QuizResult {
     let title: String
     let description: String
     let powerTip: String
-    // NEW
     let imageURL: URL?
-}
-// MARK: - Personality Results (from Strapi)
-
-struct PersonalityResult: Codable, Identifiable, Hashable {
-    let id: Int
-    let attributes: PersonalityResultAttributes
-}
-
-struct PersonalityResultAttributes: Codable, Hashable {
-    let title: String
-    let description: String
-    let powerTip: String
-    let createdAt: String
-    let updatedAt: String
-    let locale: String?
-    let psId: String?
-
-    // NEW: reuse StrapiRelation<Media> from Models.swift
-    let image: StrapiRelation<Media>?    // ← add this
-
-    enum CodingKeys: String, CodingKey {
-        case title, description, locale, createdAt, updatedAt, image
-        case powerTip = "power_tip"
-        case psId = "ps_id"
-    }
 }
 
 // Convenience bridge so UI that expects QuizResult can still work
@@ -70,35 +42,12 @@ extension QuizResult {
 
         self.init(
             title: result.attributes.title,
-            description: result.attributes.description,
-            powerTip: result.attributes.powerTip,
+            description: result.attributes.description, // ✅ FIX: Provide a default empty string
+            powerTip: result.attributes.powerTip,       // ✅ FIX: Provide a default empty string
             imageURL: absoluteURL
         )
     }
 }
-// MARK: - Strapi: Personality Questions
-
-/// Strapi entry: /api/pers-questions
-struct PersQuestion: Codable, Identifiable {
-    let id: Int
-    let attributes: Attributes
-    struct Attributes: Codable {
-        let order: Int
-        let question: String
-        let answer: [PersAnswerRaw]? // populated via populate[answer]=*
-        let createdAt: String?
-        let updatedAt: String?
-        let locale: String?
-    }
-}
-
-
-struct PersAnswerRaw: Codable, Hashable, Identifiable {
-    let id: Int
-    let ans_id: String
-    let ans_text: String
-}
-
 
 // Bridge Strapi → UI
 extension Question {

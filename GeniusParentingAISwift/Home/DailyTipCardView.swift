@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct DailyTipCardView: View {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     let tip: Tip
 
     var body: some View {
@@ -13,8 +13,8 @@ struct DailyTipCardView: View {
                     if let iconMedia = tip.iconImageMedia, let imageUrl = URL(string: iconMedia.attributes.url) {
                         CachedAsyncImage(url: imageUrl)
                     } else {
-                        theme.background
-                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                        currentTheme.accentBackground
+                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(currentTheme.accent))
                     }
                 }
                 .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
@@ -23,13 +23,19 @@ struct DailyTipCardView: View {
                 // --- TITLE SECTION ---
                 HStack(alignment: .center) {
                     Text(tip.text)
-                        .style(.dailyTipCardTitle) // <-- USE THE NEW STYLE
+                        .style(.dailyTipCardTitle)
 
                     Spacer()
                 }
-                .style(.courseCard) // This style handles padding and background
+                .padding(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(currentTheme.accentBackground.opacity(1))
             }
         }
         .dailyTipCardStyle() // <-- USE THE NEW CONTAINER STYLE
+        //.frame(width: 300, height: 250)
+        //.background(currentTheme.accentBackground)
+        //.clipShape(RoundedRectangle(cornerRadius: 25))
+        //.shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }

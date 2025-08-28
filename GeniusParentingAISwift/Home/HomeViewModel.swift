@@ -18,6 +18,34 @@ class HomeViewModel: ObservableObject {
 
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
 
+    // NEW: pull "my recommendations" and map into existing card model
+    func fetchRecommendedCourses() async {
+        let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
+        guard isRefreshEnabled || self.todaysLessons.isEmpty else {
+            print("HomeViewModel: Skipping fetch for recommended courses, using cached data.")
+            return
+        }
+
+        print("HomeViewModel: Fetching recommended courses...")
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let resp = try await StrapiService.shared.fetchRecommendedCourses()
+            // Map CourseProgress -> LessonCourse (so UI stays unchanged)
+            let lessons: [LessonCourse] = (resp.data ?? []).compactMap { cp in
+                guard let c = cp.attributes.course?.data else { return nil }
+                return LessonCourse(id: c.id, attributes: c.attributes)
+            }
+            self.todaysLessons = lessons
+        } catch {
+            self.errorMessage = "Failed to fetch recommended courses: \(error.localizedDescription)"
+            self.todaysLessons = []
+        }
+
+        isLoading = false
+    }
+    
     func fetchDailyTips() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
         guard isRefreshEnabled || self.dailyTips.isEmpty else {

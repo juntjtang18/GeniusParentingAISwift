@@ -10,7 +10,6 @@ struct HomeView: View {
 
     @State private var selectedTip: Tip? = nil
     @State private var searchText: String = ""
-    @State private var showCourseList = false   // ⬅️ NEW
     @EnvironmentObject private var tabRouter: MainTabRouter    // ⬅️ add
 
     private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
@@ -18,145 +17,145 @@ struct HomeView: View {
     private let shadowAllowance: CGFloat = 12
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+        ZStack { // Use ZStack to place the gradient behind the ScrollView
+            LinearGradient(
+                colors: [theme.background, theme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                // MARK: Welcome Row
-                WelcomeRow(
-                    profileName: profileName,
-                    onAvatarTap: { withAnimation(.easeInOut) { isSideMenuShowing.toggle() } }
-                )
-                .padding(.top, 6)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
 
-                // MARK: Search
-                SearchBar(
-                    text: $searchText,
-                    placeholder: "Search Courses",
-                    onSubmit: {
-                        // Optional: push to CourseView and leverage search later
-                    }
-                )
+                    // MARK: Welcome Row
+                    WelcomeRow(
+                        profileName: profileName,
+                        onAvatarTap: { withAnimation(.easeInOut) { isSideMenuShowing.toggle() } }
+                    )
+                    .padding(.top, 6)
 
-                // MARK: Your Courses + See All
-                SectionHeader(
-                    title: "Your Courses",
-                    trailing: "See All",
-                    onTapTrailing: { tabRouter.selectedTab = 1 }   // ⬅️ switch to Course tab
-                )
+                    // MARK: Search
+                    SearchBar(
+                        text: $searchText,
+                        placeholder: "Search Courses",
+                        onSubmit: {
+                            // Optional: push to CourseView and leverage search later
+                        }
+                    )
 
-                // Horizontal carousel of today's courses (reusing your model + card)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 15) {
-                        if viewModel.isLoading {
-                            ProgressView().frame(width: cardWidth, height: cardHeight)
-                        } else if viewModel.todaysLessons.isEmpty {
-                            Text("No lessons for today.")
-                                .frame(width: cardWidth, height: cardHeight)
-                                .multilineTextAlignment(.center)
-                        } else {
-                            ForEach(viewModel.todaysLessons) { lesson in
-                                NavigationLink(
-                                    destination: ShowACourseView(
-                                        selectedLanguage: $selectedLanguage,
-                                        courseId: lesson.id,
-                                        isSideMenuShowing: $isSideMenuShowing
-                                    )
-                                ) {
-                                    LessonCardView(
-                                        lesson: lesson,
-                                        cardWidth: self.cardWidth,
-                                        cardHeight: self.cardHeight
-                                    )
+                    // MARK: Your Courses + See All
+                    SectionHeader(
+                        title: "Your Courses",
+                        trailing: "See All",
+                        onTapTrailing: { tabRouter.selectedTab = 1 }   // ⬅️ switch to Course tab
+                    )
+
+                    // Horizontal carousel of today's courses (reusing your model + card)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(spacing: 15) {
+                            if viewModel.isLoading {
+                                ProgressView().frame(width: cardWidth, height: cardHeight)
+                            } else if viewModel.todaysLessons.isEmpty {
+                                Text("No lessons for today.")
+                                    .frame(width: cardWidth, height: cardHeight)
+                                    .multilineTextAlignment(.center)
+                            } else {
+                                ForEach(viewModel.todaysLessons) { lesson in
+                                    NavigationLink(
+                                        destination: ShowACourseView(
+                                            selectedLanguage: $selectedLanguage,
+                                            courseId: lesson.id,
+                                            isSideMenuShowing: $isSideMenuShowing
+                                        )
+                                    ) {
+                                        LessonCardView(
+                                            lesson: lesson,
+                                            cardWidth: self.cardWidth,
+                                            cardHeight: self.cardHeight
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, shadowAllowance / 2)
+                        .frame(height: cardHeight + shadowAllowance)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, shadowAllowance / 2)
-                    .frame(height: cardHeight + shadowAllowance)
+
+                    // MARK: Features
+                    Text("Features")
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(.white)
+
+                    FeatureGrid {
+                        // Hot Topics tile
+                        NavigationLink {
+                            HotTopicsListScreen(
+                                topics: viewModel.hotTopics,
+                                isLoading: viewModel.isLoadingHotTopics
+                            )
+                        } label: {
+                            FeatureCard(
+                                systemImage: "flame.fill",
+                                title: "Hot Topics",
+                                tint: theme.primary
+                            )
+                        }
+
+                        // Tips tile
+                        NavigationLink {
+                            DailyTipsListScreen(
+                                tips: viewModel.dailyTips,
+                                isLoading: viewModel.isLoadingDailyTips
+                            )
+                        } label: {
+                            FeatureCard(
+                                systemImage: "checkmark.seal.fill",
+                                title: "Tips",
+                                tint: theme.primary
+                            )
+                        }
+
+                        // Community tile
+                        Button {
+                            tabRouter.selectedTab = 3   // same as tapping the Community tab
+                        } label: {
+                            FeatureCard(
+                                systemImage: "person.3.fill",
+                                title: "Community",
+                                tint: theme.primary
+                            )
+                        }
+                    }
+
+                    Spacer(minLength: 16)
                 }
-
-                // MARK: Features
-                Text("Features")
-                    .font(.headline.weight(.semibold))
-                    .foregroundColor(.white)
-
-                FeatureGrid {
-                    // Hot Topics tile
-                    NavigationLink {
-                        HotTopicsListScreen(
-                            topics: viewModel.hotTopics,
-                            isLoading: viewModel.isLoadingHotTopics
-                        )
-                    } label: {
-                        FeatureCard(
-                            systemImage: "flame.fill",
-                            title: "Hot Topics",
-                            tint: theme.primary
-                        )
-                    }
-
-                    // Tips tile
-                    NavigationLink {
-                        DailyTipsListScreen(
-                            tips: viewModel.dailyTips,
-                            isLoading: viewModel.isLoadingDailyTips
-                        )
-                    } label: {
-                        FeatureCard(
-                            systemImage: "checkmark.seal.fill",
-                            title: "Tips",
-                            tint: theme.primary
-                        )
-                    }
-
-                    // Community tile
-                    Button {
-                        tabRouter.selectedTab = 3   // same as tapping the Community tab
-                    } label: {
-                        FeatureCard(
-                            systemImage: "person.3.fill",
-                            title: "Community",
-                            tint: theme.primary
-                        )
-                    }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
+            }
+            // Remove the .background modifier from the ScrollView
+            .scrollContentBackground(.hidden)
+            .overlay {
+                if let tip = selectedTip {
+                    FairyTipPopupView(tip: tip, isPresented: Binding(
+                        get: { selectedTip != nil },
+                        set: { if !$0 { withAnimation(.spring()) { selectedTip = nil } } }
+                    ))
                 }
-
-                Spacer(minLength: 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
-        }
-        .background(theme.background)
-        .background(
-                    NavigationLink(
-                        destination: CourseView(
-                            selectedLanguage: $selectedLanguage,
-                            isSideMenuShowing: $isSideMenuShowing
-                        ),
-                        isActive: $showCourseList
-                    ) { EmptyView() }
-                    .hidden()
-                )
-        .overlay {
-            if let tip = selectedTip {
-                FairyTipPopupView(tip: tip, isPresented: Binding(
-                    get: { selectedTip != nil },
-                    set: { if !$0 { withAnimation(.spring()) { selectedTip = nil } } }
-                ))
-            }
-        }
+        } // End of ZStack
         .onAppear {
             Task {
-                await viewModel.fetchDailyLessons()   // uses HomeViewModel’s API
+                await viewModel.fetchRecommendedCourses()
                 await viewModel.fetchHotTopics()
                 await viewModel.fetchDailyTips()
             }
         }
         .toolbar(.hidden, for: .navigationBar)
     }
-    
+   
     private var profileName: String {
         SessionManager.shared.currentUser?.username ?? "there"
     }
@@ -165,7 +164,7 @@ struct HomeView: View {
 // Welcome row with avatar and "Welcome back"
 // MARK: Welcome row with avatar and "Welcome back"
 private struct WelcomeRow: View {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
     let profileName: String
     let onAvatarTap: () -> Void    // NEW
 
@@ -184,11 +183,11 @@ private struct WelcomeRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Welcome back")
-                    .font(.footnote)
-                    .foregroundColor(.white.opacity(0.85))
+                    .font(.headline.weight(.semibold))
+                    .foregroundColor(currentTheme.foreground)
                 Text(profileName)
                     .font(.headline.weight(.semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(currentTheme.foreground)
             }
 
             Spacer()
@@ -367,37 +366,56 @@ struct PlayButtonView: View {
 
 // A simple Hot Topics list using your existing card + data flow
 private struct HotTopicsListScreen: View {
+    @Environment(\.theme) var currentTheme: Theme
     let topics: [Topic]
     let isLoading: Bool
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                if isLoading {
-                    ProgressView().padding(.top, 40)
-                } else {
-                    ForEach(topics) { t in
-                        HotTopicCardView(topic: t)
-                            .frame(height: 250)
-                            .padding(.horizontal, 16)
+        ZStack { // Added ZStack for the gradient
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    if isLoading {
+                        ProgressView().padding(.top, 40)
+                    } else {
+                        ForEach(topics) { t in
+                            HotTopicCardView(topic: t)
+                                .frame(height: 250)
+                                .padding(.horizontal, 16)
+                        }
                     }
                 }
+                .padding(.vertical, 16)
             }
-            .padding(.vertical, 16)
-        }
+        } // End of ZStack
         .navigationTitle("Hot Topics")
         .navigationBarTitleDisplayMode(.inline)
+        // Removed .background(currentTheme.background)
     }
 }
 
 // A simple Daily Tips list using your existing card + popup behavior
 private struct DailyTipsListScreen: View {
+    @Environment(\.theme) var currentTheme: Theme
     let tips: [Tip]
     let isLoading: Bool
     @State private var selectedTip: Tip? = nil
 
     var body: some View {
-        ZStack {
+        ZStack { // Added ZStack for the gradient
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
             ScrollView {
                 LazyVStack(spacing: 16) {
                     if isLoading {
@@ -423,8 +441,9 @@ private struct DailyTipsListScreen: View {
                     )
                 )
             }
-        }
+        } // End of ZStack
         .navigationTitle("Daily Tips")
         .navigationBarTitleDisplayMode(.inline)
+        // Removed .background(currentTheme.background)
     }
 }

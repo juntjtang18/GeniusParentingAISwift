@@ -24,13 +24,13 @@ struct UserProfile: Codable, Identifiable, Hashable {
     let consentForEmailNotice: Bool?
     let children: [Child]?
     let users_permissions_user: StrapiRelation<PopulatedUser>?
-    let personality_result: StrapiRelation<PersonalityResult>?   // 👈 add this
+    let personality_result: StrapiRelation<PersonalityResult>?
 
     enum CodingKeys: String, CodingKey {
         case id, children, locale
         case consentForEmailNotice
         case users_permissions_user = "users_permissions_user"
-        case personality_result     = "personality_result"       // 👈 add this
+        case personality_result     = "personality_result"
     }
 }
 

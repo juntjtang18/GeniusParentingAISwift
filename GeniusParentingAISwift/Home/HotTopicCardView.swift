@@ -14,7 +14,7 @@ struct HotTopicCardView: View {
                         CachedAsyncImage(url: imageUrl)
                     } else {
                         currentTheme.background
-                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                            .overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(currentTheme.accent))
                     }
                 }
                 .frame(width: geometry.size.width, height: geometry.size.height * 0.7)

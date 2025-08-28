@@ -192,4 +192,73 @@ struct AuthResponse: Codable {
     let user: StrapiUser
 }
 
+// MARK: - Personality Models (from OnboardingModels.swift)
 
+/// Represents a single answer option for a question.
+struct PersAnswerRaw: Codable, Identifiable, Hashable {
+    let id: Int
+    let ans_id: String
+    let ans_text: String
+}
+
+/// Strapi entry for personality questions.
+struct PersQuestion: Codable, Identifiable {
+    let id: Int
+    let attributes: Attributes
+    struct Attributes: Codable {
+        let order: Int
+        let question: String
+        let answer: [PersAnswerRaw]?
+        let createdAt: String?
+        let updatedAt: String?
+        let locale: String?
+    }
+}
+
+/// Represents the final result of the quiz from Strapi, with non-optional properties.
+struct PersonalityResult: Codable, Identifiable, Hashable {
+    let id: Int
+    let attributes: PersonalityResultAttributes
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    static func == (lhs: PersonalityResult, rhs: PersonalityResult) -> Bool { lhs.id == rhs.id }
+}
+
+struct PersonalityResultAttributes: Codable, Hashable {
+    let title: String
+    let description: String
+    let powerTip: String
+    let createdAt: String
+    let updatedAt: String
+    let locale: String?
+    let psId: String
+    let image: StrapiRelation<Media>?
+    let recommend_courses: [CoursePick]?
+
+    enum CodingKeys: String, CodingKey {
+        case title, locale, createdAt, updatedAt, image, recommend_courses
+        case description, powerTip
+        case psId = "ps_id"
+    }
+
+    // Custom initializer to handle missing values and provide defaults.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.title = try container.decode(String.self, forKey: .title)
+        // Use `decodeIfPresent` and nil-coalescing for properties that might be missing
+        self.description = (try container.decodeIfPresent(String.self, forKey: .description)) ?? ""
+        self.powerTip = (try container.decodeIfPresent(String.self, forKey: .powerTip)) ?? ""
+        self.psId = (try container.decodeIfPresent(String.self, forKey: .psId)) ?? ""
+        self.locale = try container.decodeIfPresent(String.self, forKey: .locale)
+        self.createdAt = try container.decode(String.self, forKey: .createdAt)
+        self.updatedAt = try container.decode(String.self, forKey: .updatedAt)
+        self.image = try container.decodeIfPresent(StrapiRelation<Media>.self, forKey: .image)
+        self.recommend_courses = try container.decodeIfPresent([CoursePick].self, forKey: .recommend_courses)
+    }
+}
+
+// A model for the 'a.course-pick' component within PersonalityResult.
+struct CoursePick: Codable, Hashable, Identifiable {
+    let id: Int
+    let rank: Int
+}

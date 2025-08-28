@@ -92,23 +92,25 @@ struct GeniusParentingAISwiftApp: App {
 
     private func checkLoginStatus() {
         Task {
-            if let jwt = SessionManager.shared.getJWT() {
-                do {
-                    let user = try await StrapiService.shared.fetchCurrentUser()
-                    SessionManager.shared.setCurrentUser(user)
-                    SessionManager.shared.updateLastUserEmail(user.email)
-                    isLoggedIn = true
-                } catch {
-                    SessionManager.shared.clearSession()
-                    isLoggedIn = false
-                }
-            } else {
+            defer { isCheckingToken = false }
+
+            guard SessionManager.shared.getJWT() != nil else {
+                SessionManager.shared.clearSession()
+                isLoggedIn = false
+                return
+            }
+            do {
+                let user = try await StrapiService.shared.fetchCurrentUser()
+                SessionManager.shared.setCurrentUser(user)
+                SessionManager.shared.updateLastUserEmail(user.email)
+                isLoggedIn = true
+            } catch {
                 SessionManager.shared.clearSession()
                 isLoggedIn = false
             }
-            isCheckingToken = false
         }
     }
+
 
     private func logout() {
         // This function is correct, no changes needed.
