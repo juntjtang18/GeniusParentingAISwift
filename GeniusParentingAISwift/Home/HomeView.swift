@@ -12,7 +12,7 @@ struct HomeView: View {
     @State private var searchText: String = ""
     @EnvironmentObject private var tabRouter: MainTabRouter    // ⬅️ add
 
-    private var cardWidth: CGFloat { dims.screenSize.width * 0.85 }
+    private var cardWidth: CGFloat { dims.screenSize.width * 0.82 }
     private var cardHeight: CGFloat { cardWidth * 0.9 }
     private let shadowAllowance: CGFloat = 12
 
@@ -422,7 +422,7 @@ private struct DailyTipsListScreen: View {
             .ignoresSafeArea()
 
             ScrollView {
-                LazyVStack(spacing: 16) {
+                LazyVStack(spacing: 12) {
                     if isLoading {
                         ProgressView().padding(.top, 40)
                     } else {

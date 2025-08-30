@@ -28,9 +28,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = GeniusParentingAISwift.app; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwift.app"; sourceTree = "<absolute>"; };
-		1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = GeniusParentingAISwiftTests.xctest; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwift.app/PlugIns/GeniusParentingAISwiftTests.xctest"; sourceTree = "<absolute>"; };
-		1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = GeniusParentingAISwiftUITests.xctest; path = "/Users/James/develop/apple/GeniusParentingAISwift/build/Debug-iphoneos/GeniusParentingAISwiftUITests-Runner.app/PlugIns/GeniusParentingAISwiftUITests.xctest"; sourceTree = "<absolute>"; };
+		1A82529B2E5D0B2300B94A97 /* GeniusParentingAISwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeniusParentingAISwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A82529C2E5D0B2300B94A97 /* GeniusParentingAISwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A82529D2E5D0B2300B94A97 /* GeniusParentingAISwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeniusParentingAISwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -133,6 +133,9 @@
 				1A6281082DECC52400DD0D1C /* GeniusParentingAISwift */,
 				1A6281192DECC52600DD0D1C /* GeniusParentingAISwiftTests */,
 				1A4DCDE02E3B2FCE00A32508 /* GeniusParentingAISwiftUITests */,
+				1A82529B2E5D0B2300B94A97 /* GeniusParentingAISwift.app */,
+				1A82529C2E5D0B2300B94A97 /* GeniusParentingAISwiftUITests.xctest */,
+				1A82529D2E5D0B2300B94A97 /* GeniusParentingAISwiftTests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -160,7 +163,7 @@
 				1A53DA452DEE763A00C1AD2B /* KeychainAccess */,
 			);
 			productName = GeniusParentingAISwift;
-			productReference = 1A6281062DECC52400DD0D1C /* GeniusParentingAISwift.app */;
+			productReference = 1A82529B2E5D0B2300B94A97 /* GeniusParentingAISwift.app */;
 			productType = "com.apple.product-type.application";
 		};
 		1A6281152DECC52600DD0D1C /* GeniusParentingAISwiftTests */ = {
@@ -183,7 +186,7 @@
 			packageProductDependencies = (
 			);
 			productName = GeniusParentingAISwiftTests;
-			productReference = 1A6281162DECC52600DD0D1C /* GeniusParentingAISwiftTests.xctest */;
+			productReference = 1A82529D2E5D0B2300B94A97 /* GeniusParentingAISwiftTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		1A62811F2DECC52600DD0D1C /* GeniusParentingAISwiftUITests */ = {
@@ -203,7 +206,7 @@
 			packageProductDependencies = (
 			);
 			productName = GeniusParentingAISwiftUITests;
-			productReference = 1A6281202DECC52600DD0D1C /* GeniusParentingAISwiftUITests.xctest */;
+			productReference = 1A82529C2E5D0B2300B94A97 /* GeniusParentingAISwiftUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */

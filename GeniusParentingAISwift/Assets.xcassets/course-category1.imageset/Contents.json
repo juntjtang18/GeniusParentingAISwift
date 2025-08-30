@@ -3,6 +3,16 @@
     {
       "filename" : "course-category1.pdf",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Foundation-dark-icon.pdf",
+      "idiom" : "universal"
     }
   ],
   "info" : {

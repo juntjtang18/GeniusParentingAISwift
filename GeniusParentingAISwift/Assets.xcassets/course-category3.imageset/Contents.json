@@ -3,6 +3,16 @@
     {
       "filename" : "course-category3.pdf",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Parenting-tools-dark-icon.pdf",
+      "idiom" : "universal"
     }
   ],
   "info" : {

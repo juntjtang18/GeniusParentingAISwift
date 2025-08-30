@@ -23,12 +23,21 @@ struct OnboardingFlowView: View {
     @State private var currentStep: OnboardingStep = .intro
     @StateObject private var viewModel = OnboardingViewModel()
 
+    init(didComplete: Binding<Bool>, initialStep: OnboardingStep = .intro) {
+        self._didComplete = didComplete
+        // This sets the initial value for the @State variable above
+        self._currentStep = State(initialValue: initialStep)
+    }
+    
     var body: some View {
         ZStack {
-            // Use the background color from your theme
-            // Note: You'll need access to your ThemeManager for this to work.
-            // For now, we'll use a placeholder.
-            //Color(UIColor.systemGray6).ignoresSafeArea()
+            // Apply the gradient background to the entire flow
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             switch currentStep {
             case .intro:
@@ -66,7 +75,7 @@ struct OnboardingFlowView: View {
                 )
             }
         }
-        .background(currentTheme.background)
+        // Removed .background(currentTheme.background) from here as ZStack now handles it
         .task {
             await viewModel.loadPersonalityResults(locale: "en")
             await viewModel.loadPersonalityQuestions(locale: "en")
@@ -122,26 +131,27 @@ struct OnboardingIntroView: View {
             Spacer()
         }
         .padding()
-        .background(currentTheme.background)
+        // Removed .background(currentTheme.background) from here to allow gradient to show
     }
 }
 
 // MARK: - Start Test Screen (image_caf227.png)
 struct OnboardingStartTestView: View {
     var onStartTest: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
+    //@EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.theme) var currentTheme: Theme
 
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            Image("applogo-\(themeManager.currentTheme.id)")
+            Image("applogo-\(currentTheme.id)")
                 .resizable()
                 .scaledToFit()
                 .frame(height: 120) // Adjust the height as needed for your logo's aspect ratio
             Spacer()
             Text("Great! Let's get to know you better. This will only take 30 seconds.")
                 .font(.title2).bold()
-                .foregroundColor(themeManager.currentTheme.foreground)
+                .foregroundColor(currentTheme.foreground)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
@@ -153,6 +163,7 @@ struct OnboardingStartTestView: View {
             Spacer()
         }
         .padding()
+        // Removed .background(currentTheme.background) from here to allow gradient to show
     }
 }
 
@@ -160,7 +171,7 @@ struct OnboardingStartTestView: View {
 struct QuestionnaireView: View {
     @ObservedObject var viewModel: OnboardingViewModel
     var onSkip: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.theme) var currentTheme: Theme
 
     var body: some View {
         if viewModel.isLoadingQuestions {
@@ -179,13 +190,13 @@ struct QuestionnaireView: View {
             // ——— your original questionnaire UI ———
             VStack(alignment: .leading, spacing: 30) {
                 Text("Question \(viewModel.currentQuestionIndex + 1)")
-                    .foregroundColor(themeManager.currentTheme.foreground)
+                    .foregroundColor(currentTheme.foreground)
                     .font(.title).bold()
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 Text(viewModel.currentQuestion.questionText)
                     .font(.title3)
-                    .foregroundColor(themeManager.currentTheme.foreground)
+                    .foregroundColor(currentTheme.foreground)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal)
 
@@ -208,18 +219,18 @@ struct QuestionnaireView: View {
                         }
                         .padding()
                         .frame(minHeight: 80)
-                        .background(themeManager.currentTheme.accentSecond)
-                        .foregroundColor(themeManager.currentTheme.accent)
+                        .background(currentTheme.accentSecond)
+                        .foregroundColor(currentTheme.accent)
                         .cornerRadius(12)
                     }
                 }
                 Spacer()
                 HStack {
                     Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questions.count)")
-                        .foregroundColor(themeManager.currentTheme.foreground)
+                        .foregroundColor(currentTheme.foreground)
                     Spacer()
                     Button("Skip Test >", action: onSkip)
-                        .foregroundColor(themeManager.currentTheme.foreground)
+                        .foregroundColor(currentTheme.foreground)
                 }
             }
             .padding()
@@ -280,7 +291,7 @@ struct OnboardingResultsView: View {
                     .padding(.top, 8)
             }
             .padding()
-            .background(Color(UIColor.systemBackground))
+            .background(Color(UIColor.systemBackground)) // Keep this background for the card for contrast
             .cornerRadius(16)
             .shadow(radius: 5)
             
@@ -295,6 +306,6 @@ struct OnboardingResultsView: View {
             Spacer()
         }
         .padding()
+        // Removed .background(currentTheme.background) from here to allow gradient to show
     }
 }
-
