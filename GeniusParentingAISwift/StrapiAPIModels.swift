@@ -237,7 +237,8 @@ struct PersonalityResultAttributes: Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case title, locale, createdAt, updatedAt, image, recommend_courses
-        case description, powerTip
+        case description
+        case powerTip = "power_tip"
         case psId = "ps_id"
     }
 

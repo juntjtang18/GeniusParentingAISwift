@@ -94,7 +94,9 @@ struct HomeView: View {
                         NavigationLink {
                             HotTopicsListScreen(
                                 topics: viewModel.hotTopics,
-                                isLoading: viewModel.isLoadingHotTopics
+                                isLoading: viewModel.isLoadingHotTopics,
+                                selectedLanguage: $selectedLanguage,
+                                isSideMenuShowing: $isSideMenuShowing
                             )
                         } label: {
                             FeatureCard(
@@ -374,7 +376,9 @@ private struct HotTopicsListScreen: View {
     @Environment(\.theme) var currentTheme: Theme
     let topics: [Topic]
     let isLoading: Bool
-
+    @Binding var selectedLanguage: String
+    @Binding var isSideMenuShowing: Bool
+    
     var body: some View {
         ZStack { // Added ZStack for the gradient
             LinearGradient(
@@ -390,9 +394,16 @@ private struct HotTopicsListScreen: View {
                         ProgressView().padding(.top, 40)
                     } else {
                         ForEach(topics) { t in
-                            HotTopicCardView(topic: t)
-                                .frame(height: 250)
-                                .padding(.horizontal, 16)
+                            NavigationLink(destination: ShowACourseView(
+                                selectedLanguage: $selectedLanguage,
+                                courseId: t.id, // Use the topic's ID
+                                isSideMenuShowing: $isSideMenuShowing
+                            )) {
+                                HotTopicCardView(topic: t)
+                                    .frame(height: 250)
+                                    .padding(.horizontal, 16)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }

@@ -38,7 +38,7 @@ class OnboardingViewModel: ObservableObject {
             logger.info("[OnboardingVM] Loaded \(self.remoteResults.count) results.")   // ← add self
             self.remoteResults.forEach { r in                                            // ← add self
                 let img = r.attributes.image?.data?.attributes.url ?? "nil"
-                logger.info("[OnboardingVM] result id=\(r.id) ps_id=\(r.attributes.psId) title='\(r.attributes.title)' image='\(img)'")            }
+                logger.info("[OnboardingVM] result id=\(r.id) ps_id=\(r.attributes.psId) title='\(r.attributes.title)' tip='\(r.attributes.powerTip)")            }
         } catch {
             self.loadError = error.localizedDescription
             logger.error("[OnboardingVM] Failed loading results: \(error.localizedDescription)")

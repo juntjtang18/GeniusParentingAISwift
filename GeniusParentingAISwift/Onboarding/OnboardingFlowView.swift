@@ -244,10 +244,6 @@ struct OnboardingResultsView: View {
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            Text("Results")
-                .foregroundColor(themeManager.currentTheme.foreground)
-                .font(.title2).bold()
-            
             Text(result.title)
                 .font(.largeTitle).bold()
                 .foregroundColor(themeManager.currentTheme.foreground)
@@ -292,8 +288,8 @@ struct OnboardingResultsView: View {
             
             Spacer()
             
-            Button("Watch My Parenting Tip Video") {
-                            print("Final button tapped. Setting didComplete to true.")
+            Button("Your courses to match your style") {
+                            //print("Final button tapped. Setting didComplete to true.")
                             onComplete()   // ← call the closure (sets the binding in the parent)
                             dismiss()      // ← then close the fullscreen cover immediately
                         }
