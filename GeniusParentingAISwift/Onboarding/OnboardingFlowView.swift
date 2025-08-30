@@ -37,7 +37,7 @@ struct OnboardingFlowView: View {
             switch currentStep {
             case .intro:
                 OnboardingIntroView(
-                    onKnowMeBetter: { currentStep = .startTest },
+                    onKnowMeBetter: { currentStep = .questionnaire }, 
                     onSkip: { dismiss() }
                 )
             case .startTest:
