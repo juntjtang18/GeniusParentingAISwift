@@ -13,6 +13,7 @@ import SwiftUI
 // This is the main container that manages the entire onboarding sequence.
 struct OnboardingFlowView: View {
     @Environment(\.theme) var currentTheme: Theme
+    @Environment(\.dismiss) private var dismiss
 
     // This enum helps us track which screen to show.
     enum OnboardingStep {
@@ -23,12 +24,6 @@ struct OnboardingFlowView: View {
     @State private var currentStep: OnboardingStep = .intro
     @StateObject private var viewModel = OnboardingViewModel()
 
-    init(didComplete: Binding<Bool>, initialStep: OnboardingStep = .intro) {
-        self._didComplete = didComplete
-        // This sets the initial value for the @State variable above
-        self._currentStep = State(initialValue: initialStep)
-    }
-    
     var body: some View {
         ZStack {
             // Apply the gradient background to the entire flow
@@ -43,7 +38,7 @@ struct OnboardingFlowView: View {
             case .intro:
                 OnboardingIntroView(
                     onKnowMeBetter: { currentStep = .startTest },
-                    onSkip: { didComplete = true }
+                    onSkip: { dismiss() }
                 )
             case .startTest:
                 OnboardingStartTestView(

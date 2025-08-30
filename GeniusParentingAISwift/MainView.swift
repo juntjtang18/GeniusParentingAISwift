@@ -25,7 +25,7 @@ struct MainView: View {
     @State private var isShowingSubscriptionSheet = false
 
     @State private var isSideMenuShowing = false
-    @State private var showIntroPrompt = false
+    @State private var showPersonalityPrompt = false
     @State private var showOnboarding = false
     @State private var didCheckReminderOnce = false
 
@@ -194,28 +194,16 @@ struct MainView: View {
         .animation(.easeInOut, value: isShowingPrivacySheet)
         .animation(.easeInOut, value: isShowingTermsSheet)
         .animation(.easeInOut, value: isShowingSubscriptionSheet)
-        .sheet(isPresented: $showIntroPrompt) {
-            OnboardingIntroView(
-                onKnowMeBetter: {
-                    showIntroPrompt = false // Close the sheet first
-                    // A tiny delay ensures a smooth transition between closing the sheet
-                    // and opening the full-screen cover.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        showOnboarding = true
-                    }
-                },
-                onSkip: {
-                    personalityReminderSuppressed = true // Don't ask again
-                    showIntroPrompt = false // Close the sheet
-                }
-            )
-            .environmentObject(themeManager) // The intro view needs this
+        .alert("Try the 30-sec Personality Test?", isPresented: $showPersonalityPrompt) {
+            Button("Not now") { personalityReminderSuppressed = true; showPersonalityPrompt = false }
+            Button("Take the test") { showPersonalityPrompt = false; showOnboarding = true }
+        } message: {
+            Text("This helps tailor tips and lessons to you.")
         }
         .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingFlowView(didComplete: $hasCompletedPersonalityTest, initialStep: .questionnaire) // ✨ Updated line
+            OnboardingFlowView(didComplete: $hasCompletedPersonalityTest)
                 .environmentObject(themeManager)
         }
-
         .onChange(of: hasCompletedPersonalityTest) { done in
             if done { showOnboarding = false }
         }
@@ -241,7 +229,7 @@ struct MainView: View {
 
         if shouldPrompt {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                showIntroPrompt = true
+                showOnboarding = true
             }
         }
     }
