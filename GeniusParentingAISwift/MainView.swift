@@ -212,7 +212,7 @@ struct MainView: View {
             .environmentObject(themeManager) // The intro view needs this
         }
         .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingFlowView(didComplete: $hasCompletedPersonalityTest, initialStep: .startTest)
+            OnboardingFlowView(didComplete: $hasCompletedPersonalityTest, initialStep: .questionnaire) // ✨ Updated line
                 .environmentObject(themeManager)
         }
 
