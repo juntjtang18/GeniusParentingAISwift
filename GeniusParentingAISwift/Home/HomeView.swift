@@ -48,7 +48,10 @@ struct HomeView: View {
                     SectionHeader(
                         title: "Your Courses",
                         trailing: "See All",
-                        onTapTrailing: { tabRouter.selectedTab = 1 }   // ⬅️ switch to Course tab
+                        onTapTrailing: {
+                            tabRouter.needsCourseViewReset = true // Signal the reset
+                            tabRouter.selectedTab = 1             // Then switch tabs
+                        }
                     )
 
                     // Horizontal carousel of today's courses (reusing your model + card)
@@ -410,9 +413,15 @@ private struct HotTopicsListScreen: View {
                 .padding(.vertical, 16)
             }
         } // End of ZStack
-        .navigationTitle("Hot Topics")
         .navigationBarTitleDisplayMode(.inline)
-        // Removed .background(currentTheme.background)
+        //.tint(currentTheme.accentSecond)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Hot Topics")
+                    .font(.headline) // Optional: match the default title font style
+                    .foregroundColor(currentTheme.accentSecond)
+            }
+        }
     }
 }
 
@@ -458,8 +467,17 @@ private struct DailyTipsListScreen: View {
                 )
             }
         } // End of ZStack
-        .navigationTitle("Daily Tips")
         .navigationBarTitleDisplayMode(.inline)
+        //.tint(currentTheme.accentSecond)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Daily Tips")
+                    .font(.headline) // Optional: match the default title font style
+                    .foregroundColor(currentTheme.accentSecond)
+            }
+        }
+        //.navigationTitle("Daily Tips")
+        //.navigationBarTitleDisplayMode(.inline)
         // Removed .background(currentTheme.background)
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 import KeychainAccess
 final class MainTabRouter: ObservableObject {
     @Published var selectedTab: Int = 0
+    @Published var needsCourseViewReset: Bool = false
 }
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -243,6 +244,7 @@ struct MainView: View {
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
+        .tint(themeManager.currentTheme.accentSecond)
     }
 
     private var courseTab: some View {
@@ -257,6 +259,8 @@ struct MainView: View {
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .tint(themeManager.currentTheme.accentSecond)
+
     }
 
     private var aiTab: some View {
@@ -275,6 +279,7 @@ struct MainView: View {
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
+        .tint(themeManager.currentTheme.accentSecond)
     }
 
     private var communityTab: some View {
@@ -289,6 +294,7 @@ struct MainView: View {
                 .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
+        .tint(themeManager.currentTheme.accentSecond)
     }
 }
 

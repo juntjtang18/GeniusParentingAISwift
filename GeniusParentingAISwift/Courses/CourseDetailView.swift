@@ -13,140 +13,126 @@ struct ShowACourseView: View {
     @Binding var isSideMenuShowing: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            if viewModel.isLoading {
-                ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let errorMessage = viewModel.errorMessage {
-                 Text("Error: \(errorMessage)")
-                    .style(.body)
-                    .foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let course = viewModel.course {
-                let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
-                VStack(alignment: .leading, spacing: 8) {
-                    // Course title
-                    Text("Course \(course.id): \(displayTitle)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(theme.foreground) // highlight color like in screenshot
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading) // force left edge
-
+        ZStack {
+            // ✅ Add the gradient as the first (bottom) layer
+            LinearGradient(
+                colors: [theme.background, theme.background2],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea() // Ensure the gradient fills the entire safe area
+            
+            VStack(spacing: 0) {
+                if viewModel.isLoading {
+                    ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let errorMessage = viewModel.errorMessage {
+                    Text("Error: \(errorMessage)")
+                        .style(.body)
+                        .foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let course = viewModel.course {
+                    let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Course title
+                        Text("Course \(course.id): \(displayTitle)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(theme.foreground) // highlight color like in screenshot
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading) // force left edge
+                    }
+                    .padding(.horizontal)
+                    .padding(.top)
                     
-                    // Optional transcript/play controls (like screenshot)
-                    //if let duration = course.estimatedDuration {
-                    /*
-                        HStack(spacing: 12) {
-                            Image(systemName: "play.circle.fill")
-                                .foregroundColor(theme.accent)
-                            Text("Play transcript")
-                                .font(.subheadline)
-                                .foregroundColor(.primary)
-                     
-                            //Spacer()
-                            //Text("\(duration) min")
-                            //    .font(.caption)
-                            //    .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 6)
-                        .overlay(
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(.gray.opacity(0.2)),
-                            alignment: .bottom
-                        )
-                     */
-                    //}
-                }
-                .padding(.horizontal)
-                .padding(.top)
-
-
-                let pages = groupContentIntoPages(content: course.content ?? [])
-                if !pages.isEmpty && pages.indices.contains(currentPageIndex) {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 15) {
-                            ForEach(pages[currentPageIndex], id: \.uniqueIdForList) { item in
-                                if item.__component != "coursecontent.pagebreaker" {
-                                    if let urlString = item.video_file?.data?.attributes.url,
-                                       let url = URL(string: urlString) {
-                                        VideoBlock(url: url)
-                                            .id(item.uniqueIdForList)
-                                    } else {
-                                        ContentComponentView(contentItem: item, language: selectedLanguage)
-                                            .id(item.uniqueIdForList)
+                    
+                    let pages = groupContentIntoPages(content: course.content ?? [])
+                    if !pages.isEmpty && pages.indices.contains(currentPageIndex) {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 15) {
+                                ForEach(pages[currentPageIndex], id: \.uniqueIdForList) { item in
+                                    if item.__component != "coursecontent.pagebreaker" {
+                                        if let urlString = item.video_file?.data?.attributes.url,
+                                           let url = URL(string: urlString) {
+                                            VideoBlock(url: url)
+                                                .id(item.uniqueIdForList)
+                                        } else {
+                                            ContentComponentView(contentItem: item, language: selectedLanguage)
+                                                .id(item.uniqueIdForList)
+                                        }
                                     }
                                 }
                             }
+                            .padding(.horizontal)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.horizontal)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .id(currentPageIndex)
+                        .transition(navigationTransition)
+                        
+                        HStack {
+                            let pageBreakerSettings = findPageBreakerSettings(forCurrentPage: currentPageIndex, totalPages: pages.count, allContent: course.content ?? [])
+                            
+                            if pageBreakerSettings.showBackButton {
+                                Button {
+                                    navigationTransition = .asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing))
+                                    withAnimation(.easeInOut) { currentPageIndex -= 1 }
+                                } label: { Image(systemName: "arrow.left.circle.fill").font(.title) }
+                            } else {
+                                Spacer().frame(width: 44)
+                            }
+                            
+                            Spacer()
+                            Text("Page \(currentPageIndex + 1) of \(pages.count)")
+                                .style(.caption)
+                            Spacer()
+                            
+                            if pageBreakerSettings.showNextButton {
+                                Button {
+                                    navigationTransition = .asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading))
+                                    withAnimation(.easeInOut) { currentPageIndex += 1 }
+                                } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
+                            } else {
+                                Spacer().frame(width: 44)
+                            }
+                        }.padding()
+                        
+                    } else {
+                        Text("No content for this course.")
+                            .style(.body)
+                            .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                    .id(currentPageIndex)
-                    .transition(navigationTransition)
-
-                    HStack {
-                        let pageBreakerSettings = findPageBreakerSettings(forCurrentPage: currentPageIndex, totalPages: pages.count, allContent: course.content ?? [])
-                        
-                        if pageBreakerSettings.showBackButton {
-                            Button {
-                                navigationTransition = .asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing))
-                                withAnimation(.easeInOut) { currentPageIndex -= 1 }
-                            } label: { Image(systemName: "arrow.left.circle.fill").font(.title) }
-                        } else {
-                            Spacer().frame(width: 44)
-                        }
-                        
-                        Spacer()
-                        Text("Page \(currentPageIndex + 1) of \(pages.count)")
-                            .style(.caption)
-                        Spacer()
-                        
-                        if pageBreakerSettings.showNextButton {
-                            Button {
-                                navigationTransition = .asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading))
-                                withAnimation(.easeInOut) { currentPageIndex += 1 }
-                            } label: { Image(systemName: "arrow.right.circle.fill").font(.title) }
-                        } else {
-                             Spacer().frame(width: 44)
-                        }
-                    }.padding()
-                    
-                } else {
-                    Text("No content for this course.")
+                } else if !viewModel.isLoading {
+                    Text("Course data not found.")
                         .style(.body)
                         .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-            } else if !viewModel.isLoading {
-                 Text("Course data not found.")
-                    .style(.body)
-                    .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }
-        .background(theme.background.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button {
-                    Task {
-                        await viewModel.fetchCourse(courseId: courseId)
+            //.background(theme.background.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                /*
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            await viewModel.fetchCourse(courseId: courseId)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise").foregroundColor(theme.accent)
                     }
-                } label: {
-                    Image(systemName: "arrow.clockwise").foregroundColor(theme.accent)
-                }
-                
-                Button(action: {
-                    withAnimation(.easeInOut) {
-                        isSideMenuShowing.toggle()
+                    
+                    Button(action: {
+                        withAnimation(.easeInOut) {
+                            isSideMenuShowing.toggle()
+                        }
+                    }) {
+                        Image(systemName: "line.3.horizontal").font(.title3)
+                            .foregroundColor(theme.accent)
                     }
-                }) {
-                    Image(systemName: "line.3.horizontal").font(.title3)
-                        .foregroundColor(theme.accent)
                 }
+                 */
             }
-        }
-        .task {
-            await viewModel.fetchCourse(courseId: courseId)
+            .task {
+                await viewModel.fetchCourse(courseId: courseId)
+            }
         }
     }
     

@@ -9,7 +9,7 @@ schemes = {
     "SoftBlue": {
         "Light": {
             "Foreground":   "#FFFFFF",
-            "Background":   "#264CAB",
+            "Background":   "#3D91FD",
             "Background2":  "#8977FF",            
             "AccentBackground": "#FFFFFF",
             "Accent":       "#333333",
@@ -18,7 +18,7 @@ schemes = {
             "Border":       "#FFFFFF",
             "InputBoxForeground": "#333333",
             "InputBoxBackground": "#FFFFFF",
-            "Primary":     "#40E0D0",
+            "Primary":     "#30D0DB",
             "PrimaryText": "#333333",
         },
         "Dark": {

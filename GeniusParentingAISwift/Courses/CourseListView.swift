@@ -191,6 +191,7 @@ struct CourseView: View {
     @Binding var isSideMenuShowing: Bool
 
     @State private var selectedCategory: CategoryData? = nil
+    @EnvironmentObject private var tabRouter: MainTabRouter
 
     var body: some View {
         ZStack { // Added ZStack for the gradient background
@@ -254,6 +255,12 @@ struct CourseView: View {
         }
         .onAppear {
             Task { await viewModel.initialFetch() }
+        }
+        .onChange(of: tabRouter.needsCourseViewReset) { shouldReset in
+            if shouldReset {
+                selectedCategory = nil // Reset the state
+                tabRouter.needsCourseViewReset = false // Consume the signal
+            }
         }
     }
 }
