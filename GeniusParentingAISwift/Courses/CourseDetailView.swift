@@ -33,7 +33,8 @@ struct ShowACourseView: View {
                     let displayTitle = course.translations?[selectedLanguage]?.title ?? course.title
                     VStack(alignment: .leading, spacing: 8) {
                         // Course title
-                        Text("Course \(course.id): \(displayTitle)")
+                        //Text("Course \(course.id): \(displayTitle)")
+                        Text("\(displayTitle)")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(theme.foreground) // highlight color like in screenshot
@@ -43,6 +44,7 @@ struct ShowACourseView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top)
+                    .padding(.bottom, 15)
                     
                     
                     let pages = groupContentIntoPages(content: course.content ?? [])
@@ -108,6 +110,7 @@ struct ShowACourseView: View {
             }
             //.background(theme.background.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 /*
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
