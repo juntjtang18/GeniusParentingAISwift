@@ -17,7 +17,6 @@ struct StrapiUser: Codable, Identifiable, Equatable {
     }
 }
 
-// ✅ REVISED: This struct now uses InlinePersonalityResult and removes an unused field.
 /// Represents the populated 'user_profile' relation within the StrapiUser.
 struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
@@ -27,7 +26,6 @@ struct UserProfile: Codable, Identifiable, Hashable {
     let personality_result: InlinePersonalityResult?
 }
 
-// ✅ ADDED: This new struct correctly models the nested personality_result object.
 /// A simplified, inline version of a personality result for user profiles.
 struct InlinePersonalityResult: Codable, Identifiable, Hashable {
     let id: Int
@@ -83,7 +81,7 @@ public struct ProfileUpdatePayload: Codable {
 public struct ProfileUpdateData: Codable {
     let consentForEmailNotice: Bool?
     let children: [ChildPayload]?
-    let personality_result: Int?                                  // 👈
+    let personality_result: Int?
 }
 
 public struct ChildPayload: Codable {
@@ -102,7 +100,6 @@ struct StrapiSystemRole: Codable {
     let type: String
 }
 
-// ... (The rest of the file remains unchanged)
 struct Subscription: Codable, Identifiable {
     let id: Int
     let attributes: SubscriptionAttributes

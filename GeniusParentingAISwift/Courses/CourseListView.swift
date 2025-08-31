@@ -5,6 +5,7 @@ import KeychainAccess
 // MARK: - Course Card View
 struct CourseCardView: View {
     @Environment(\.theme) var currentTheme: Theme
+    @EnvironmentObject var permissionManager: PermissionManager
     let course: Course
     let selectedLanguage: String
     private let cardHeight: CGFloat = 250
@@ -12,7 +13,7 @@ struct CourseCardView: View {
     // Determine if the course is locked for the current user.
     private var isLocked: Bool {
         // A course is locked if it's membership-only AND the user doesn't have access.
-        return course.isMembershipOnly && !PermissionManager.shared.canAccess(.accessMembershipCourses)
+        return course.isMembershipOnly && !permissionManager.canAccess(.accessMembershipCourses)
     }
 
     var body: some View {
@@ -67,9 +68,11 @@ struct CourseCardView: View {
 }
 
 
+/*
 // MARK: - Collapsible Category View
 struct CollapsibleCategoryView: View {
     @Environment(\.theme) var currentTheme: Theme
+    @EnvironmentObject var permissionManager: PermissionManager
     let category: CategoryData
     @ObservedObject var viewModel: CourseViewModel
     @Binding var selectedLanguage: String
@@ -121,8 +124,24 @@ struct CollapsibleCategoryView: View {
                     LazyVStack(spacing: 15) {
                         if let courses = viewModel.coursesByCategoryID[category.id] {
                             ForEach(courses) { course in
+                                // --- Start of Debugging Logic ---
+
+                                // ✅ Use the reactive manager from the environment
+                                let hasAccess = permissionManager.canAccess(.accessMembershipCourses)
+                                let isLocked = course.isMembershipOnly && !hasAccess
+
+                                // ✅ Add the log you requested
+                                let _ = print("""
+                                --- Checking Course: \(course.title) ---
+                                Is Membership Only: \(course.isMembershipOnly)
+                                User Has Access to Membership Courses: \(hasAccess)
+                                Result -> Is Locked: \(isLocked)
+                                --------------------
+                                """)
+                                
+                                // --- End of Debugging Logic ---
                                 // Determine if the course is locked for the current user.
-                                let isLocked = course.isMembershipOnly && !PermissionManager.shared.canAccess(.accessMembershipCourses)
+                                //let isLocked = course.isMembershipOnly && !PermissionManager.shared.canAccess(.accessMembershipCourses)
 
                                 if isLocked {
                                     // If the course is locked, display it as a Button that triggers an alert.
@@ -175,6 +194,7 @@ struct CollapsibleCategoryView: View {
     }
 }
 
+ */
 // MARK: - Main Course List View (refactored for picker + category list)
 struct CourseView: View {
     @Environment(\.theme) var theme: Theme
@@ -395,42 +415,59 @@ private struct CategoryTileButton: View {
 // MARK: - Category List Screen (courses of selected category)
 private struct CategoryListScreen: View {
     @Environment(\.theme) var currentTheme: Theme
+    // 1. Receive the reactive PermissionManager from the environment
+    @EnvironmentObject var permissionManager: PermissionManager
+    
+    // 2. Add state variables to control the alert and subscription sheet
+    @State private var showPermissionAlert = false
+    @State private var showSubscriptionSheet = false
+
     let category: CategoryData
     @ObservedObject var viewModel: CourseViewModel
     @Binding var selectedLanguage: String
     let onBack: () -> Void
 
     var body: some View {
-        // ZStack here is to ensure the gradient covers the whole screen if this is presented directly
         ZStack {
             LinearGradient(
                 colors: [currentTheme.background, currentTheme.background2],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea() // Ensure the gradient fills the entire safe area
+            .ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Category title
                     Text(category.attributes.name)
                         .font(.title3).bold()
                         .foregroundColor(currentTheme.foreground)
                         .padding(.top, 4)
 
-                    // Courses list
                     Group {
                         if let courses = viewModel.coursesByCategoryID[category.id] {
                             LazyVStack(spacing: 18) {
                                 ForEach(courses) { course in
-                                    NavigationLink(
-                                        destination: ShowACourseView(
-                                            selectedLanguage: $selectedLanguage,
-                                            courseId: course.id,
-                                            isSideMenuShowing: .constant(false)
-                                        )
-                                    ) {
-                                        CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                    // 3. This is the complete, migrated permission logic
+                                    let hasAccess = permissionManager.canAccess(.accessMembershipCourses)
+                                    let isLocked = course.isMembershipOnly && !hasAccess
+
+                                    // 4. This log will now work correctly
+                                    let _ = print("""
+                                    --- [CategoryListScreen] Checking Course: \(course.title) ---
+                                    Is Membership Only: \(course.isMembershipOnly)
+                                    User Has Access: \(hasAccess)
+                                    Result -> Is Locked: \(isLocked)
+                                    --------------------
+                                    """)
+
+                                    if isLocked {
+                                        Button(action: { self.showPermissionAlert = true }) {
+                                            CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                        }
+                                    } else {
+                                        NavigationLink(destination: ShowACourseView(selectedLanguage: $selectedLanguage, courseId: course.id, isSideMenuShowing: .constant(false))) {
+                                            CourseCardView(course: course, selectedLanguage: selectedLanguage)
+                                        }
                                     }
                                 }
                             }
@@ -450,12 +487,11 @@ private struct CategoryListScreen: View {
                 .padding(.top, 8)
                 .padding(.bottom, 24)
             }
-        } // End of ZStack
+        }
         .navigationTitle(category.attributes.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            // keep your existing leading back
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: onBack) {
                     HStack(spacing: 4) {
@@ -464,36 +500,16 @@ private struct CategoryListScreen: View {
                     }
                 }
             }
-            // keep your existing trailing items (refresh/menu) here...
         }
-        //.tint(currentTheme.accent) // buttons adopt theme color (iOS 15+)
-        /*
-        .onAppear {
-            // Title color via UINavigationBarAppearance
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithOpaqueBackground()
-            //appearance.backgroundColor = .clear
-            appearance.backgroundColor = UIColor(currentTheme.background)
-
-            // Convert SwiftUI.Color -> UIColor safely
-            let titleColor = UIColor(currentTheme.foreground)
-            appearance.titleTextAttributes = [.foregroundColor: titleColor]
-            appearance.largeTitleTextAttributes = [.foregroundColor: titleColor]
-
-            // Apply
-            let navBar = UINavigationBar.appearance()
-            navBar.standardAppearance = appearance
-            navBar.compactAppearance = appearance
-            navBar.scrollEdgeAppearance = appearance
+        // 5. Add the necessary modifiers to handle the alert and sheet
+        .alert("Membership Required", isPresented: $showPermissionAlert) {
+            Button("Subscribe") { self.showSubscriptionSheet = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This course requires a membership to access.")
         }
-        .onDisappear {
-            // (Optional) reset to system default when leaving this screen
-            let reset = UINavigationBarAppearance()
-            reset.configureWithDefaultBackground()
-            UINavigationBar.appearance().standardAppearance = reset
-            UINavigationBar.appearance().compactAppearance = reset
-            UINavigationBar.appearance().scrollEdgeAppearance = reset
+        .fullScreenCover(isPresented: $showSubscriptionSheet) {
+            SubscriptionView(isPresented: $showSubscriptionSheet)
         }
-         */
     }
 }

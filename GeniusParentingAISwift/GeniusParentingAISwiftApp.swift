@@ -82,7 +82,6 @@ struct GeniusParentingAISwiftApp: App {
                 .environmentObject(permissionManager)
                 .theme(themeManager.currentTheme)
                 .onAppear {
-                    PermissionManager.shared.storeManager = storeManager
                     checkLoginStatus()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
