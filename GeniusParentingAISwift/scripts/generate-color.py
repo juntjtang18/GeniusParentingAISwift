@@ -32,7 +32,7 @@ schemes = {
             "Border":       "#39424A",
             "InputBoxForeground": "#F5F5F5",
             "InputBoxBackground": "#39424A",
-            "Primary":     "#A4E5D9",
+            "Primary":     "#30D0DB",
             "PrimaryText": "#F5F5F5",
         },
     },

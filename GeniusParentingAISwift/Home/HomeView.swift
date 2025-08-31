@@ -188,10 +188,12 @@ private struct WelcomeRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Welcome back")
-                    .font(.headline.weight(.semibold))
-                    .foregroundColor(currentTheme.foreground)
+                    .font(.body) // Use .body with its default regular weight
+                    .foregroundColor(currentTheme.foreground.opacity(0.8))
+
+                // Keep the profile name bold for emphasis, but at the same base size
                 Text(profileName)
-                    .font(.headline.weight(.semibold))
+                    .font(.body.weight(.bold)) // Use .body but make it bold
                     .foregroundColor(currentTheme.foreground)
             }
 
@@ -360,14 +362,16 @@ private struct FairyTipPopupView: View {
         .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 }
+
 struct PlayButtonView: View {
-    @Environment(\.theme) var theme: Theme
+    @Environment(\.theme) var currentTheme: Theme
+    var isLocked: Bool = false
     
     var body: some View {
         ZStack {
-            Circle().fill(theme.primary)
+            Circle().fill(isLocked ? .gray : currentTheme.primary)
             Image(systemName: "play.fill")
-                .foregroundColor(theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
                 .font(.system(size: 20))
         }
         .frame(width: 50, height: 50)
@@ -377,6 +381,7 @@ struct PlayButtonView: View {
 // A simple Hot Topics list using your existing card + data flow
 private struct HotTopicsListScreen: View {
     @Environment(\.theme) var currentTheme: Theme
+    @Environment(\.dismiss) private var dismiss
     let topics: [Topic]
     let isLoading: Bool
     @Binding var selectedLanguage: String
@@ -414,12 +419,22 @@ private struct HotTopicsListScreen: View {
             }
         } // End of ZStack
         .navigationBarTitleDisplayMode(.inline)
-        //.tint(currentTheme.accentSecond)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                }
+            }
+            
+            // This is your existing title item
             ToolbarItem(placement: .principal) {
                 Text("Hot Topics")
-                    .font(.headline) // Optional: match the default title font style
-                    .foregroundColor(currentTheme.accentSecond)
+                    .font(.headline)
+                    .foregroundColor(currentTheme.foreground)
             }
         }
     }
@@ -428,6 +443,7 @@ private struct HotTopicsListScreen: View {
 // A simple Daily Tips list using your existing card + popup behavior
 private struct DailyTipsListScreen: View {
     @Environment(\.theme) var currentTheme: Theme
+    @Environment(\.dismiss) private var dismiss
     let tips: [Tip]
     let isLoading: Bool
     @State private var selectedTip: Tip? = nil
@@ -468,16 +484,21 @@ private struct DailyTipsListScreen: View {
             }
         } // End of ZStack
         .navigationBarTitleDisplayMode(.inline)
-        //.tint(currentTheme.accentSecond)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                }
+            }
             ToolbarItem(placement: .principal) {
                 Text("Daily Tips")
-                    .font(.headline) // Optional: match the default title font style
-                    .foregroundColor(currentTheme.accentSecond)
+                    .font(.headline)
+                    .foregroundColor(currentTheme.foreground)
             }
         }
-        //.navigationTitle("Daily Tips")
-        //.navigationBarTitleDisplayMode(.inline)
-        // Removed .background(currentTheme.background)
     }
 }

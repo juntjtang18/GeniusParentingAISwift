@@ -31,7 +31,7 @@ struct HotTopicCardView: View {
 
                     Spacer()
 
-                    PlayButtonView()
+                    PlayButtonView(isLocked: false)
 
                 }
                 .style(.courseCard) // This style handles padding and background

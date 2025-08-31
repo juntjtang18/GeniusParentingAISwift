@@ -12,35 +12,45 @@ struct CommentView: View {
 
     var body: some View {
         NavigationView {
-            // The entire view is now a single scrollable container
-            ScrollView {
+            ZStack{
+                /*
                 LinearGradient(
                     colors: [currentTheme.background, currentTheme.background2],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea() // Ensure the gradient fills the entire screen
-                 
-                VStack(alignment: .leading, spacing: 0) {
-                    PostContentView(post: viewModel.post)
-                        .padding()
-                    
-                    Divider()
-
-                    // The input area is now at the top of the comments section
-                    CommentInputArea(viewModel: viewModel)
-                    
-                    CommentsListView(viewModel: viewModel)
-                        .padding(.horizontal)
+                 */
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        PostContentView(post: viewModel.post)
+                            .padding()
+                        
+                        Divider()
+                        
+                        // The input area is now at the top of the comments section
+                        CommentInputArea(viewModel: viewModel)
+                        
+                        CommentsListView(viewModel: viewModel)
+                            .padding(.horizontal)
+                    }
                 }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
-                // Cancel Button
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Back") {
+                    Button {
                         dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            // Use a relevant title like "Community" or "Post"
+                            Text("Community")
+                        }
                     }
                 }
             }

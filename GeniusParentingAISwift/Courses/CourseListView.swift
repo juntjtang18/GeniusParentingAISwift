@@ -53,15 +53,7 @@ struct CourseCardView: View {
 
                 Spacer()
 
-                // Play Button
-                ZStack {
-                    Circle()
-                        .fill(isLocked ? .gray : currentTheme.background) // Use gray color for locked courses.
-                    Image(systemName: "play.fill")
-                        .foregroundColor(currentTheme.foreground)
-                        .font(.system(size: 20))
-                }
-                .frame(width: 50, height: 50)
+                PlayButtonView(isLocked: isLocked);
             }
             .frame(height: cardHeight * 0.3)
             .style(.courseCard)

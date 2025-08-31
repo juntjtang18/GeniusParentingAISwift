@@ -52,7 +52,7 @@ struct LessonCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true) // let text expand if 2 lines
 
-                PlayButtonView()
+                PlayButtonView(isLocked: false)
                     .frame(width: 36, height: 36) // keeps button centered
             }
             //.frame(height: 60)                      // fixed row height

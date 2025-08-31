@@ -5,6 +5,7 @@ import Combine
 
 struct ShowACourseView: View {
     @Environment(\.theme) var theme: Theme
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ShowACourseViewModel()
     @Binding var selectedLanguage: String
     let courseId: Int
@@ -14,7 +15,6 @@ struct ShowACourseView: View {
 
     var body: some View {
         ZStack {
-            // ✅ Add the gradient as the first (bottom) layer
             LinearGradient(
                 colors: [theme.background, theme.background2],
                 startPoint: .top,
@@ -108,30 +108,17 @@ struct ShowACourseView: View {
                         .foregroundColor(.gray).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            //.background(theme.background.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
-                /*
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button {
-                        Task {
-                            await viewModel.fetchCourse(courseId: courseId)
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
                         }
-                    } label: {
-                        Image(systemName: "arrow.clockwise").foregroundColor(theme.accent)
-                    }
-                    
-                    Button(action: {
-                        withAnimation(.easeInOut) {
-                            isSideMenuShowing.toggle()
-                        }
-                    }) {
-                        Image(systemName: "line.3.horizontal").font(.title3)
-                            .foregroundColor(theme.accent)
                     }
                 }
-                 */
             }
             .task {
                 await viewModel.fetchCourse(courseId: courseId)

@@ -241,28 +241,29 @@ struct MainView: View {
         NavigationView {
             HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
                 // Set toolbar background to clear for transparency
-                .toolbarBackground(Color.clear, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
+                //.toolbarBackground(Color.clear, for: .navigationBar)
+                //.toolbarBackground(.visible, for: .navigationBar)
+                //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.accentSecond)
+        .tint(themeManager.currentTheme.foreground)
     }
 
     private var courseTab: some View {
         NavigationStack {
             CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
-                .background(Color.clear) // Ensure CourseView's background is clear to show the gradient from MainView
-                .navigationTitle("Courses")
+                .navigationTitle("Courses") // Keep this for accessibility
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar { menuToolbar }
-                // Set toolbar background to clear for transparency
-                .toolbarBackground(Color.clear, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("Courses")
+                            .font(.headline) // Optional: matches the default title font
+                            .foregroundColor(themeManager.currentTheme.foreground)
+                    }
+                    menuToolbar
+                }
         }
-        .tint(themeManager.currentTheme.accentSecond)
-
+        .tint(themeManager.currentTheme.foreground)
     }
 
     private var aiTab: some View {
@@ -270,18 +271,19 @@ struct MainView: View {
             AIView()
                 .navigationTitle("AI Assistant")
                 .navigationBarTitleDisplayMode(.inline)
-            
                 .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("AI Assistant")
+                            .font(.headline).foregroundColor(themeManager.currentTheme.foreground)
+                    }
                     menuToolbar
                 }
-            
-                // Set toolbar background to clear for transparency
-                .toolbarBackground(Color.clear, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
+                //.toolbarBackground(Color.clear, for: .navigationBar)
+                //.toolbarBackground(.visible, for: .navigationBar)
+                //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.accentSecond)
+        .tint(themeManager.currentTheme.foreground)
     }
 
     private var communityTab: some View {
@@ -289,14 +291,19 @@ struct MainView: View {
             CommunityView()
                 .navigationTitle("Community")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar { menuToolbar }
+                .toolbar {
+                    ToolbarItem(placement:.principal) {
+                        Text("Community").font(.headline).foregroundColor(themeManager.currentTheme.foreground)
+                    }
+                    menuToolbar
+                }
                 // Set toolbar background to clear for transparency
-                .toolbarBackground(Color.clear, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
+                //.toolbarBackground(Color.clear, for: .navigationBar)
+                //.toolbarBackground(.visible, for: .navigationBar)
+                //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.accentSecond)
+        .tint(themeManager.currentTheme.foreground)
     }
 }
 
