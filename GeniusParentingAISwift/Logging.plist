@@ -7,11 +7,11 @@
 	<key>Levels</key>
 	<dict>
 		<key>NetworkManager</key>
-		<string>debug</string>
+		<string>error</string>
 		<key>StrapiService</key>
-		<string>debug</string>
+		<string>error</string>
 		<key>ProfileViewModel</key>
-		<string>info</string>
+		<string>error</string>
 		<key>StoreManager</key>
 		<string>debug</string>
 		<key>SessionManager</key>

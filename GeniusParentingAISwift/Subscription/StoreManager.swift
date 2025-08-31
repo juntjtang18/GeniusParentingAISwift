@@ -138,6 +138,9 @@ class StoreManager: ObservableObject {
                     //    await transaction.finish()
                     //}
                     await SessionManager.shared.refreshCurrentUserFromServer()
+                    await MainActor.run {
+                        PermissionManager.shared.syncWithSession()
+                    }
 
                     // Always finish the transaction on the device once you've acknowledged it.
                     await transaction.finish()
