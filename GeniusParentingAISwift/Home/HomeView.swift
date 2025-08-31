@@ -27,15 +27,16 @@ struct HomeView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-
+                    /*
                     // MARK: Welcome Row
                     WelcomeRow(
                         profileName: profileName,
                         onAvatarTap: { withAnimation(.easeInOut) { isSideMenuShowing.toggle() } }
                     )
                     .padding(.top, 6)
-
+                     */
                     // MARK: Search
+                    Spacer()
                     SearchBar(
                         text: $searchText,
                         placeholder: "Search Courses",
@@ -151,6 +152,40 @@ struct HomeView: View {
                 }
             }
         } // End of ZStack
+        .toolbar {
+            // ✅ Use a single ToolbarItem on the left
+            ToolbarItem(placement: .navigationBarLeading) {
+                // ✅ Wrap the button and text in an HStack
+                HStack(spacing: 12) {
+                    // Avatar Button
+                    Button(action: { withAnimation(.easeInOut) { isSideMenuShowing.toggle() } }) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 32, height: 32)
+                    }
+
+                    // Welcome Text
+                    VStack(alignment: .leading) { // Ensure the text within the VStack is left-aligned
+                        Text("Welcome back")
+                            .font(.caption)
+                            .foregroundColor(theme.foreground.opacity(0.8))
+                        Text(profileName)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(theme.foreground)
+                    }
+                }
+            }
+            // ✅ ADD THIS NEW ITEM for the button on the right
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    withAnimation(.easeInOut) { isSideMenuShowing.toggle() }
+                }) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.title3)
+                }
+            }
+        }
         .onAppear {
             Task {
                 await viewModel.fetchRecommendedCourses()
@@ -158,7 +193,7 @@ struct HomeView: View {
                 await viewModel.fetchDailyTips()
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        //.toolbar(.hidden, for: .navigationBar)
     }
    
     private var profileName: String {
