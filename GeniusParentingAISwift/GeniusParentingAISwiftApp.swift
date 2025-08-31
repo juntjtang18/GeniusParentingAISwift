@@ -57,6 +57,7 @@ struct GeniusParentingAISwiftApp: App {
     @StateObject private var speechManager = SpeechManager()
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var storeManager = StoreManager.shared
+    @StateObject private var permissionManager = PermissionManager.shared
 
     init() {
         print("Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")
@@ -78,6 +79,7 @@ struct GeniusParentingAISwiftApp: App {
                 .environmentObject(speechManager)
                 .environmentObject(themeManager)
                 .environmentObject(storeManager)
+                .environmentObject(permissionManager)
                 .theme(themeManager.currentTheme)
                 .onAppear {
                     PermissionManager.shared.storeManager = storeManager
@@ -103,6 +105,7 @@ struct GeniusParentingAISwiftApp: App {
                 let user = try await StrapiService.shared.fetchCurrentUser()
                 SessionManager.shared.setCurrentUser(user)
                 SessionManager.shared.updateLastUserEmail(user.email)
+                PermissionManager.shared.syncWithSession()
                 isLoggedIn = true
             } catch {
                 SessionManager.shared.clearSession()
@@ -115,6 +118,7 @@ struct GeniusParentingAISwiftApp: App {
     private func logout() {
         // This function is correct, no changes needed.
         SessionManager.shared.clearSession()
+        PermissionManager.shared.syncWithSession()
         //hasCompletedPersonalityTest = false // It's good practice to reset this on logout
         NotificationCenter.default.post(name: .didLogout, object: nil)
         withAnimation {

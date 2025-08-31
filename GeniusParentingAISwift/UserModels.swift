@@ -17,20 +17,29 @@ struct StrapiUser: Codable, Identifiable, Equatable {
     }
 }
 
+// ✅ REVISED: This struct now uses InlinePersonalityResult and removes an unused field.
 /// Represents the populated 'user_profile' relation within the StrapiUser.
 struct UserProfile: Codable, Identifiable, Hashable {
     let id: Int
     let locale: String?
     let consentForEmailNotice: Bool?
     let children: [Child]?
-    let users_permissions_user: StrapiRelation<PopulatedUser>?
-    let personality_result: StrapiRelation<PersonalityResult>?
+    let personality_result: InlinePersonalityResult?
+}
+
+// ✅ ADDED: This new struct correctly models the nested personality_result object.
+/// A simplified, inline version of a personality result for user profiles.
+struct InlinePersonalityResult: Codable, Identifiable, Hashable {
+    let id: Int
+    let title: String
+    let description: String
+    let powerTip: String
+    let psId: String
 
     enum CodingKeys: String, CodingKey {
-        case id, children, locale
-        case consentForEmailNotice
-        case users_permissions_user = "users_permissions_user"
-        case personality_result     = "personality_result"
+        case id, title, description
+        case powerTip = "power_tip"
+        case psId = "ps_id"
     }
 }
 
@@ -99,10 +108,13 @@ struct Subscription: Codable, Identifiable {
     let attributes: SubscriptionAttributes
 }
 
+// ✅ REVISED: Added two missing transaction ID properties.
 struct SubscriptionAttributes: Codable {
     let status: String
     let expireDate: String?
     let startDate: String?
+    let originalTransactionId: String?
+    let latestTransactionId: String?
     let plan: Plan
 }
 

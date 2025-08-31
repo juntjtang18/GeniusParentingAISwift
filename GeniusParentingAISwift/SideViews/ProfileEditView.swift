@@ -34,7 +34,6 @@ struct ProfileEditView: View {
         
         if let profile = viewModel.user?.user_profile {
             self.userProfileId = profile.id
-            // MODIFIED: Provide a default value of 'false' for the optional Bool.
             self._editableConsent = State(initialValue: profile.consentForEmailNotice ?? false)
             _editableChildren = State(initialValue: (profile.children ?? []).map { child in
                 EditableChild(serverId: child.id, name: child.name, age: child.age, gender: child.gender)
@@ -49,58 +48,16 @@ struct ProfileEditView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("User Name")) {
-                    TextField("Username", text: $editableUsername)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                }
+                // ✅ The Form now assembles smaller, simpler views
+                AccountDetailsSection(username: $editableUsername, consent: $editableConsent)
+                
+                PersonalityProfileSection(viewModel: viewModel)
 
-                Section(header: Text("Preferences")) {
-                    Toggle("Email Notifications", isOn: $editableConsent)
-                }
-                Section(header: Text("Personality Profile")) {
-                    if let relation = viewModel.user?.user_profile?.personality_result,
-                       let result = relation.data {
-
-                        let attrs = result.attributes
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(attrs.title)
-                                .font(.headline)
-                            Text(attrs.description)
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                            if !attrs.powerTip.isEmpty {
-                                Divider().padding(.vertical, 4)
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "lightbulb")
-                                    Text(attrs.powerTip)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                        Text("To change your result, retake the personality test.")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text("No personality result saved yet.")
-                            .foregroundColor(.secondary)
-                    }
-                }
-                Section(header: Text("Family Information")) {
-                    ForEach($editableChildren) { $child in
-                        ChildEditRow(child: $child)
-                    }
-                    .onDelete(perform: deleteChild)
-
-                    Button(action: addChild) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add Child")
-                        }
-                    }
-                }
+                FamilyInformationSection(
+                    children: $editableChildren,
+                    onAdd: addChild,
+                    onDelete: deleteChild
+                )
 
                 if let errorMessage = errorMessage {
                     Section {
@@ -109,12 +66,15 @@ struct ProfileEditView: View {
                 }
             }
             .navigationTitle("Edit Profile")
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    isPresented = false
-                },
-                trailing: saveButton
-            )
+            // ✅ Use the modern .toolbar modifier
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { isPresented = false }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    saveButton
+                }
+            }
         }
     }
 
@@ -131,6 +91,7 @@ struct ProfileEditView: View {
         .disabled(isSaving)
     }
 
+    // MARK: - Child Management
     private func addChild() {
         editableChildren.append(EditableChild(serverId: nil, name: "", age: 0, gender: "male"))
     }
@@ -139,6 +100,7 @@ struct ProfileEditView: View {
         editableChildren.remove(atOffsets: offsets)
     }
 
+    // MARK: - Save Action
     private func saveChanges() async {
         guard userProfileId != 0 else {
             self.errorMessage = "Cannot save: Profile ID is missing."
@@ -164,6 +126,82 @@ struct ProfileEditView: View {
         }
     }
 }
+
+// MARK: - Subviews for Edit Form
+private struct AccountDetailsSection: View {
+    @Binding var username: String
+    @Binding var consent: Bool
+
+    var body: some View {
+        Section(header: Text("User Name")) {
+            TextField("Username", text: $username)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+        }
+
+        Section(header: Text("Preferences")) {
+            Toggle("Email Notifications", isOn: $consent)
+        }
+    }
+}
+
+private struct PersonalityProfileSection: View {
+    @ObservedObject var viewModel: ProfileViewModel
+
+    var body: some View {
+        Section(header: Text("Personality Profile")) {
+            // This logic is now isolated in its own view
+            if let result = viewModel.user?.user_profile?.personality_result {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(result.title)
+                        .font(.headline)
+                    Text(result.description)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                    if !result.powerTip.isEmpty {
+                        Divider().padding(.vertical, 4)
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "lightbulb")
+                            Text(result.powerTip)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+                Text("To change your result, retake the personality test.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            } else {
+                Text("No personality result saved yet.")
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
+
+private struct FamilyInformationSection: View {
+    @Binding var children: [EditableChild]
+    let onAdd: () -> Void
+    let onDelete: (IndexSet) -> Void
+    
+    var body: some View {
+        Section(header: Text("Family Information")) {
+            ForEach($children) { $child in
+                ChildEditRow(child: $child)
+            }
+            .onDelete(perform: onDelete)
+
+            Button(action: onAdd) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Child")
+                }
+            }
+        }
+    }
+}
+
 
 struct ChildEditRow: View {
     @Binding var child: EditableChild

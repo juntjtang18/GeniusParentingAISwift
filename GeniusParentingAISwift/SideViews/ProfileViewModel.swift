@@ -28,19 +28,36 @@ class ProfileViewModel: ObservableObject {
         do {
             let apiResponse = try await StrapiService.shared.fetchUserProfile()
             let decodedData = apiResponse.data
-            
+            let apiAttributes = decodedData.attributes
+
+            // 1. Manually map the personality result from the API response
+            //    to the simpler InlinePersonalityResult model.
+            var inlineResult: InlinePersonalityResult? = nil
+            if let resultRelation = apiAttributes.personality_result, let resultData = resultRelation.data {
+                let resultAttributes = resultData.attributes
+                inlineResult = InlinePersonalityResult(
+                    id: resultData.id,
+                    title: resultAttributes.title,
+                    description: resultAttributes.description,
+                    powerTip: resultAttributes.powerTip,
+                    psId: resultAttributes.psId
+                )
+            }
+
+            // 2. Create the UserProfile object using the correct properties.
+            //    The extra 'users_permissions_user' argument is now removed.
             let userProfile = UserProfile(
                 id: decodedData.id,
-                locale: decodedData.attributes.locale,
-                consentForEmailNotice: decodedData.attributes.consentForEmailNotice,
-                children: decodedData.attributes.children,
-                users_permissions_user: nil,
-                personality_result: decodedData.attributes.personality_result   // ✅ new
+                locale: apiAttributes.locale,
+                consentForEmailNotice: apiAttributes.consentForEmailNotice,
+                children: apiAttributes.children,
+                personality_result: inlineResult
             )
-            
-            // Update the user object and assign it back to the SessionManager's property.
+
+            // 3. Update the user object and sync permissions.
             baseUser.user_profile = userProfile
             self.user = baseUser
+            PermissionManager.shared.syncWithSession()
             
         } catch {
             print("Could not fetch user profile details: \(error.localizedDescription)")

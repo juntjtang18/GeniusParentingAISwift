@@ -1,34 +1,46 @@
 // GeniusParentingAISwift/Subscription/PermissionManager.swift
 import Foundation
+import SwiftUI
+import Combine
 
 @MainActor
-class PermissionManager {
+// ✅ 1. PermissionManager is now an ObservableObject
+final class PermissionManager: ObservableObject {
     static let shared = PermissionManager()
 
-    // The StoreManager is still needed to check if *any* subscription is active,
-    // but the specific plan comes from the SessionManager.
     var storeManager: StoreManager?
 
-    private init() {}
+    // ✅ 2. It now publishes the current user. Views will automatically
+    //       update when this property changes.
+    @Published private var currentUser: StrapiUser?
+
+    private init() {
+        // Load the initial user state from the session when the app starts
+        syncWithSession()
+    }
+
+    /// This function must be called whenever the user logs in, logs out,
+    /// or their profile data is refreshed to keep permissions in sync.
+    func syncWithSession() {
+        self.currentUser = SessionManager.shared.currentUser
+    }
 
     func canAccess(_ permission: Permission) -> Bool {
-        // Get the active plan's product ID directly from the session.
-        let activeProductId = SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.productId
+        // ✅ 3. The logic now reads from the @Published currentUser property,
+        //       making it reactive for any observing SwiftUI views.
+        let activeProductId = currentUser?.subscription?.data?.attributes.plan.attributes.productId
 
         switch permission {
         case .viewAITab, .useAIChat, .accessMembershipCourses:
-            // Grant access if the user has an active plan that is not the free plan.
             return activeProductId != nil && activeProductId != "gpa-free-plan"
 
         case .viewCommunityTab:
             return true
 
         case .canPostComment:
-            // Grant access if the user has an active plan that is not the free plan.
             return activeProductId != nil && activeProductId != "gpa-free-plan"
 
         case .accessPremiumCourses:
-            // Grant access only if the premium plan is the active one.
             return activeProductId == ProductIdentifiers.premiumYearly
         }
     }

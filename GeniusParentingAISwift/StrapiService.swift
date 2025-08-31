@@ -42,11 +42,19 @@ class StrapiService {
     // MARK: - Authentication & User Management
 
     func login(credentials: LoginCredentials) async throws -> AuthResponse {
-        let functionName = #function // Capture the function name for logging
+        let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Attempting login for user: \(credentials.identifier)")
         do {
             let response = try await NetworkManager.shared.login(credentials: credentials)
             logger.info("[StrapiService::\(functionName)] - Login successful for user: \(response.user.username)")
+            
+            // ✅ REVISED: This now checks for the single 'role' object
+            if let role = response.user.role {
+                logger.info("[StrapiService::\(functionName)] - User role found: [\(role.name)]")
+            } else {
+                logger.warning("[StrapiService::\(functionName)] - User has no role assigned.")
+            }
+
             return response
         } catch {
             logger.error("[StrapiService::\(functionName)] - Login failed: \(error.localizedDescription)")
@@ -60,13 +68,21 @@ class StrapiService {
         do {
             let user = try await NetworkManager.shared.fetchUser()
             logger.info("[StrapiService::\(functionName)] - Successfully fetched user: \(user.username)")
+            
+            // ✅ REVISED: Add the same logging here to verify the role during session validation
+            if let role = user.role {
+                logger.info("[StrapiService::\(functionName)] - User role found: [\(role.name)]")
+            } else {
+                logger.warning("[StrapiService::\(functionName)] - User has no role assigned.")
+            }
+            
             return user
         } catch {
             logger.error("[StrapiService::\(functionName)] - Failed to fetch current user: \(error.localizedDescription)")
             throw error
         }
     }
-    
+
     func fetchUserProfile() async throws -> UserProfileApiResponse {
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Fetching user profile from /mine endpoint.")
