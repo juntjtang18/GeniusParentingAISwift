@@ -8,7 +8,8 @@ struct ProfileView: View {
     @Binding var isPresented: Bool
     @State private var isShowingOnboarding = false
     @State private var onboardingDidComplete = false
-    
+    @EnvironmentObject var tabRouter: MainTabRouter
+
     private let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
     var body: some View {
@@ -148,6 +149,8 @@ struct ProfileView: View {
             .fullScreenCover(isPresented: $isShowingOnboarding) {
                 // Show the onboarding flow. It will set didComplete = true when done.
                 OnboardingFlowView(didComplete: $onboardingDidComplete)
+                    .environmentObject(tabRouter)
+
             }
             .onChange(of: onboardingDidComplete) { completed in
                 if completed {
@@ -155,6 +158,7 @@ struct ProfileView: View {
                     isShowingOnboarding = false
                     onboardingDidComplete = false
                     Task { await viewModel.fetchUserProfile() }
+                    isPresented = false
                 }
             }
         }
@@ -182,6 +186,8 @@ struct ProfileView_Previews: PreviewProvider {
                 viewModel: ProfileViewModel(),
                 isPresented: .constant(true)
             )
+            // ✅ ADD THIS LINE TO FIX THE PREVIEW
+            .environmentObject(MainTabRouter())
         }
     }
 }

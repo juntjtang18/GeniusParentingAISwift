@@ -88,6 +88,7 @@ struct OnboardingFlowView: View {
 // MARK: - Welcome Screen (image_caf1ee.png)
 struct OnboardingIntroView: View {
     @Environment(\.theme) var currentTheme: Theme
+    @Environment(\.appDimensions) var appDimensions
     var onKnowMeBetter: () -> Void
     var onSkip: () -> Void
     
@@ -105,14 +106,15 @@ struct OnboardingIntroView: View {
                 .font(.largeTitle).bold()
                 .multilineTextAlignment(.center)
                 .foregroundColor(currentTheme.foreground)
+
             Spacer()
             
             Text("Your AI-powered partner in building trust, love, and resilience in parenting.")
                 .font(.title2)
                 .multilineTextAlignment(.center)
                 .foregroundColor(currentTheme.foreground)
-                //.padding(.bottom, 40)
-            
+                .frame(maxWidth: appDimensions.screenSize.width * 0.75)
+
             Spacer()
             /*
             Text("You already know your child best. In 30 seconds, help us know you — so your parenting support is as smart and unique as you are.")
@@ -243,7 +245,8 @@ struct OnboardingResultsView: View {
     @Environment(\.dismiss) private var dismiss   // ← add this
 
     @EnvironmentObject var themeManager: ThemeManager
-    
+    @EnvironmentObject var tabRouter: MainTabRouter
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -292,9 +295,9 @@ struct OnboardingResultsView: View {
             Spacer()
             
             Button("Your courses to match your style") {
-                            //print("Final button tapped. Setting didComplete to true.")
-                            onComplete()   // ← call the closure (sets the binding in the parent)
-                            dismiss()      // ← then close the fullscreen cover immediately
+                            tabRouter.selectedTab = 0
+                            onComplete()
+                            dismiss()      
                         }
                         .buttonStyle(PrimaryButtonStyle())
             Spacer()

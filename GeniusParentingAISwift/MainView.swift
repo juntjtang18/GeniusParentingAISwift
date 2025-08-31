@@ -13,7 +13,7 @@ struct MainView: View {
     @State private var selectedTab: Int = 0
     @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
     @AppStorage("personalityReminderSuppressed") private var personalityReminderSuppressed = false
-    @StateObject private var tabRouter = MainTabRouter()      // ⬅️ add
+    @StateObject private var tabRouter = MainTabRouter()
 
     // Existing sheets
     @State private var selectedLanguage = "en"
@@ -153,6 +153,7 @@ struct MainView: View {
                     viewModel: profileViewModel,
                     isPresented: $isShowingProfileSheet
                 )
+                .environmentObject(tabRouter)
                 .transition(.move(edge: .leading))
                 .zIndex(3)
             }
@@ -204,6 +205,7 @@ struct MainView: View {
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlowView(didComplete: $hasCompletedPersonalityTest)
                 .environmentObject(themeManager)
+               .environmentObject(tabRouter)
         }
         .onChange(of: hasCompletedPersonalityTest) { done in
             if done { showOnboarding = false }
