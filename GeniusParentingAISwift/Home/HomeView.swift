@@ -437,9 +437,9 @@ private struct HotTopicsListScreen: View {
                         ProgressView().padding(.top, 40)
                     } else {
                         ForEach(topics) { t in
-                            NavigationLink(destination: ShowACourseView(
+                            NavigationLink(destination: TopicView(
                                 selectedLanguage: $selectedLanguage,
-                                courseId: t.id, // Use the topic's ID
+                                topicId: t.id,
                                 isSideMenuShowing: $isSideMenuShowing
                             )) {
                                 HotTopicCardView(topic: t)
