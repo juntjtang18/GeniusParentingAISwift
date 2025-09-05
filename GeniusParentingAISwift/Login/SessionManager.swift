@@ -20,6 +20,24 @@ class SessionManager: ObservableObject {
         }
         return Role(rawValue: roleString) ?? .free
     }
+    
+    // MARK: - Core Session Logic
+    
+    /// Establishes a new session after a successful login.
+    func startSession(jwt: String, user: StrapiUser) {
+        setJWT(jwt)
+        setCurrentUser(user)
+        updateLastUserEmail(user.email)
+        PermissionManager.shared.syncWithSession()
+    }
+    
+    /// The central function for logging out the user.
+    func logout() {
+        clearSession()
+        PermissionManager.shared.syncWithSession()
+        // Post a notification so the root view can react and update the UI.
+        NotificationCenter.default.post(name: .didLogout, object: nil)
+    }
 
     func refreshCurrentUserFromServer() async {
         let logger = AppLogger(category: "SessionManager")
@@ -34,6 +52,8 @@ class SessionManager: ObservableObject {
             // For now, we will leave the stale data.
         }
     }
+    
+    // MARK: - Helpers
     
     func isSameUser(email: String) -> Bool {
         return email.lowercased() == lastUserEmail?.lowercased()

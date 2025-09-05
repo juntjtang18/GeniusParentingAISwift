@@ -156,4 +156,4 @@ class NetworkManager {
 }
 
 private struct EmptyResponse: Codable {}
-private struct EmptyPayload: Codable {}
+//private struct EmptyPayload: Codable {}

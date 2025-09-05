@@ -15,7 +15,7 @@ struct LoginView: View {
     @State private var agreeToPrivacy = false
     @State private var showingPrivacyPolicy = false
     @State private var showingTermsOfService = false
-    private let inputInset: CGFloat = 50   // match TextField/SecureField horizontal padding
+    private let inputInset: CGFloat = 50  // match TextField/SecureField horizontal padding
 
     enum ViewState {
         case login
@@ -48,7 +48,7 @@ struct LoginView: View {
                             .padding(.horizontal, 18)
                             .frame(height: 50)
                             .background(theme.inputBoxBackground)
-                            //.foregroundColor(theme.inputBoxForeground)         // text color
+                            //.foregroundColor(theme.inputBoxForeground)      // text color
                             .overlay(
                                 Capsule().stroke(theme.border, lineWidth: 2) // subtle hairline
                             )
@@ -79,10 +79,7 @@ struct LoginView: View {
                                 .padding()
                         }
                         
-                        if isLoading {
-                            ProgressView()
-                                .padding()
-                        }
+                        // ✅ REMOVED: The separate ProgressView is no longer needed here.
                         
                         VStack(spacing: 15) {
                             // ⬇︎ Checkbox block
@@ -118,17 +115,25 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity, alignment: .leading) // expand to same width as button/fields
                             .padding(.leading, inputInset)
                             
+                            // ✅ MODIFIED: The Login Button now shows a ProgressView internally.
                             Button(action: { Task { await login() } }) {
-                                Text("Login")
-                                    .font(.headline)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(theme.primary)
-                                    .foregroundColor(theme.primaryText)
-                                    .overlay(
-                                        Capsule().stroke(theme.border, lineWidth: 2)   // ⬅️ added border
-                                    )
-                                    .clipShape(Capsule())
+                                Group {
+                                    if isLoading {
+                                        ProgressView()
+                                    } else {
+                                        Text("Login")
+                                            .font(.headline)
+                                    }
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50) // Fixed height to prevent layout shifts
+                                .background(theme.primary)
+                                .foregroundColor(theme.primaryText) // Applies to both Text and ProgressView
+                                .overlay(
+                                    Capsule().stroke(theme.border, lineWidth: 2)
+                                )
+                                .clipShape(Capsule())
                             }
                             .disabled(isLoading || !agreeToTerms || !agreeToPrivacy)
                         }
@@ -155,7 +160,6 @@ struct LoginView: View {
         }
     }
 
-    // login() and performNewLogin() functions remain the same...
     func login() async {
         isLoading = true
         errorMessage = ""
@@ -175,9 +179,8 @@ struct LoginView: View {
 
     private func performNewLogin(credentials: LoginCredentials) async throws {
         let authResponse = try await StrapiService.shared.login(credentials: credentials)
-        SessionManager.shared.setJWT(authResponse.jwt)
-        SessionManager.shared.setCurrentUser(authResponse.user)
-        SessionManager.shared.updateLastUserEmail(authResponse.user.email)
+        // ✅ CLEANUP: Use the centralized startSession method.
+        SessionManager.shared.startSession(jwt: authResponse.jwt, user: authResponse.user)
         isLoggedIn = true
     }
 }

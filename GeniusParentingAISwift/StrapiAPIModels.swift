@@ -263,3 +263,12 @@ struct CoursePick: Codable, Hashable, Identifiable {
     let id: Int
     let rank: Int
 }
+
+
+// A generic empty payload for POST requests that don't require a body.
+struct EmptyPayload: Codable {}
+
+// The expected response from the unregister endpoint.
+struct UnregisterResponse: Codable {
+    let message: String
+}

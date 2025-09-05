@@ -61,7 +61,26 @@ class StrapiService {
             throw error
         }
     }
+    
+    func unregister() async throws {
+        let functionName = #function
+        logger.info("[StrapiService::\(functionName)] - Attempting to unregister and delete current user.")
+        
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/auth/unregister")!
 
+        do {
+            // This endpoint requires a POST request but doesn't need a body.
+            // We expect a simple message response, which we decode but don't need to return.
+            let _: UnregisterResponse = try await NetworkManager.shared.post(to: url, body: EmptyPayload())
+            
+            logger.info("[StrapiService::\(functionName)] - User successfully unregistered.")
+        } catch {
+            logger.error("[StrapiService::\(functionName)] - Failed to unregister user: \(error.localizedDescription)")
+            // Re-throw the error to be handled by the caller.
+            throw error
+        }
+    }
+    
     func fetchCurrentUser() async throws -> StrapiUser {
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Fetching current user.")

@@ -10,7 +10,7 @@ extension Notification.Name {
 
 /// Everything you might want globally.
 struct AppDimensions: Equatable {
-    var screenSize: CGSize         // logical points
+    var screenSize: CGSize      // logical points
     var safeArea: EdgeInsets
     var displayScale: CGFloat
 }
@@ -70,7 +70,8 @@ struct GeniusParentingAISwiftApp: App {
                     if isCheckingToken {
                         ProgressView("Checking Login Status...")
                     } else if isLoggedIn, let user = SessionManager.shared.currentUser {
-                        MainView(isLoggedIn: $isLoggedIn, logoutAction: logout)
+                        // The logoutAction now calls the centralized SessionManager.logout()
+                        MainView(isLoggedIn: $isLoggedIn, logoutAction: { SessionManager.shared.logout() })
                             .id(user.id)
                     } else {
                         LoginView(isLoggedIn: $isLoggedIn)
@@ -84,8 +85,14 @@ struct GeniusParentingAISwiftApp: App {
                 .onAppear {
                     checkLoginStatus()
                 }
+                // ✅ ADDED: Listen for our custom logout notification
+                .onReceive(NotificationCenter.default.publisher(for: .didLogout)) { _ in
+                    handleLogout()
+                }
+                // Listen for session invalidation (e.g., from NetworkManager)
                 .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
-                    logout()
+                    // We can call logout directly here as well to ensure data is cleared
+                    SessionManager.shared.logout()
                 }
             }
         }
@@ -102,9 +109,8 @@ struct GeniusParentingAISwiftApp: App {
             }
             do {
                 let user = try await StrapiService.shared.fetchCurrentUser()
-                SessionManager.shared.setCurrentUser(user)
-                SessionManager.shared.updateLastUserEmail(user.email)
-                PermissionManager.shared.syncWithSession()
+                // Use the new convenience method to set up the session
+                SessionManager.shared.startSession(jwt: SessionManager.shared.getJWT()!, user: user)
                 isLoggedIn = true
             } catch {
                 SessionManager.shared.clearSession()
@@ -114,12 +120,8 @@ struct GeniusParentingAISwiftApp: App {
     }
 
 
-    private func logout() {
-        // This function is correct, no changes needed.
-        SessionManager.shared.clearSession()
-        PermissionManager.shared.syncWithSession()
-        //hasCompletedPersonalityTest = false // It's good practice to reset this on logout
-        NotificationCenter.default.post(name: .didLogout, object: nil)
+    /// ✅ REFACTORED: This function's only job is to update the UI state.
+    private func handleLogout() {
         withAnimation {
             isLoggedIn = false
         }

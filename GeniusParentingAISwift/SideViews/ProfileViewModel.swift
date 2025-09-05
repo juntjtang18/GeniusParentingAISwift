@@ -99,4 +99,26 @@ class ProfileViewModel: ObservableObject {
             return false
         }
     }
+    
+    /// Unregisters the user from the server and logs them out locally.
+    /// - Returns: `true` if the operation was successful, otherwise `false`.
+    func unregisterUser() async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            // 1. Call the service to delete the user account on the server.
+            try await StrapiService.shared.unregister()
+            
+            // 2. On success, clear the local session data.
+            SessionManager.shared.logout()
+            
+            isLoading = false
+            return true
+        } catch {
+            errorMessage = "Failed to delete account: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        }
+    }
 }

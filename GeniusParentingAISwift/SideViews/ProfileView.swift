@@ -30,7 +30,9 @@ struct ProfileView: View {
                     // All profile details are now in this self-contained view
                     ProfileDetailsList(
                         user: user,
-                        isShowingOnboarding: $isShowingOnboarding
+                        isShowingOnboarding: $isShowingOnboarding,
+                        viewModel: viewModel,
+                        isPresented: $isPresented
                     )
                 } else {
                     Text("No profile data available.")
@@ -79,6 +81,10 @@ struct ProfileView: View {
 private struct ProfileDetailsList: View {
     let user: StrapiUser
     @Binding var isShowingOnboarding: Bool
+    @ObservedObject var viewModel: ProfileViewModel
+    @Binding var isPresented: Bool
+    
+    @State private var isShowingUnregisterAlert = false
     
     private let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
@@ -108,8 +114,29 @@ private struct ProfileDetailsList: View {
                         .foregroundColor(.secondary)
                 }
             }
+            
+            // Section for account deletion
+            Section {
+                Button("Delete Account", role: .destructive) {
+                    isShowingUnregisterAlert = true
+                }
+            }
         }
         .listStyle(GroupedListStyle())
+        .alert("Are you sure?", isPresented: $isShowingUnregisterAlert) {
+            Button("Delete My Account", role: .destructive) {
+                Task {
+                    let success = await viewModel.unregisterUser()
+                    if success {
+                        // On successful deletion and logout, dismiss the profile view.
+                        isPresented = false
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your account and all associated data will be permanently deleted. This action is irreversible.")
+        }
     }
 }
 

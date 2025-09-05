@@ -10,6 +10,11 @@ struct SubscriptionView: View {
     @State private var selectedPlanIndex: Int = 0
     @State private var showSuccessAlert = false
     @State private var showErrorAlert = false
+    // @State private var showTermsOfService = false // 1. REMOVED
+    @State private var showPrivacyPolicy = false
+
+    // 2. ADDED URL for Apple's standard EULA
+    private let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     var body: some View {
         NavigationView {
@@ -38,6 +43,21 @@ struct SubscriptionView: View {
                         .tabViewStyle(.page(indexDisplayMode: .always))
                         .indexViewStyle(.page(backgroundDisplayMode: .never))
                     }
+
+                    // Links to legal documents
+                    HStack(spacing: 24) {
+                        // 3. REPLACED Button with Link
+                        Link("Terms of Use", destination: termsOfUseURL)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Button("Privacy Policy") {
+                            showPrivacyPolicy = true
+                        }
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    }
+                    .padding(.bottom, 8)
                 }
                 .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
                 .navigationTitle("Subscription Plans")
@@ -72,6 +92,11 @@ struct SubscriptionView: View {
                 } message: {
                     Text(storeManager.purchaseState.errorMessage ?? "An unknown error occurred. Please try again.")
                 }
+                // 4. REMOVED the sheet for Terms of Service
+                // .sheet(isPresented: $showTermsOfService) { ... }
+                .sheet(isPresented: $showPrivacyPolicy) {
+                    PrivacyPolicyView(isPresented: $showPrivacyPolicy)
+                }
 
                 if case .inProgress = storeManager.purchaseState {
                     Color.black.opacity(0.4).ignoresSafeArea()
@@ -96,8 +121,6 @@ private struct SubscriptionCardView: View {
     @Binding var selectedPlanIndex: Int
     let totalPlans: Int
 
-    // **CRITICAL FIX:** This logic now directly compares the card's product ID
-    // with the active plan ID from the server, stored in SessionManager.
     var isPurchased: Bool {
         guard let activeProductId = SessionManager.shared.currentUser?.subscription?.data?.attributes.plan.attributes.productId else {
             return false
