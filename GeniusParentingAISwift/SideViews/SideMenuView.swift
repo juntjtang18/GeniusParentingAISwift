@@ -39,14 +39,14 @@ struct SideMenuView: View {
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
-                
+                /*
                 Button(action: { handleMenuSelection { isShowingLanguageSheet = true } }) {
                     Label("Language", systemImage: "globe")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
-
+                 */
                 // Commented out the Theme selection button
                 /*
                 Button(action: { handleMenuSelection { isShowingThemeSheet = true } }) {
@@ -55,7 +55,6 @@ struct SideMenuView: View {
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
-                */
 
                 Button(action: { handleMenuSelection { isShowingSettingSheet = true } }) {
                     Label("Setting", systemImage: "gear")
@@ -63,18 +62,39 @@ struct SideMenuView: View {
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
-                
-                Button(action: { handleMenuSelection { isShowingTermsSheet = true } }) {
+                 */
+
+                Button(action: {
+                    if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
                     Label("Terms of Service", systemImage: "doc.text.fill")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
 
                 Divider()
 
-                Button(action: { handleMenuSelection { isShowingPrivacySheet = true } }) {
+                Button(action: {
+                    if let url = URL(string: "https://www.geniusparentingai.ca/privacy-policy") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
                     Label("Privacy Policy", systemImage: "shield.lefthalf.filled")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
+
+                Divider()
+
+                Button(action: {
+                    if let url = URL(string: "https://www.geniusparentingai.ca/community-guidelines") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Community Guidelines", systemImage: "list.bullet.rectangle")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+
             }
 
             Spacer()
