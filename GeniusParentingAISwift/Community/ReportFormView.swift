@@ -1,24 +1,15 @@
-//
-//  ReportFormView.swift
-//  GeniusParentingAISwift
-//
-//  Created by James Tang on 2025/9/9.
-//
-
-
 // ReportFormView.swift
 import SwiftUI
 
 struct ReportFormView: View {
     @Environment(\.theme) private var currentTheme: Theme
-    let title: String                    // e.g. "Report Comment"
-    let subject: String                  // e.g. "by @username"
+    let title: String
+    let subject: String
     let onCancel: () -> Void
     let onSubmit: (_ reason: ModerationReason, _ details: String?) -> Void
 
     @State private var reason: ModerationReason = .spam
     @State private var details: String = ""
-    @State private var isSubmitting = false
     @FocusState private var focusDetails: Bool
 
     var body: some View {
@@ -27,10 +18,13 @@ struct ReportFormView: View {
                 Section(header: Text("Reason")) {
                     Picker("Reason", selection: $reason) {
                         ForEach(ModerationReason.allCases, id: \.self) { r in
-                            Text(label(for: r)).tag(r)
+                            Text(label(for: r))
+                                .tag(r as ModerationReason)   // 👈 explicit tag type
                         }
                     }
+                    .pickerStyle(.navigationLink)            // 👈 on iOS 16+, reliable in Form
                 }
+
 
                 Section(header: Text("Details (optional)")) {
                     TextEditor(text: $details)
@@ -43,24 +37,17 @@ struct ReportFormView: View {
 
                 Section {
                     Button {
-                        isSubmitting = true
-                        onSubmit(reason, details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : details)
-                        // isSubmitting is reset by caller closing the sheet
+                        onSubmit(
+                            reason,
+                            details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : details
+                        )
                     } label: {
-                        if isSubmitting {
-                            ProgressView()
-                        } else {
-                            Label("Submit Report", systemImage: "paperplane.fill")
-                        }
+                        Label("Submit Report", systemImage: "paperplane.fill")
                     }
                     .foregroundColor(currentTheme.accent)
                     .background(currentTheme.accentBackground)
-                    .disabled(isSubmitting)
-                    //.buttonStyle(.borderedProminent)
 
-                    Button(role: .cancel) {
-                        onCancel()
-                    } label: {
+                    Button(role: .cancel) { onCancel() } label: {
                         Label("Cancel", systemImage: "xmark.circle")
                     }
                     .foregroundColor(currentTheme.accent)
@@ -75,13 +62,13 @@ struct ReportFormView: View {
 
     private func label(for r: ModerationReason) -> String {
         switch r {
-        case .spam:        return "Spam"
-        case .harassment:  return "Harassment"
-        case .hate:        return "Hate"
-        case .sexual:      return "Sexual Content"
-        case .violence:    return "Violence"
-        case .illegal:     return "Illegal Activity"
-        case .other:       return "Other"
+        case .spam:       return "Spam"
+        case .harassment: return "Harassment"
+        case .hate:       return "Hate"
+        case .sexual:     return "Sexual Content"
+        case .violence:   return "Violence"
+        case .illegal:    return "Illegal Activity"
+        case .other:      return "Other"
         }
     }
 }

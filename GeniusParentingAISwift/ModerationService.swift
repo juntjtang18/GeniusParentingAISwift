@@ -29,7 +29,7 @@ import Foundation
 // MARK: - Models
 
 /// Allowed reasons for reporting (mirrors server REASONS set)
-public enum ModerationReason: String, Codable, CaseIterable {
+public enum ModerationReason: String, Codable, CaseIterable, Hashable {
     case spam
     case harassment
     case hate
