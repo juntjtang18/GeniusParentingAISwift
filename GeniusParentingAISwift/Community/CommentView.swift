@@ -20,7 +20,7 @@ struct CommentView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea() // Ensure the gradient fills the entire screen
-                 */
+                */
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
@@ -80,7 +80,7 @@ private struct CommentsListView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Comments are now reversed for descending order
                 ForEach(viewModel.comments.reversed()) { comment in
-                    CommentRowView(comment: comment)
+                    CommentRowView(comment: comment, viewModel: viewModel)
                 }
             }
             .padding(.top)
@@ -90,13 +90,18 @@ private struct CommentsListView: View {
 
 private struct CommentRowView: View {
     let comment: Comment
-    
+    @ObservedObject var viewModel: CommentViewModel
+    @State private var showReportConfirm = false
+    @State private var showReportSheet = false
+    @State private var showBlockConfirm = false
+    @State private var working = false
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "person.crop.circle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.gray)
-
+            
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(comment.attributes.author?.data?.attributes.username ?? "Anonymous")
@@ -113,26 +118,88 @@ private struct CommentRowView: View {
             }
             
             Spacer()
-
-            Button(action: {}) {
-                Image(systemName: "ellipsis")
-            }
-            .foregroundColor(.secondary)
+            
+            // Ellipsis menu with Report / Block
+            Menu {
+                Button(role: .destructive) { showReportSheet = true } label: {
+                    Label("Report Comment", systemImage: "flag")
+                }
+                
+                if let _ = comment.attributes.author?.data?.id {
+                    Button(role: .destructive) {
+                        showBlockConfirm = true
+                    } label: {
+                        Label("Block User", systemImage: "person.crop.circle.badge.xmark")
+                    }
+                }
+            } label: {
+                if working { ProgressView().scaleEffect(0.6) } else {
+                    Image(systemName: "ellipsis").foregroundColor(.secondary)
+                }
+            }.disabled(working)
         }
         .padding(.vertical, 8)
+        // Confirmation dialogs
+        .sheet(isPresented: $showReportSheet) {
+            ReportFormView(
+                title: "Report Comment",
+                subject: "by @\(comment.attributes.author?.data?.attributes.username ?? "unknown")",
+                onCancel: { showReportSheet = false },
+                onSubmit: { reason, details in
+                    Task { @MainActor in
+                        working = true
+                        defer { working = false }
+                        do {
+                            try await viewModel.reportComment(
+                                commentId: comment.id,
+                                reason: reason,
+                                details: details
+                            )
+                            showReportSheet = false
+                        } catch {
+                            viewModel.errorMessage = error.localizedDescription
+                        }
+                    }
+                }
+            )
+        }
+        .confirmationDialog("Block this user?", isPresented: $showBlockConfirm, titleVisibility: .visible) {
+            if let offenderId = comment.attributes.author?.data?.id {
+                Button("Block User", role: .destructive) { block(offenderId: offenderId) }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
-    
+
     private func timeAgo(from dateString: String) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let date = formatter.date(from: dateString) else { return "Just now" }
-        
+
         let now = Date()
         let formatter_display = RelativeDateTimeFormatter()
         formatter_display.unitsStyle = .full
         return formatter_display.localizedString(for: date, relativeTo: now)
     }
+    
+    // New helpers inside CommentRowView
+    private func report() {
+      Task { @MainActor in
+        working = true; defer { working = false }
+        do { try await viewModel.reportComment(commentId: comment.id, reason: .other, details: "Reported from iOS") }
+        catch { viewModel.errorMessage = error.localizedDescription }
+      }
+    }
+    
+    private func block(offenderId: Int) {
+      Task { @MainActor in
+        working = true; defer { working = false }
+        do { try await viewModel.blockUser(userId: offenderId) }
+        catch { viewModel.errorMessage = error.localizedDescription }
+      }
+    }
 }
+
 
 private struct CommentInputArea: View {
     @ObservedObject var viewModel: CommentViewModel

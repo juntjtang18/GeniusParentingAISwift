@@ -13,7 +13,8 @@ struct SideMenuView: View {
     @Binding var isShowingPrivacySheet: Bool
     @Binding var isShowingTermsSheet: Bool
     @Binding var isShowingSubscriptionSheet: Bool
-
+    @Binding var isShowingBlockedUsers: Bool
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading) {
@@ -38,6 +39,12 @@ struct SideMenuView: View {
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
+                Divider()
+                Button(action: { handleMenuSelection { isShowingBlockedUsers = true } }) {
+                    Label("Blocked Users", systemImage: "person.2.slash")
+                }
+                .buttonStyle(SideMenuItemButtonStyle())
+    
                 Divider()
                 /*
                 Button(action: { handleMenuSelection { isShowingLanguageSheet = true } }) {
@@ -141,7 +148,8 @@ struct SideMenuView_Previews: PreviewProvider {
             logoutAction: {},
             isShowingPrivacySheet: .constant(false),
             isShowingTermsSheet: .constant(false),
-            isShowingSubscriptionSheet: .constant(false)
+            isShowingSubscriptionSheet: .constant(false),
+            isShowingBlockedUsers: .constant(false)
         )
     }
 }

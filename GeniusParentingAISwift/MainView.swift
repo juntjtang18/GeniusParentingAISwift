@@ -4,6 +4,7 @@ final class MainTabRouter: ObservableObject {
     @Published var selectedTab: Int = 0
     @Published var needsCourseViewReset: Bool = false
 }
+
 struct MainView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Binding var isLoggedIn: Bool
@@ -14,7 +15,7 @@ struct MainView: View {
     @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
     @AppStorage("personalityReminderSuppressed") private var personalityReminderSuppressed = false
     @StateObject private var tabRouter = MainTabRouter()
-
+    
     // Existing sheets
     @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
@@ -24,6 +25,7 @@ struct MainView: View {
     @State private var isShowingPrivacySheet = false
     @State private var isShowingTermsSheet = false
     @State private var isShowingSubscriptionSheet = false
+    @State private var isShowingBlockedUsers = false
 
     @State private var isSideMenuShowing = false
     @State private var showPersonalityPrompt = false
@@ -139,7 +141,8 @@ struct MainView: View {
                 logoutAction: logoutAction,
                 isShowingPrivacySheet: $isShowingPrivacySheet,
                 isShowingTermsSheet: $isShowingTermsSheet,
-                isShowingSubscriptionSheet: $isShowingSubscriptionSheet
+                isShowingSubscriptionSheet: $isShowingSubscriptionSheet,
+                isShowingBlockedUsers: $isShowingBlockedUsers
             )
             .frame(width: UIScreen.main.bounds.width * 0.7)
             .frame(maxWidth: .infinity, alignment: .trailing)
@@ -187,6 +190,22 @@ struct MainView: View {
                     .transition(.move(edge: .leading))
                     .zIndex(3)
             }
+            if isShowingBlockedUsers {
+                NavigationStack {
+                    BlockedUsersView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    withAnimation(.easeInOut) { isShowingBlockedUsers = false }
+                                } label: {
+                                    Label("Close", systemImage: "xmark")
+                                }
+                            }
+                        }
+                }
+                .transition(.move(edge: .leading))
+                .zIndex(3)
+            }
         }
         .animation(.easeInOut, value: isSideMenuShowing)
         .animation(.easeInOut, value: isShowingProfileSheet)
@@ -196,6 +215,7 @@ struct MainView: View {
         .animation(.easeInOut, value: isShowingPrivacySheet)
         .animation(.easeInOut, value: isShowingTermsSheet)
         .animation(.easeInOut, value: isShowingSubscriptionSheet)
+        .animation(.easeInOut, value: isShowingBlockedUsers)
         .alert("Try the 30-sec Personality Test?", isPresented: $showPersonalityPrompt) {
             Button("Not now") { personalityReminderSuppressed = true; showPersonalityPrompt = false }
             Button("Take the test") { showPersonalityPrompt = false; showOnboarding = true }

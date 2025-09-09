@@ -7,7 +7,7 @@ struct AddPostView: View {
     @StateObject private var viewModel: AddPostViewModel
     @ObservedObject var communityViewModel: CommunityViewModel
     @Environment(\.dismiss) private var dismiss
-
+    @Environment(\.theme) private var currentTheme: Theme
     init(communityViewModel: CommunityViewModel) {
         _viewModel = StateObject(wrappedValue: AddPostViewModel(communityViewModel: communityViewModel))
         self.communityViewModel = communityViewModel
@@ -16,14 +16,20 @@ struct AddPostView: View {
     var body: some View {
         NavigationView {
             ZStack {
+                LinearGradient(
+                    colors: [currentTheme.background, currentTheme.background2],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea() // Ensure the gradient fills the entire screen
                 VStack {
                     TextEditor(text: $viewModel.content)
                         .padding()
                         .frame(height: 150)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.gray, lineWidth: 1)
-                        )
+                        //.overlay(
+                        //    RoundedRectangle(cornerRadius: 8)
+                        //        .stroke(Color.gray, lineWidth: 1)
+                        //)
                         .padding()
 
                     ScrollView(.horizontal, showsIndicators: false) {

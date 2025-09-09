@@ -90,4 +90,26 @@ class CommentViewModel: ObservableObject {
         }
         isLoading = false
     }
+    // MARK: - Moderation wiring
+    func reportComment(commentId: Int, reason: ModerationReason = .other, details: String? = nil) async throws {
+        errorMessage = nil
+        _ = try await ModerationService.shared.reportComment(commentId: commentId, reason: reason, details: details)
+        errorMessage = "Comment reported."
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if self.errorMessage == "Comment reported." { self.errorMessage = nil }
+        }
+    }
+
+    func blockUser(userId: Int) async throws {
+        errorMessage = nil
+        _ = try await ModerationService.shared.blockUser(userId: userId)
+        self.comments.removeAll { $0.attributes.author?.data?.id == userId }
+        errorMessage = "User blocked."
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if self.errorMessage == "User blocked." { self.errorMessage = nil }
+        }
+    }
+
 }
