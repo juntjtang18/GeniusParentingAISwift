@@ -7,18 +7,28 @@ struct SignupView: View {
     @Environment(\.theme) var theme: Theme
     @Binding var isLoggedIn: Bool
     @Binding var currentView: LoginView.ViewState
+
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
     @State private var isLoading = false
 
+    // NEW: explicit consent
+    @State private var agreedToPolicies = false
+
+    // Policy URLs
+    private let tosURL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+    private let privacyURL = "https://www.geniusparentingai.ca/privacy-policy"
+    private let guidelinesURL = "https://www.geniusparentingai.ca/community-guidelines"
+
     let keychain = Keychain(service: Config.keychainService)
 
     var body: some View {
-        // CHANGED: Root view is now a ZStack to match LoginView's structure for vertical centering.
         ZStack {
-            theme.background.ignoresSafeArea()
+            LinearGradient(colors: [theme.background, theme.background2],
+                           startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Image("applogo-\(theme.id)")
@@ -27,6 +37,7 @@ struct SignupView: View {
                     .frame(height: 150)
                     .padding(.vertical, 20)
 
+                // Username
                 TextField("User Name", text: $username)
                     .font(.system(size: 20))
                     .autocapitalization(.none)
@@ -34,14 +45,13 @@ struct SignupView: View {
                     .padding(.horizontal, 18)
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
-                    .foregroundColor(theme.foreground)
-                    .overlay(
-                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
-                    )
+                    .foregroundColor(theme.inputBoxForeground)
+                    .overlay(Capsule().stroke(theme.border, lineWidth: 1))
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
 
+                // Email
                 TextField("Email", text: $email)
                     .font(.system(size: 20))
                     .autocapitalization(.none)
@@ -49,88 +59,97 @@ struct SignupView: View {
                     .padding(.horizontal, 18)
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
-                    .foregroundColor(theme.foreground)
-                    .overlay(
-                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
-                    )
+                    .foregroundColor(theme.inputBoxForeground)
+                    .overlay(Capsule().stroke(theme.border, lineWidth: 1))
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
 
+                // Password
                 SecureField("Password", text: $password)
                     .font(.system(size: 20))
                     .padding(.horizontal, 18)
                     .frame(height: 50)
                     .background(theme.inputBoxBackground)
-                    .foregroundColor(theme.foreground)
-                    .overlay(
-                        Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
-                    )
+                    .foregroundColor(theme.inputBoxForeground)
+                    .overlay(Capsule().stroke(theme.border, lineWidth: 1))
                     .clipShape(Capsule())
                     .padding(.horizontal)
                     .disabled(isLoading)
-                
+
+                // Errors / progress
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
                         .foregroundColor(.red)
-                        .padding()
+                        .font(.footnote)
+                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
+                        .accessibilityLabel("Error: \(errorMessage)")
                 }
 
-                if isLoading {
-                    ProgressView()
-                        .padding()
+                // CONSENT: third-person + links + toggle
+                HStack {
+                    if let md = try? AttributedString(
+                        markdown:
+                """
+                By signing up, the user agrees to the [Terms of Service](\(tosURL)), [Privacy Policy](\(privacyURL)), and [Community Guidelines](\(guidelinesURL)).
+                """
+                    ) {
+                        Text(md)
+                            .font(.footnote)
+                            .foregroundColor(theme.foreground)
+                            .multilineTextAlignment(.leading)
+                            .tint(theme.primary)
+                    }
+
+                    // ⬇️ Checkbox (replaces Toggle)
+                    Button {
+                        agreedToPolicies.toggle()
+                    } label: {
+                        Image(systemName: agreedToPolicies ? "checkmark.square.fill" : "square")
+                            .font(.system(size: 18, weight: .semibold))
+                            //.foregroundColor(agreedToPolicies ? theme.primary : theme.border)
+                            .padding(6)
+                            //.background(theme.inputBoxBackground)   // match text fields
+                            //.clipShape(Capsule())
+                            //.overlay(
+                            //    Capsule().stroke(theme.border, lineWidth: 1)
+                            //)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Agree to Terms of Service, Privacy Policy, and Community Guidelines")
+                    .accessibilityAddTraits(.isButton)
                 }
-                
+
+
+
+                // Sign Up
+                // Sign Up
                 Button(action: { Task { await signup() } }) {
-                    Text("Sign Up")
-                        .font(.headline)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(theme.primary)
-                        .foregroundColor(theme.primaryText)
-                        .overlay(
-                            Capsule().stroke(theme.border, lineWidth: 1)   // ⬅️ added border
-                        )
-                        .clipShape(Capsule())
+                    ZStack {
+                        if isLoading {
+                            ProgressView()
+                                .tint(theme.primaryText)
+                        } else {
+                            Text("Sign Up")
+                                .font(.headline)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                    .background(agreedToPolicies && !isLoading ? theme.primary : theme.primary.opacity(0.4))
+                    .foregroundColor(theme.primaryText)
+                    .overlay(Capsule().stroke(theme.border, lineWidth: 1))
+                    .clipShape(Capsule())
                 }
                 .padding(.horizontal)
-                .disabled(isLoading)
+                .disabled(isLoading || !agreedToPolicies)
 
 
-                Button(action: {
-                    currentView = .login
-                }) {
+                // Switch to Login
+                Button(action: { currentView = .login }) {
                     Text("Already have an account? Login")
                 }
-                //.buttonStyle(LinkStyleButtonStyle())
                 .foregroundColor(theme.accentThird)
-                .padding(.top)
-
-                Button(action: {
-                    // TODO: Implement Google Sign-In action
-                }) {
-                    HStack {
-                        Image("google-logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                        Text("Continue with Google")
-                            .font(.headline)
-                            .foregroundColor(theme.accent)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(theme.accentBackground)
-                    .cornerRadius(25)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 25)
-                            .stroke(theme.border, lineWidth: 1)
-                    )
-                }
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
-                // REMOVED: The Spacer that was pushing content to the top is gone.
             }
             .padding()
         }
@@ -138,20 +157,25 @@ struct SignupView: View {
 
     func signup() async {
         guard !isLoading else { return }
-        
         errorMessage = ""
+
+        // minimal client-side validation
         guard !username.isEmpty, !email.isEmpty, !password.isEmpty else {
             errorMessage = "Please fill in all fields"
             return
         }
-        
+        guard agreedToPolicies else {
+            errorMessage = "Agreement to the Terms of Service, Privacy Policy, and Community Guidelines is required."
+            return
+        }
+
         isLoading = true
-        
-        let payload = RegistrationPayload(username: username, email: email, password: password)
+        let payload = RegistrationPayload(username: username, email: email, password: password) // uses shared models
 
         do {
             let authResponse = try await NetworkManager.shared.signup(payload: payload)
             keychain["jwt"] = authResponse.jwt
+            // optional: isLoggedIn = true
             currentView = .login
         } catch {
             errorMessage = error.localizedDescription

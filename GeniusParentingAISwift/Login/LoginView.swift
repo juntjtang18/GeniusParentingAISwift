@@ -6,16 +6,12 @@ import KeychainAccess
 struct LoginView: View {
     @Environment(\.theme) var theme: Theme
     @Binding var isLoggedIn: Bool
+
     @State private var currentView: ViewState = .login
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
     @State private var isLoading = false
-    @State private var agreeToTerms = false
-    @State private var agreeToPrivacy = false
-    @State private var showingPrivacyPolicy = false
-    @State private var showingTermsOfService = false
-    private let inputInset: CGFloat = 50  // match TextField/SecureField horizontal padding
 
     enum ViewState {
         case login
@@ -26,12 +22,12 @@ struct LoginView: View {
         Group {
             if currentView == .login {
                 ZStack {
-                    //theme.background.ignoresSafeArea()
                     LinearGradient(
                         colors: [theme.background, theme.background2],
                         startPoint: .top, endPoint: .bottom
                     )
                     .ignoresSafeArea()
+
                     VStack(spacing: 20) {
                         Image("applogo-\(theme.id)")
                             .resizable()
@@ -40,82 +36,49 @@ struct LoginView: View {
                             .padding(.bottom, 20)
 
                         // Email
-                        TextField("", text: $email, prompt: Text("Email").foregroundColor(theme.inputBoxForeground.opacity(0.6)))
-                            .font(.system(size: 20))
-                            .autocapitalization(.none)
-                            .keyboardType(.emailAddress)
-                            .disableAutocorrection(true)
-                            .padding(.horizontal, 18)
-                            .frame(height: 50)
-                            .background(theme.inputBoxBackground)
-                            //.foregroundColor(theme.inputBoxForeground)      // text color
-                            .overlay(
-                                Capsule().stroke(theme.border, lineWidth: 2) // subtle hairline
-                            )
-                            .clipShape(Capsule())
-                            .padding(.horizontal)
-                            .disabled(isLoading)
+                        TextField(
+                            "",
+                            text: $email,
+                            prompt: Text("Email").foregroundColor(theme.inputBoxForeground.opacity(0.6))
+                        )
+                        .font(.system(size: 20))
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                        .disableAutocorrection(true)
+                        .padding(.horizontal, 18)
+                        .frame(height: 50)
+                        .background(theme.inputBoxBackground)
+                        .overlay(Capsule().stroke(theme.border, lineWidth: 2))
+                        .clipShape(Capsule())
+                        .padding(.horizontal)
+                        .disabled(isLoading)
 
                         // Password
-                        SecureField("", text: $password, prompt: Text("Password").foregroundColor(theme.inputBoxForeground.opacity(0.6)))
-                            .font(.system(size: 20))
-                            .autocapitalization(.none)
-                            .padding(.horizontal, 18)
-                            .frame(height: 50)
-                            .background(theme.inputBoxBackground)
-                            //.foregroundColor(theme.inputBoxForeground)
-                            .overlay(
-                                Capsule().stroke(theme.border, lineWidth: 2)
-                            )
-                            .clipShape(Capsule())
-                            .padding(.horizontal)
-                            .disabled(isLoading)
-                        
-                        
-                        // The rest of the view remains the same...
+                        SecureField(
+                            "",
+                            text: $password,
+                            prompt: Text("Password").foregroundColor(theme.inputBoxForeground.opacity(0.6))
+                        )
+                        .font(.system(size: 20))
+                        .textInputAutocapitalization(.never)
+                        .padding(.horizontal, 18)
+                        .frame(height: 50)
+                        .background(theme.inputBoxBackground)
+                        .overlay(Capsule().stroke(theme.border, lineWidth: 2))
+                        .clipShape(Capsule())
+                        .padding(.horizontal)
+                        .disabled(isLoading)
+
                         if !errorMessage.isEmpty {
                             Text(errorMessage)
                                 .foregroundColor(.red)
-                                .padding()
+                                .font(.footnote)
+                                .padding(.horizontal)
+                                .multilineTextAlignment(.center)
+                                .accessibilityLabel("Error: \(errorMessage)")
                         }
-                        
-                        // ✅ REMOVED: The separate ProgressView is no longer needed here.
-                        
+
                         VStack(spacing: 15) {
-                            // ⬇︎ Checkbox block
-                            VStack(alignment: .leading, spacing: 10) {
-                                // Terms row
-                                HStack(spacing: 8) {
-                                    Button { agreeToTerms.toggle() } label: {
-                                        Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(theme.accentThird)
-                                    }
-                                    .buttonStyle(.plain)
-
-                                    Text("Terms of Service")
-                                        .font(.caption)
-                                        .foregroundColor(theme.accentThird)
-                                        .onTapGesture { showingTermsOfService = true }
-                                }
-
-                                // Privacy row
-                                HStack(spacing: 8) {
-                                    Button { agreeToPrivacy.toggle() } label: {
-                                        Image(systemName: agreeToPrivacy ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(theme.accentThird)
-                                    }
-                                    .buttonStyle(.plain)
-
-                                    Text("Privacy Policy")
-                                        .font(.caption)
-                                        .foregroundColor(theme.accentThird)
-                                        .onTapGesture { showingPrivacyPolicy = true }
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading) // expand to same width as button/fields
-                            .padding(.leading, inputInset)
-                            
-                            // ✅ MODIFIED: The Login Button now shows a ProgressView internally.
                             Button(action: { Task { await login() } }) {
                                 Group {
                                     if isLoading {
@@ -127,22 +90,19 @@ struct LoginView: View {
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 50) // Fixed height to prevent layout shifts
+                                .frame(height: 50)
                                 .background(theme.primary)
-                                .foregroundColor(theme.primaryText) // Applies to both Text and ProgressView
-                                .overlay(
-                                    Capsule().stroke(theme.border, lineWidth: 2)
-                                )
+                                .foregroundColor(theme.primaryText)
+                                .overlay(Capsule().stroke(theme.border, lineWidth: 2))
                                 .clipShape(Capsule())
                             }
-                            .disabled(isLoading || !agreeToTerms || !agreeToPrivacy)
+                            .disabled(isLoading)
                         }
                         .padding(.horizontal)
-                        
+
                         Button(action: { currentView = .signup }) {
                             Text("Don't have an account? Sign Up")
                                 .foregroundColor(theme.accentThird)
-                                .backgroundStyle(theme.accentBackground)
                         }
                         .padding()
                     }
@@ -164,7 +124,7 @@ struct LoginView: View {
         isLoading = true
         errorMessage = ""
         let credentials = LoginCredentials(identifier: email, password: password)
-        
+
         do {
             SessionManager.shared.clearSession()
             try await performNewLogin(credentials: credentials)
@@ -173,13 +133,12 @@ struct LoginView: View {
             SessionManager.shared.clearSession()
             isLoggedIn = false
         }
-        
+
         isLoading = false
     }
 
     private func performNewLogin(credentials: LoginCredentials) async throws {
         let authResponse = try await StrapiService.shared.login(credentials: credentials)
-        // ✅ CLEANUP: Use the centralized startSession method.
         SessionManager.shared.startSession(jwt: authResponse.jwt, user: authResponse.user)
         isLoggedIn = true
     }
