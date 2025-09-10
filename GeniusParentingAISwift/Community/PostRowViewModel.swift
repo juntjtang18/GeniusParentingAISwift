@@ -105,5 +105,6 @@ class PostRowViewModel: ObservableObject, Identifiable {
     /// Errors are thrown as-is by NetworkManager.
     func blockUser(userId: Int) async throws {
         _ = try await ModerationService.shared.blockUser(userId: userId)
+        RefreshCoordinator.shared.markCommunityNeedsRefresh()
     }
 }
