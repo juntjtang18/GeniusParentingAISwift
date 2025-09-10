@@ -9,13 +9,17 @@
 		<key>NetworkManager</key>
 		<string>error</string>
 		<key>StrapiService</key>
-		<string>error</string>
+		<string>debug</string>
 		<key>ProfileViewModel</key>
 		<string>error</string>
 		<key>StoreManager</key>
 		<string>debug</string>
 		<key>SessionManager</key>
 		<string>info</string>
+		<key>CommentViewModel</key>
+		<string>debug</string>
+		<key>CommunityViewModel</key>
+		<string>debug</string>
 	</dict>
 </dict>
 </plist>

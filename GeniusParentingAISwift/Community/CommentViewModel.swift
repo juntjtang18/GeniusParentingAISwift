@@ -3,6 +3,8 @@ import Foundation
 
 @MainActor
 class CommentViewModel: ObservableObject {
+    private let logger = AppLogger(category: "CommentViewModel")
+
     @Published var comments: [Comment] = []
     @Published var newCommentText: String = ""
     @Published var isLoading: Bool = false
@@ -16,6 +18,7 @@ class CommentViewModel: ObservableObject {
 
     init(post: Post) {
         self.post = post
+        logger.info("[init] Post id=\(post.id), title='\(post.attributes.content.prefix(50))...'")
         Task {
             await fetchComments(isInitialLoad: true)
         }
@@ -26,10 +29,12 @@ class CommentViewModel: ObservableObject {
             isLoading = true
             currentPage = 1
             totalPages = 1
+            logger.info("[fetchComments] initial load start: postId=\(self.post.id), page=\(self.currentPage)")
         } else {
             guard currentPage < totalPages else { return }
             currentPage += 1
             isLoadingMore = true
+            logger.info("[fetchComments] pagination load: postId=\(self.post.id), page=\(self.currentPage)")
         }
         errorMessage = nil
 
@@ -42,10 +47,23 @@ class CommentViewModel: ObservableObject {
                 } else {
                     self.comments.append(contentsOf: newComments)
                 }
+                // Detailed success logs
+                let total = self.comments.count
+                let pageCount = response.meta?.pagination?.pageCount ?? 0
+                let pageSize = response.meta?.pagination?.pageSize ?? 0
+                logger.info("[fetchComments] success: received=\(newComments.count), totalNow=\(total), page=\(self.currentPage)/\(pageCount), pageSize=\(pageSize)")
+                // Log first few comment identities to verify payload
+                for c in self.comments.prefix(5) {
+                    let uid = c.attributes.author?.data?.id ?? -1
+                    let uname = c.attributes.author?.data?.attributes.username ?? "unknown"
+                    logger.debug("[fetchComments] comment id=\(c.id), by #\(uid) @\(uname), createdAt=\(c.attributes.createdAt)")
+                }
             }
             
             if let pagination = response.meta?.pagination {
                 self.totalPages = pagination.pageCount
+                logger.debug("[fetchComments] pagination meta: page=\(pagination.page), pageCount=\(pagination.pageCount), total=\(pagination.total)")
+
             }
         } catch {
             errorMessage = "Failed to fetch comments: \(error.localizedDescription)"
@@ -103,9 +121,12 @@ class CommentViewModel: ObservableObject {
 
     func blockUser(userId: Int) async throws {
         errorMessage = nil
+        logger.info("[blockUser] blocking userId=\(userId)")
         _ = try await ModerationService.shared.blockUser(userId: userId)
         self.comments.removeAll { $0.attributes.author?.data?.id == userId }
         errorMessage = "User blocked."
+        logger.info("[blockUser] success; pruned comments by userId=\(userId). Remaining=\(self.comments.count)")
+
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             if self.errorMessage == "User blocked." { self.errorMessage = nil }

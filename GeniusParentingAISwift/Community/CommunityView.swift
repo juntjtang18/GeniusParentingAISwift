@@ -1,59 +1,66 @@
-// GeniusParentingAISwift/CommunityView.swift
+// CommunityView.swift
+
 import SwiftUI
 
 struct CommunityView: View {
     @Environment(\.theme) var currentTheme: Theme
     @StateObject private var viewModel = CommunityViewModel()
     @State private var isShowingAddPostView = false
+    @State private var toastMessage: String?
 
     var body: some View {
         ZStack {
+            // Background
             LinearGradient(
                 colors: [currentTheme.background, currentTheme.background2],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea() // Ensure the gradient fills the entire screen
-             
-            VStack {
-                if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
-                    ProgressView("Loading Community...")
-                } else if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                } else {
-                    List {
-                        ForEach(viewModel.postRowViewModels) { rowViewModel in
-                            PostCardView(viewModel: rowViewModel)
-                                // --- Card chrome (gives the view its own background) ---
-                                .padding(12)
-                                .background(currentTheme.accentBackground)
-                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .stroke(currentTheme.border.opacity(0.12), lineWidth: 1)
-                                )
-                                // --- List cosmetics ---
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear) // keep the row transparent so the screen bg shows around the card
-                                .onAppear {
-                                    viewModel.fetchMorePostsIfNeeded(currentItem: rowViewModel)
-                                }
-                        }
+            .ignoresSafeArea()
 
-                        if viewModel.isLoadingMore {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
+            // Main Content: List of posts
+            List {
+                ForEach(viewModel.postRowViewModels) { rowViewModel in
+                    PostCardView(viewModel: rowViewModel, onToast: { msg in
+                        toastMessage = msg
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation { toastMessage = nil }
                         }
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)        // so your outer theme bg is visible
-                    .background(Color.clear)
+                    })
+                    .padding(12)
+                    .background(currentTheme.accentBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(currentTheme.border.opacity(0.12), lineWidth: 1)
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .onAppear { viewModel.fetchMorePostsIfNeeded(currentItem: rowViewModel) }
                 }
+
+                if viewModel.isLoadingMore {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
+            .refreshable {
+                await viewModel.initialLoad()
+            }
+            
+            // ✅ MODIFIED: The initial ProgressView is now a floating overlay
+            if viewModel.isLoading && viewModel.postRowViewModels.isEmpty {
+                ProgressView("Loading Community...")
+                    .padding(20)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(radius: 10)
             }
 
             // Floating Action Button
@@ -70,6 +77,17 @@ struct CommunityView: View {
                     .padding()
                 }
             }
+
+            // Toast Banner Overlay
+            if let msg = toastMessage {
+                VStack {
+                    Spacer()
+                    ToastBanner(text: msg)
+                        .padding(.bottom, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.35, dampingFraction: 0.9), value: toastMessage)
+            }
         }
         .task {
             if viewModel.postRowViewModels.isEmpty {
@@ -81,20 +99,36 @@ struct CommunityView: View {
         }) {
             AddPostView(communityViewModel: viewModel)
         }
-        // ✅ iOS 15 fallback: make UITableView background transparent
         .onAppear {
-            if #available(iOS 16.0, *) {
-                // no-op; .scrollContentBackground(.hidden) handles it
-            } else {
-                UITableView.appearance().backgroundColor = .clear
-            }
+            if #available(iOS 16.0, *) {} else { UITableView.appearance().backgroundColor = .clear }
         }
         .onDisappear {
-            if #available(iOS 16.0, *) {
-                // no-op
-            } else {
-                UITableView.appearance().backgroundColor = .systemBackground
+            if #available(iOS 16.0, *) {} else { UITableView.appearance().backgroundColor = .systemBackground }
+        }
+        .onChange(of: viewModel.errorMessage) { msg in
+            guard let msg = msg, !msg.isEmpty else { return }
+            toastMessage = msg
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    toastMessage = nil
+                    viewModel.errorMessage = nil
+                }
             }
         }
+    }
+}
+
+// Unchanged
+private struct ToastBanner: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .shadow(radius: 8, x: 0, y: 4)
+            .multilineTextAlignment(.center)
     }
 }

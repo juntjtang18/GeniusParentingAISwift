@@ -1,6 +1,7 @@
 // PostRowViewModel.swift
 
 import Foundation
+import KeychainAccess
 
 @MainActor
 class PostRowViewModel: ObservableObject, Identifiable {
@@ -86,5 +87,23 @@ class PostRowViewModel: ObservableObject, Identifiable {
         }
         
         isLoadingMoreComments = false
+    }
+    
+    // MARK: - Moderation (Report / Block) via ModerationService
+
+    /// Report this post through ModerationService.
+    /// Errors (including 409 duplicates) are thrown as-is by NetworkManager.
+    func reportPost(postId: Int, reason: ModerationReason, details: String?) async throws {
+        _ = try await ModerationService.shared.reportPost(
+            postId: postId,
+            reason: reason,
+            details: details
+        )
+    }
+
+    /// Block a user through ModerationService.
+    /// Errors are thrown as-is by NetworkManager.
+    func blockUser(userId: Int) async throws {
+        _ = try await ModerationService.shared.blockUser(userId: userId)
     }
 }

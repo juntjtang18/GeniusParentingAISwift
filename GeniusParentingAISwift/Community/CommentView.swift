@@ -74,6 +74,11 @@ struct CommentView: View {
                 }
             }
         }
+        .task {
+            if viewModel.comments.isEmpty && !viewModel.isLoading {
+                await viewModel.fetchComments(isInitialLoad: true)
+            }
+        }
         .onChange(of: viewModel.errorMessage) { msg in
             guard let msg = msg, !msg.isEmpty else { return }
             toastMessage = humanize(msg) // see helper below (optional)
@@ -104,13 +109,17 @@ private struct CommentsListView: View {
             ProgressView("Loading comments...")
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .center)
+        } else if let error = viewModel.errorMessage, !error.isEmpty, viewModel.comments.isEmpty {
+            Text(error)
+                .foregroundColor(.red)
+               .padding(.vertical)
         } else if viewModel.comments.isEmpty {
-            Text("No comments yet.")
+                Text("No comments yet.")
                 .foregroundColor(.secondary)
                 .padding(.vertical)
         } else {
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(viewModel.comments.reversed()) { comment in
+                ForEach(viewModel.comments, id: \.id) { comment in
                     CommentRowView(comment: comment, viewModel: viewModel)
                         .padding(.horizontal, 4)
                 }

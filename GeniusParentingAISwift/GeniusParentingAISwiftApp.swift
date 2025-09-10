@@ -4,52 +4,6 @@ import SwiftUI
 import KeychainAccess
 import StoreKit
 
-extension Notification.Name {
-    static let didLogout = Notification.Name("didLogout")
-}
-
-/// Everything you might want globally.
-struct AppDimensions: Equatable {
-    var screenSize: CGSize      // logical points
-    var safeArea: EdgeInsets
-    var displayScale: CGFloat
-}
-
-private struct AppDimensionsKey: EnvironmentKey {
-    static let defaultValue = AppDimensions(
-        screenSize: UIScreen.main.bounds.size,
-        safeArea: .init(),
-        displayScale: UIScreen.main.scale
-    )
-}
-
-extension EnvironmentValues {
-    var appDimensions: AppDimensions {
-        get { self[AppDimensionsKey.self] }
-        set { self[AppDimensionsKey.self] = newValue }
-    }
-}
-
-/// Provide dimensions once at the app root. This is the ONLY place we use GeometryReader.
-private struct DimensionsProvider<Content: View>: View {
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        GeometryReader { proxy in
-            let dims = AppDimensions(
-                screenSize: proxy.size,
-                safeArea: proxy.safeAreaInsets,
-                displayScale: UIScreen.main.scale
-            )
-            content()
-                .environment(\.appDimensions, dims)
-                // ⬇️ ensure the wrapped content (your ZStack) fills the screen
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .ignoresSafeArea() // optional: match your existing safe-area behavior
-        }
-    }
-}
-
 @main
 struct GeniusParentingAISwiftApp: App {
     @State private var isLoggedIn = false
@@ -133,5 +87,52 @@ extension Binding where Value == Bool {
             get: { !self.wrappedValue },
             set: { self.wrappedValue = !$0 }
         )
+    }
+}
+
+
+extension Notification.Name {
+    static let didLogout = Notification.Name("didLogout")
+}
+
+/// Everything you might want globally.
+struct AppDimensions: Equatable {
+    var screenSize: CGSize      // logical points
+    var safeArea: EdgeInsets
+    var displayScale: CGFloat
+}
+
+private struct AppDimensionsKey: EnvironmentKey {
+    static let defaultValue = AppDimensions(
+        screenSize: UIScreen.main.bounds.size,
+        safeArea: .init(),
+        displayScale: UIScreen.main.scale
+    )
+}
+
+extension EnvironmentValues {
+    var appDimensions: AppDimensions {
+        get { self[AppDimensionsKey.self] }
+        set { self[AppDimensionsKey.self] = newValue }
+    }
+}
+
+/// Provide dimensions once at the app root. This is the ONLY place we use GeometryReader.
+private struct DimensionsProvider<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            let dims = AppDimensions(
+                screenSize: proxy.size,
+                safeArea: proxy.safeAreaInsets,
+                displayScale: UIScreen.main.scale
+            )
+            content()
+                .environment(\.appDimensions, dims)
+                // ⬇️ ensure the wrapped content (your ZStack) fills the screen
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .ignoresSafeArea() // optional: match your existing safe-area behavior
+        }
     }
 }

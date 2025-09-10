@@ -5,6 +5,8 @@ import UIKit
 
 @MainActor
 class CommunityViewModel: ObservableObject {
+    let logger = AppLogger(category: "CommunityViewModel")
+
     @Published var postRowViewModels: [PostRowViewModel] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -90,10 +92,17 @@ class CommunityViewModel: ObservableObject {
             // A single, clean call to the StrapiService.
             let response = try await StrapiService.shared.fetchPosts(page: currentPage, pageSize: 25)
             let posts = response.data ?? []
-            
+            logger.info("Fetched \(posts.count) posts on page \(self.currentPage).")
+            for post in posts.prefix(5) { // limit to first 5 for readability
+                let id = post.id
+                let authorId = post.attributes.users_permissions_user?.data?.id ?? -1
+                let username = post.attributes.users_permissions_user?.data?.attributes.username ?? "nil"
+                logger.debug("Post \(id) by userId=\(authorId), username=\(username)")
+            }
+
             // Clean log showing pagination info, which is useful for debugging.
             if let pagination = response.meta?.pagination {
-                print("Fetched page \(pagination.page)/\(pagination.pageCount). Total posts: \(pagination.total).")
+                logger.info("Pagination: page \(pagination.page)/\(pagination.pageCount), total \(pagination.total).")
                 self.totalPages = pagination.pageCount
             }
             
@@ -120,7 +129,6 @@ class CommunityViewModel: ObservableObject {
         isLoadingMore = false
     }
 
-    // ... The rest of your ViewModel methods remain unchanged ...
     func toggleLikeOnServer(postId: Int) async {
         guard let userId = currentUser?.id, let token = keychain["jwt"] else { return }
 
@@ -191,53 +199,33 @@ class CommunityViewModel: ObservableObject {
     }
 
     func createPost(content: String, mediaData: [Data]) async throws {
-        // --- ADDED LOGGING ---
-        if currentUser == nil {
-            print("⚠️ createPost called but currentUser is nil. Attempting to fetch user...")
-            await fetchCurrentUser()
-        }
-        
-        guard let token = keychain["jwt"], let userId = currentUser?.id else {
-            print("❌ createPost failed: User not authenticated.")
-            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated."])
+        // ✅ Always use SessionManager for the user
+        guard let user = SessionManager.shared.currentUser,
+              let token = SessionManager.shared.getJWT() else {
+            logger.error("createPost failed: no session (user/jwt missing)")
+            throw NSError(domain: "AuthError", code: 401,
+                          userInfo: [NSLocalizedDescriptionKey: "User not authenticated."])
         }
 
-        // --- ADDED LOGGING ---
-        print("✅ Creating post for User ID: \(userId)")
+        logger.info("Creating post for userId=\(user.id)")
 
+        // Upload first (if any)
         var mediaIds: [Int] = []
         if !mediaData.isEmpty {
+            logger.debug("Uploading \(mediaData.count) media files...")
             mediaIds = try await uploadMedia(mediaData: mediaData, token: token)
+            logger.info("Upload completed. mediaIds=\(mediaIds)")
         }
 
-        guard let url = URL(string: "\(strapiUrl)/posts") else {
-            throw NSError(domain: "URLError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL for creating post."])
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let postData: [String: Any] = [
-            "content": content,
-            "users_permissions_user": userId,
-            "media": mediaIds
-        ]
-        
-        let requestBody: [String: Any] = ["data": postData]
-        
-        // --- ADDED LOGGING ---
-        print("📤 Sending createPost request with payload: \(requestBody)")
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        
-        // FIXED: Replaced 'responseData' with '_' to silence the "never used" warning.
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw NSError(domain: "NetworkError", code: (response as? HTTPURLResponse)?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create post."])
-        }
+        // ✅ Use StrapiService, not URLSession
+        _ = try await StrapiService.shared.createPost(
+            content: content,
+            userId: user.id,
+            mediaIds: mediaIds.isEmpty ? nil : mediaIds
+        )
+
+        // Optional: refresh first page so the new post appears
+        await initialLoad()
     }
 
     private func uploadMedia(mediaData: [Data], token: String) async throws -> [Int] {
@@ -279,4 +267,5 @@ class CommunityViewModel: ObservableObject {
         
         return uploadedMediaIDs
     }
+
 }

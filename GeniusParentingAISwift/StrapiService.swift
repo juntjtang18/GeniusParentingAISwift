@@ -29,6 +29,15 @@ struct ReadRequestPayload: Codable {
     let data: DataBody
 }
 
+// ADD these models near the other payloads
+struct PostCreatePayload: Codable {
+    struct DataBody: Codable {
+        let content: String
+        let users_permissions_user: Int
+        let media: [Int]?
+    }
+    let data: DataBody
+}
 
 /// A service layer for interacting with the Strapi backend API.
 class StrapiService {
@@ -296,6 +305,44 @@ extension StrapiService {
         return response
     }
     
+    @discardableResult
+    func createPost(content: String, userId: Int, mediaIds: [Int]?) async throws -> StrapiSingleResponse<Post> {
+        let functionName = #function
+        let url = URL(string: "\(Config.strapiBaseUrl)/api/posts")!
+
+        let payload = PostCreatePayload(
+            data: .init(
+                content: content,
+                users_permissions_user: userId,
+                media: (mediaIds?.isEmpty == true ? nil : mediaIds)
+            )
+        )
+
+        // 🔎 Log the exact JSON payload we will send
+        do {
+            let enc = JSONEncoder()
+            enc.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
+            let data = try enc.encode(payload)
+            if let json = String(data: data, encoding: .utf8) {
+                logger.debug("[StrapiService::\(functionName)] - Outgoing JSON payload:\n\(json)")
+            }
+        } catch {
+            logger.warning("[StrapiService::\(functionName)] - Failed to encode payload for logging: \(error.localizedDescription)")
+        }
+
+        logger.info("[StrapiService::\(functionName)] - Creating post for userId=\(userId), mediaCount=\(mediaIds?.count ?? 0)")
+
+        let resp: StrapiSingleResponse<Post> = try await NetworkManager.shared.post(to: url, body: payload)
+
+        // 🔎 Log what Strapi returned (specifically the author relation)
+        let created = resp.data
+        let authorId = created.attributes.users_permissions_user?.data?.id
+        let authorName = created.attributes.users_permissions_user?.data?.attributes.username
+        logger.info("[StrapiService::\(functionName)] - Created post id=\(created.id). authorId=\(authorId?.description ?? "nil"), username=\(authorName ?? "nil")")
+
+        return resp
+    }
+
     /// Fetch a single personality result by its `ps_id` (your mapping key)
     func fetchPersonalityResult(psId: String, locale: String? = nil) async throws -> PersonalityResult? {
         let functionName = #function

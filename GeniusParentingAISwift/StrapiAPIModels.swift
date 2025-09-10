@@ -272,3 +272,4 @@ struct EmptyPayload: Codable {}
 struct UnregisterResponse: Codable {
     let message: String
 }
+

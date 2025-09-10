@@ -6,6 +6,14 @@ struct PostCardView: View {
     @ObservedObject var viewModel: PostRowViewModel
     @State private var isShowingCommentView = false
 
+    // NEW: toast callback to parent (CommunityView passes it down)
+    var onToast: (String) -> Void = { _ in }
+
+    // NEW: state for report/block UX
+    @State private var showReportSheet = false
+    @State private var showBlockConfirm = false
+    @State private var working = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Post Content
@@ -14,22 +22,47 @@ struct PostCardView: View {
                     Image(systemName: "person.crop.circle.fill")
                         .font(.largeTitle)
                         .foregroundColor(.gray)
-                    
+
                     VStack(alignment: .leading) {
                         // This HStack ensures username and time are on the same line
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(viewModel.post.attributes.users_permissions_user?.data?.attributes.username ?? "Unknown User")
                                 .font(.headline)
-                            
+
                             Text(timeAgo(from: viewModel.post.attributes.createdAt))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Spacer()
+
+                    // NEW: Ellipsis menu for Report / Block
+                    Menu {
+                        Button(role: .destructive) {
+                            showReportSheet = true
+                        } label: {
+                            Label("Report Post", systemImage: "flag")
+                        }
+
+                        if let offenderId = viewModel.post.attributes.users_permissions_user?.data?.id {
+                            Button(role: .destructive) {
+                                showBlockConfirm = true
+                            } label: {
+                                Label("Block User", systemImage: "person.crop.circle.badge.xmark")
+                            }
+                        }
+                    } label: {
+                        if working {
+                            ProgressView().scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "ellipsis")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .disabled(working)
                 }
-                
+
                 if !viewModel.post.attributes.content.isEmpty {
                     Text(viewModel.post.attributes.content).font(.body)
                         .padding(.top, 4)
@@ -53,7 +86,7 @@ struct PostCardView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    
+
                     // Comment Button
                     Button(action: { isShowingCommentView = true }) {
                         HStack {
@@ -80,6 +113,63 @@ struct PostCardView: View {
         .fullScreenCover(isPresented: $isShowingCommentView) {
             CommentView(post: viewModel.post)
         }
+        // NEW: Report sheet
+        .sheet(isPresented: $showReportSheet) {
+            ReportFormView(
+                title: "Report Post",
+                subject: "by @\(viewModel.post.attributes.users_permissions_user?.data?.attributes.username ?? "unknown")",
+                onCancel: { showReportSheet = false },
+                onSubmit: { reason, details in
+                    Task { @MainActor in
+                        working = true
+                        defer { working = false }
+                        do {
+                            try await viewModel.reportPost(
+                                postId: viewModel.post.id,
+                                reason: reason,
+                                details: details
+                            )
+                            showReportSheet = false
+                            onToast("Thanks — your report was sent.")
+                        } catch {
+                            if isAlreadyReportedError(error) {
+                                showReportSheet = false
+                                onToast("You’ve already reported this post.")
+                            } else {
+                                // Keep sheet open or close on other errors — your choice:
+                                // showReportSheet = false
+                                onToast(error.localizedDescription)
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        // NEW: Block confirmation
+        .confirmationDialog("Block this user?",
+                            isPresented: $showBlockConfirm,
+                            titleVisibility: .visible) {
+            if let offenderId = viewModel.post.attributes.users_permissions_user?.data?.id {
+                Button("Block User", role: .destructive) {
+                    Task { @MainActor in
+                        working = true
+                        defer { working = false }
+                        do {
+                            try await viewModel.blockUser(userId: offenderId)
+                            onToast("User blocked.")
+                        } catch {
+                            onToast(error.localizedDescription)
+                        }
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private func isAlreadyReportedError(_ error: Error) -> Bool {
+        let msg = (error as NSError).localizedDescription.lowercased()
+        return msg.contains("report already exists") || msg.contains("already reported")
     }
 
     private func timeAgo(from dateString: String) -> String {
