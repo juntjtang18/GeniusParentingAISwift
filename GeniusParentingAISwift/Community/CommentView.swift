@@ -5,6 +5,7 @@ struct CommentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) var currentTheme: Theme
     @State private var toastMessage: String?
+    //@State private var shouldRefreshOnDismiss = false
 
     init(post: Post) {
         _viewModel = StateObject(wrappedValue: CommentViewModel(post: post))
@@ -90,6 +91,20 @@ struct CommentView: View {
                 }
             }
         }
+        
+        //.onChange(of: viewModel.didMutateComments) { changed in
+        //    if changed { shouldRefreshOnDismiss = true }
+        //}
+        //.onDisappear {
+        //    // Only tell CommunityView to reload if something actually changed
+        //    if shouldRefreshOnDismiss {
+        //        NotificationCenter.default.post(
+        //            name: .communityPostsShouldRefresh,
+        //            object: nil,
+        //            userInfo: ["reason": CommunityRefreshReason.commented.rawValue]
+        //        )
+        //    }
+        //}
     }
     
     private func humanize(_ serverMessage: String) -> String {

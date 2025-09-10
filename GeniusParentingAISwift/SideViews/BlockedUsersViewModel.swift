@@ -31,6 +31,7 @@ final class BlockedUsersViewModel: ObservableObject {
             _ = try await ModerationService.shared.unblockUser(userId: user.id)
             // Optimistically remove from list
             blocks.removeAll { $0.id == user.id }
+            RefreshCoordinator.shared.markCommunityNeedsRefresh()
         } catch {
             self.error = error.localizedDescription
         }
@@ -95,6 +96,7 @@ struct BlockedUsersView: View {
                 Task {
                     await vm.unblock(user)
                     confirmUnblock = nil
+                    //RefreshCoordinator.shared.markCommunityNeedsRefresh()
                     showToast()
                 }
             }

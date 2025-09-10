@@ -1,13 +1,15 @@
 // CommunityView.swift
 
 import SwiftUI
+import Foundation
 
 struct CommunityView: View {
     @Environment(\.theme) var currentTheme: Theme
     @StateObject private var viewModel = CommunityViewModel()
     @State private var isShowingAddPostView = false
     @State private var toastMessage: String?
-
+    @ObservedObject private var refresh = RefreshCoordinator.shared
+    
     var body: some View {
         ZStack {
             // Background
@@ -94,8 +96,19 @@ struct CommunityView: View {
                 await viewModel.initialLoad()
             }
         }
+        .onAppear {
+            Task {
+                if RefreshCoordinator.shared.consumeCommunityNeedsRefresh() {
+                    await viewModel.initialLoad()
+                }
+            }
+        }
         .sheet(isPresented: $isShowingAddPostView, onDismiss: {
-            Task { await viewModel.initialLoad() }
+            Task {
+                if RefreshCoordinator.shared.consumeCommunityNeedsRefresh() {
+                    await viewModel.initialLoad()
+                }
+            }
         }) {
             AddPostView(communityViewModel: viewModel)
         }
@@ -115,6 +128,14 @@ struct CommunityView: View {
                 }
             }
         }
+        .onChange(of: refresh.needsCommunityRefresh) { needs in
+            guard needs else { return }
+            Task { await viewModel.initialLoad() }
+            _ = refresh.consumeCommunityNeedsRefresh()
+        }
+        //.onReceive(NotificationCenter.default.publisher(for: .communityPostsShouldRefresh)) { note in
+        //    Task { await viewModel.initialLoad() }
+        //}
     }
 }
 
@@ -131,4 +152,13 @@ private struct ToastBanner: View {
             .shadow(radius: 8, x: 0, y: 4)
             .multilineTextAlignment(.center)
     }
+}
+
+
+extension Notification.Name {
+    static let communityPostsShouldRefresh = Notification.Name("communityPostsShouldRefresh")
+}
+
+enum CommunityRefreshReason: String {
+    case commented, editedComment, deletedComment, other
 }

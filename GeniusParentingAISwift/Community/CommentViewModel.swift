@@ -10,6 +10,7 @@ class CommentViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var isLoadingMore = false
     @Published var errorMessage: String? = nil
+    //@Published var didMutateComments = false
 
     private var currentPage = 1
     private var totalPages = 1
@@ -103,6 +104,9 @@ class CommentViewModel: ObservableObject {
             newCommentText = ""
             // Refresh the comments list to show the new one
             await fetchComments(isInitialLoad: true)
+            //self.didMutateComments = true
+            RefreshCoordinator.shared.markCommunityNeedsRefresh()   // <- key line
+
         } catch {
             errorMessage = "Failed to post comment: \(error.localizedDescription)"
         }

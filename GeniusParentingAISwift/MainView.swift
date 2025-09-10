@@ -266,7 +266,7 @@ struct MainView: View {
                 //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.foreground)
+        .tint(themeManager.currentTheme.accent)
     }
 
     private var courseTab: some View {
@@ -278,12 +278,12 @@ struct MainView: View {
                     ToolbarItem(placement: .principal) {
                         Text("Courses")
                             .font(.headline) // Optional: matches the default title font
-                            .foregroundColor(themeManager.currentTheme.foreground)
+                            .foregroundColor(themeManager.currentTheme.inputBoxForeground)
                     }
                     menuToolbar
                 }
         }
-        .tint(themeManager.currentTheme.foreground)
+        .tint(themeManager.currentTheme.accent)
     }
 
     private var aiTab: some View {
@@ -294,7 +294,7 @@ struct MainView: View {
                 .toolbar {
                     ToolbarItem(placement: .principal) {
                         Text("AI Assistant")
-                            .font(.headline).foregroundColor(themeManager.currentTheme.foreground)
+                            .font(.headline).foregroundColor(themeManager.currentTheme.inputBoxForeground)
                     }
                     menuToolbar
                 }
@@ -303,7 +303,7 @@ struct MainView: View {
                 //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.foreground)
+        .tint(themeManager.currentTheme.accent)
     }
 
     private var communityTab: some View {
@@ -313,7 +313,7 @@ struct MainView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement:.principal) {
-                        Text("Community").font(.headline).foregroundColor(themeManager.currentTheme.foreground)
+                        Text("Community").font(.headline).foregroundColor(themeManager.currentTheme.inputBoxForeground)
                     }
                     menuToolbar
                 }
@@ -323,7 +323,7 @@ struct MainView: View {
                 //.toolbarColorScheme(.dark, for: .navigationBar)
         }
         .navigationViewStyle(.stack)
-        .tint(themeManager.currentTheme.foreground)
+        .tint(themeManager.currentTheme.accent)
     }
 }
 
