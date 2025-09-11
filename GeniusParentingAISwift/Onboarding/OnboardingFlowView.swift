@@ -239,7 +239,8 @@ struct OnboardingResultsView: View {
     //@StateObject private var viewModel = OnboardingViewModel()
     @ObservedObject var viewModelRef: OnboardingViewModel
     private let logger = AppLogger(category: "OnboardingResultsView")
-
+    @State private var isPersisting = false
+    
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -290,17 +291,27 @@ struct OnboardingResultsView: View {
             Button("Your courses to match your style") {
                 Task {
                     logger.info("[button] Persisting displayed result…")
+                    await MainActor.run { isPersisting = true }
                     await viewModelRef.persistDisplayedResult(locale: "en")
                     logger.info("[button] Persist done → navigate & dismiss")
-                    tabRouter.selectedTab = 0
-                    onComplete()    // does NOT persist anymore
-                    dismiss()
+                    await MainActor.run {
+                        isPersisting = false    // not strictly needed (dismiss follows)
+                        tabRouter.selectedTab = 0
+                        onComplete()
+                        dismiss()
+                    }
                 }
             }
             .buttonStyle(PrimaryButtonStyle())
             Spacer()
         }
         .padding()
-        // Removed .background(currentTheme.background) from here to allow gradient to show
+        
+        if isPersisting {
+            ProgressView("Saving…")
+                .progressViewStyle(.circular)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }
     }
 }
