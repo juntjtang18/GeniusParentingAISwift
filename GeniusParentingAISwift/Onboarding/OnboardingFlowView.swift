@@ -107,7 +107,7 @@ struct OnboardingIntroView: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(currentTheme.foreground)
 
-            Spacer()
+            //Spacer()
             
             Text("Your AI-powered partner in building trust, love, and resilience in parenting.")
                 .font(.title2)
@@ -116,11 +116,12 @@ struct OnboardingIntroView: View {
                 .frame(maxWidth: appDimensions.screenSize.width * 0.75)
 
             Spacer()
-            /*
+            
             Text("You already know your child best. In 30 seconds, help us know you — so your parenting support is as smart and unique as you are.")
+                .font(.title2)
                 .multilineTextAlignment(.center)
                 .foregroundColor(currentTheme.foreground)
-             */
+            Spacer()
             VStack(spacing: 12) {
                 Button("Know me Better", action: onKnowMeBetter)
                     .buttonStyle(PrimaryButtonStyle())
