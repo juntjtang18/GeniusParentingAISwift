@@ -4,6 +4,8 @@ import Foundation
 
 @MainActor
 class HomeViewModel: ObservableObject {
+    private let logger = AppLogger(category: "HomeViewModel")
+    
     @Published var todaysLessons: [LessonCourse] = []
     @Published var isLoading: Bool = true
     @Published var errorMessage: String? = nil
@@ -19,32 +21,37 @@ class HomeViewModel: ObservableObject {
     private let strapiUrl = "\(Config.strapiBaseUrl)/api"
 
     // NEW: pull "my recommendations" and map into existing card model
-    func fetchRecommendedCourses() async {
+    @MainActor
+    func fetchRecommendedCourses(force: Bool = false) async {
+        logger.info("[fetchRecommendedCourses] force=\(force)")
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")
-        guard isRefreshEnabled || self.todaysLessons.isEmpty else {
-            print("HomeViewModel: Skipping fetch for recommended courses, using cached data.")
-            return
+
+        if !force {
+            if !(isRefreshEnabled || self.todaysLessons.isEmpty) {
+                logger.info("[fetchRecommendedCourses] Using cached data (isRefreshEnabled=\(isRefreshEnabled), currentCount=\(self.todaysLessons.count))")
+                return
+            }
         }
 
-        print("HomeViewModel: Fetching recommended courses...")
+        logger.info("[fetchRecommendedCourses] Fetching…")
         isLoading = true
         errorMessage = nil
-
         do {
             let resp = try await StrapiService.shared.fetchRecommendedCourses()
-            // Map CourseProgress -> LessonCourse (so UI stays unchanged)
             let lessons: [LessonCourse] = (resp.data ?? []).compactMap { cp in
                 guard let c = cp.attributes.course?.data else { return nil }
                 return LessonCourse(id: c.id, attributes: c.attributes)
             }
+            logger.info("[fetchRecommendedCourses] serverItems=\(resp.data?.count ?? -1) mappedLessons=\(lessons.count)")
             self.todaysLessons = lessons
         } catch {
+            logger.error("[fetchRecommendedCourses] ERROR: \(error.localizedDescription)")
             self.errorMessage = "Failed to fetch recommended courses: \(error.localizedDescription)"
             self.todaysLessons = []
         }
-
         isLoading = false
     }
+
     
     func fetchDailyTips() async {
         let isRefreshEnabled = UserDefaults.standard.bool(forKey: "isRefreshModeEnabled")

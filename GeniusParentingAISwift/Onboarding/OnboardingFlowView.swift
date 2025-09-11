@@ -55,18 +55,8 @@ struct OnboardingFlowView: View {
             case .results:
                 OnboardingResultsView(
                     result: viewModel.result,
-                    onComplete: {
-                        Task {
-                            // Save the newly chosen result to the user's profile
-                            do {
-                                try await viewModel.persistFinalResultToProfile(locale: "en")
-                            } catch {
-                                print("[OnboardingFlowView] Failed to persist result: \(error.localizedDescription)")
-                            }
-                            print("Final button tapped. Setting didComplete to true.")
-                            didComplete = true
-                        }
-                    }
+                    onComplete: { didComplete = true },
+                    viewModelRef: viewModel
                 )
             }
         }
@@ -74,7 +64,6 @@ struct OnboardingFlowView: View {
         .task {
             await viewModel.loadPersonalityResults(locale: "en")
             await viewModel.loadPersonalityQuestions(locale: "en")
-            await viewModel.loadPersonalityResults(locale: "en")
         }
         .onChange(of: viewModel.quizCompleted) { completed in
             // When the view model marks the quiz as complete, show the results.
@@ -247,6 +236,9 @@ struct OnboardingResultsView: View {
 
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var tabRouter: MainTabRouter
+    //@StateObject private var viewModel = OnboardingViewModel()
+    @ObservedObject var viewModelRef: OnboardingViewModel
+    private let logger = AppLogger(category: "OnboardingResultsView")
 
     var body: some View {
         VStack(spacing: 24) {
@@ -296,11 +288,16 @@ struct OnboardingResultsView: View {
             Spacer()
             
             Button("Your courses to match your style") {
-                            tabRouter.selectedTab = 0
-                            onComplete()
-                            dismiss()      
-                        }
-                        .buttonStyle(PrimaryButtonStyle())
+                Task {
+                    logger.info("[button] Persisting displayed result…")
+                    await viewModelRef.persistDisplayedResult(locale: "en")
+                    logger.info("[button] Persist done → navigate & dismiss")
+                    tabRouter.selectedTab = 0
+                    onComplete()    // does NOT persist anymore
+                    dismiss()
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle())
             Spacer()
         }
         .padding()

@@ -10,7 +10,7 @@ import Foundation
 import Combine
 
 class OnboardingViewModel: ObservableObject {
-    private let logger = AppLogger(category: "OnboardingViewModel") // ✅ add this
+    private let logger = AppLogger(category: "OnboardingViewModel")
     @Published var currentQuestionIndex = 0
     @Published var userSelections: [String: String] = [:]
     @Published var quizCompleted = false
@@ -25,6 +25,7 @@ class OnboardingViewModel: ObservableObject {
     @Published var isLoadingQuestions = false
     @Published var questionsError: String?
     @Published var selectedResult: PersonalityResult?   // holds the chosen result with image
+    @Published private var isPersisting = false
 
     // Load Strapi results (unchanged)
     @MainActor
@@ -179,6 +180,55 @@ class OnboardingViewModel: ObservableObject {
             imageURL: nil
         )
     }
+    
+    @MainActor
+    func persistDisplayedResult(locale: String = "en") async {
+        if isPersisting {
+            logger.warning("[persistDisplayedResult] Already persisting. Ignoring duplicate call.")
+            return
+        }
+        isPersisting = true
+        defer { isPersisting = false }
+
+        // 1) Prefer the displayed `selectedResult` (exactly what user sees)
+        if let sel = selectedResult {
+            logger.info("[persistDisplayedResult] Using selectedResult.id=\(sel.id) ps_id=\(sel.attributes.psId)")
+            do {
+                _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: sel.id)
+                logger.info("[persistDisplayedResult] Update success with selectedResult.id=\(sel.id)")
+                RefreshCoordinator.shared.markRecommendationsNeedsRefresh()
+                return
+            } catch {
+                logger.error("[persistDisplayedResult] Update failed with selectedResult: \(error.localizedDescription)")
+                return
+            }
+        }
+
+        // 2) Fallback: compute once and persist that one
+        let letter = decideLetterByRules()
+        let psId = psIdForLetter(letter)
+        logger.info("[persistDisplayedResult] No selectedResult. Using rules → letter=\(letter), ps_id=\(psId)")
+
+        do {
+            if let match = remoteResults.first(where: { $0.attributes.psId == psId }) {
+                logger.info("[persistDisplayedResult] Persisting remoteResults match id=\(match.id)")
+                _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: match.id)
+            } else if let fetched = try await StrapiService.shared.fetchPersonalityResult(psId: psId, locale: locale) {
+                logger.info("[persistDisplayedResult] Persisting fetched result id=\(fetched.id)")
+                _ = try await StrapiService.shared.updateUserPersonalityResult(personalityResultId: fetched.id)
+            } else {
+                logger.error("[persistDisplayedResult] Could not resolve a result to persist.")
+                return
+            }
+
+            logger.info("[persistDisplayedResult] Update success")
+            RefreshCoordinator.shared.markRecommendationsNeedsRefresh()
+        } catch {
+            logger.error("[persistDisplayedResult] Update failed: \(error.localizedDescription)")
+        }
+    }
+    
+    
     // Persist the final (chosen) result to the user's profile in Strapi.
     // Uses the numeric Strapi id of the selected result.
     // Tries selectedResult first (already fetched with image); falls back to the list or a single fetch.

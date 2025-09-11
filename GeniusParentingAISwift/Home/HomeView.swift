@@ -3,6 +3,9 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
+    @StateObject private var refresh = RefreshCoordinator.shared
+    private let logger = AppLogger(category: "HomeView")
+
     @Binding var selectedLanguage: String
     @Binding var isSideMenuShowing: Bool
     @Environment(\.theme) var theme: Theme
@@ -169,10 +172,10 @@ struct HomeView: View {
                     VStack(alignment: .leading) { // Ensure the text within the VStack is left-aligned
                         Text("Welcome back")
                             .font(.caption)
-                            .foregroundColor(theme.foreground.opacity(0.8))
+                            .foregroundColor(theme.primaryText.opacity(0.9))
                         Text(profileName)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundColor(theme.foreground)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
             }
@@ -188,12 +191,30 @@ struct HomeView: View {
         }
         .onAppear {
             Task {
-                await viewModel.fetchRecommendedCourses()
+                let consumed = refresh.consumeRecommendationsNeedsRefresh()
+                logger.info("[onAppear] consumedRecommendations=\(consumed)")
+                if consumed {
+                    logger.info("[onAppear] Forcing fetchRecommendedCourses(force: true)")
+                    await viewModel.fetchRecommendedCourses(force: true)
+                } else {
+                    logger.info("[onAppear] Normal fetchRecommendedCourses(force: false)")
+                    await viewModel.fetchRecommendedCourses()
+                }
+
                 await viewModel.fetchHotTopics()
                 await viewModel.fetchDailyTips()
             }
         }
-        //.toolbar(.hidden, for: .navigationBar)
+        .onReceive(refresh.$needsRecommendationsRefresh) { flag in
+            logger.info("[onReceive] needsRecommendationsRefresh=\(flag)")
+            guard flag else { return }
+            Task {
+                _ = refresh.consumeRecommendationsNeedsRefresh()
+                logger.info("[onReceive] Forcing fetchRecommendedCourses(force: true)")
+                await viewModel.fetchRecommendedCourses(force: true)
+            }
+        }
+
     }
    
     private var profileName: String {
