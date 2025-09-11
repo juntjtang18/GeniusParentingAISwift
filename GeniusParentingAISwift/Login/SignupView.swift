@@ -89,20 +89,6 @@ struct SignupView: View {
 
                 // CONSENT: third-person + links + toggle
                 HStack {
-                    if let md = try? AttributedString(
-                        markdown:
-                """
-                By signing up, the user agrees to the [Terms of Service](\(tosURL)), [Privacy Policy](\(privacyURL)), and [Community Guidelines](\(guidelinesURL)).
-                """
-                    ) {
-                        Text(md)
-                            .font(.footnote)
-                            .foregroundColor(theme.foreground)
-                            .multilineTextAlignment(.leading)
-                            .tint(theme.primary)
-                    }
-
-                    // ⬇️ Checkbox (replaces Toggle)
                     Button {
                         agreedToPolicies.toggle()
                     } label: {
@@ -119,6 +105,19 @@ struct SignupView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Agree to Terms of Service, Privacy Policy, and Community Guidelines")
                     .accessibilityAddTraits(.isButton)
+
+                    if let md = try? AttributedString(
+                        markdown:
+                """
+                By signing up, the user agrees to the [Terms of Service](\(tosURL)), [Privacy Policy](\(privacyURL)), and [Community Guidelines](\(guidelinesURL)).
+                """
+                    ) {
+                        Text(md)
+                            .font(.footnote)
+                            .foregroundColor(theme.foreground)
+                            .multilineTextAlignment(.leading)
+                            .tint(theme.primary)
+                    }
                 }
 
 

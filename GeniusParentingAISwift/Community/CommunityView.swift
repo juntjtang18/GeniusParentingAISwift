@@ -141,14 +141,19 @@ struct CommunityView: View {
 
 // Unchanged
 private struct ToastBanner: View {
+    @Environment(\.theme) var currentTheme: Theme
     let text: String
     var body: some View {
         Text(text)
-            .font(.caption)
+            .font(.footnote)
+            .foregroundColor(currentTheme.foreground)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
+            .background(currentTheme.background)
             .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(currentTheme.border.opacity(0.12), lineWidth: 1)
+            )
             .shadow(radius: 8, x: 0, y: 4)
             .multilineTextAlignment(.center)
     }

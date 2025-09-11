@@ -130,7 +130,7 @@ struct PostCardView: View {
                                 details: details
                             )
                             showReportSheet = false
-                            onToast("Thanks — your report was sent.")
+                            onToast("Thanks, your report has been submitted for review.")
                         } catch {
                             if isAlreadyReportedError(error) {
                                 showReportSheet = false

@@ -2,6 +2,9 @@
 
 import SwiftUI
 import PhotosUI
+enum MediaLimits {
+    static let maxImagesPerPost = 9
+}
 
 struct AddPostView: View {
     @StateObject private var viewModel: AddPostViewModel
@@ -34,15 +37,16 @@ struct AddPostView: View {
                         )
                         .padding()
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(viewModel.selectedImages, id: \.self) { image in
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipped()
-                                    .cornerRadius(8)
+                    let gridSpacing: CGFloat = 8
+                    let colCount = min(3, max(1, viewModel.selectedImages.count))
+
+                    if !viewModel.selectedImages.isEmpty {
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: colCount),
+                            spacing: gridSpacing
+                        ) {
+                            ForEach(Array(viewModel.selectedImages.enumerated()), id: \.offset) { idx, image in
+                                SquarePreview(image: image)
                             }
                         }
                         .padding(.horizontal)
@@ -50,10 +54,10 @@ struct AddPostView: View {
 
                     PhotosPicker(
                         selection: $viewModel.selectedPhotoItems,
-                        maxSelectionCount: 5, // Allow up to 5 media items
+                        maxSelectionCount: MediaLimits.maxImagesPerPost,   // from 5 -> 9
                         matching: .any(of: [.images, .videos])
                     ) {
-                        Label("Select Photos/Videos", systemImage: "photo.on.rectangle")
+                        Label("Select Photos", systemImage: "photo.on.rectangle")
                     }
                     .padding()
 
@@ -102,4 +106,22 @@ struct AddPostView: View {
 struct ErrorMessage: Identifiable {
     let id = UUID()
     let message: String
+}
+
+private struct SquarePreview: View {
+    let image: UIImage
+
+    var body: some View {
+        // A square container that determines the cell size
+        Rectangle()
+            .fill(Color.clear)
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()     // fill and crop to the square
+                    .clipped()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
 }

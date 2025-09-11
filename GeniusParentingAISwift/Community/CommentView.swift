@@ -211,12 +211,12 @@ private struct CommentRowView: View {
                             )
                             // success → dismiss + (optional) friendly toast
                             showReportSheet = false
-                            viewModel.errorMessage = "Thanks — your report was sent."
+                            viewModel.errorMessage = "Thanks, your report has been submitted for review."
                         } catch {
                             if isAlreadyReportedError(error) {
                                 // already exists → dismiss + toast
                                 showReportSheet = false
-                                viewModel.errorMessage = "You’ve already reported this comment."
+                                viewModel.errorMessage = "You’ve already reported this comment. "
                             } else {
                                 // other errors → keep sheet open OR dismiss (your choice)
                                 // If you want to keep it open:
@@ -267,8 +267,12 @@ private struct CommentRowView: View {
     private func block(offenderId: Int) {
         Task { @MainActor in
             working = true; defer { working = false }
-            do { try await viewModel.blockUser(userId: offenderId) }
-            catch { viewModel.errorMessage = error.localizedDescription }
+            do {
+                try await viewModel.blockUser(userId: offenderId)
+                viewModel.errorMessage = "User blocked."
+            } catch {
+                viewModel.errorMessage = error.localizedDescription
+            }
         }
     }
 }
@@ -391,14 +395,19 @@ struct PostContentView: View {
 }
 
 private struct ToastBanner: View {
+    @Environment(\.theme) var currentTheme: Theme
     let text: String
     var body: some View {
         Text(text)
-            .font(.caption)
+            .font(.footnote)
+            .foregroundColor(currentTheme.foreground)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
+            .background(currentTheme.background)
             .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(currentTheme.border.opacity(0.12), lineWidth: 1)
+            )
             .shadow(radius: 8, x: 0, y: 4)
             .multilineTextAlignment(.center)
     }
