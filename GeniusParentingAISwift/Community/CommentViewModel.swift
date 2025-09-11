@@ -127,7 +127,13 @@ class CommentViewModel: ObservableObject {
         errorMessage = nil
         logger.info("[blockUser] blocking userId=\(userId)")
         _ = try await ModerationService.shared.blockUser(userId: userId)
+
+        // prune locally so CommentView updates immediately
         self.comments.removeAll { $0.attributes.author?.data?.id == userId }
+
+        // 🔧 NEW: tell CommunityView to reload when it reappears
+        RefreshCoordinator.shared.markCommunityNeedsRefresh()
+
         errorMessage = "User blocked."
         logger.info("[blockUser] success; pruned comments by userId=\(userId). Remaining=\(self.comments.count)")
 
