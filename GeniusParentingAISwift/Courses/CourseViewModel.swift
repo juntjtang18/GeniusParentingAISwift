@@ -13,48 +13,77 @@ class CourseViewModel: ObservableObject {
     private let keychain = Keychain(service: Config.keychainService)
     private let lastViewedCategoryKey = "lastViewedCategoryID"
 
+    // maps for locale bridging
+    // en: order -> enID
+    private var enIdByOrder: [Int: Int] = [:]
+    // current-locale: id -> order
+    private var localOrderById: [Int: Int] = [:]
+
+    private func currentStrapiLocale() -> String {
+        let appLang = Locale.current.language.languageCode?.identifier.lowercased() ?? "en"
+        return appLang.hasPrefix("zh") ? "zh" : "en"
+    }
+
+    // MARK: - Initial fetch: load EN + current-locale categories, build maps, show localized if available
     func initialFetch() async {
         guard !initialLoadCompleted else { return }
-        
+
         guard let token = keychain["jwt"] else {
             errorMessage = "Authentication token not found."
             return
         }
-        
-        let categoryQuery = "sort=order&populate=header_image"
-        guard let url = URL(string: "\(strapiUrl)/coursecategories?\(categoryQuery)") else {
-            errorMessage = "Internal error: Invalid URL."
-            return
-        }
+
+        let current = currentStrapiLocale()
 
         do {
-            var request = URLRequest(url: url)
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let decoder = JSONDecoder()
-            let decodedResponse = try decoder.decode(StrapiListResponse<CategoryData>.self, from: data)
-            
-            self.categories = decodedResponse.data ?? []
+            let enCats = try await fetchCategories(locale: "en", token: token)
+            self.enIdByOrder = Dictionary(uniqueKeysWithValues:
+                enCats.compactMap { cat in
+                    guard let order = cat.attributes.order else { return nil }
+                    return (order, cat.id)
+                }
+            )
+
+            let localCats = (current == "en")
+                ? enCats
+                : try await fetchCategories(locale: current, token: token)
+
+            if current != "en" {
+                self.localOrderById = Dictionary(uniqueKeysWithValues:
+                    localCats.compactMap { cat in
+                        guard let order = cat.attributes.order else { return nil }
+                        return (cat.id, order)
+                    }
+                )
+            } else {
+                self.localOrderById = Dictionary(uniqueKeysWithValues:
+                    enCats.compactMap { cat in
+                        guard let order = cat.attributes.order else { return nil }
+                        return (cat.id, order)
+                    }
+                )
+            }
+
+            // Prefer localized categories if they exist, else fall back to EN
+            let displayCats = (current != "en" && !localCats.isEmpty) ? localCats : enCats
+            self.categories = displayCats
             self.initialLoadCompleted = true
 
             var priorityCategoryID: Int? = UserPreferencesManager.shared.value(forKey: lastViewedCategoryKey)
             if priorityCategoryID == nil || priorityCategoryID == 0 {
                 priorityCategoryID = self.categories.first?.id
             }
-            
-            if let categoryID = priorityCategoryID {
-                await fetchCourses(for: categoryID)
+            if let id = priorityCategoryID {
+                await fetchCourses(for: id)
             }
         } catch {
             errorMessage = "Failed to fetch categories: \(error.localizedDescription)"
         }
     }
 
+    // MARK: - Fetch courses with locale fallback and category-id mapping
     func fetchCourses(for categoryID: Int) async {
-        guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else {
-            return
-        }
-
+        guard coursesByCategoryID[categoryID] == nil, !loadingCategoryIDs.contains(categoryID) else { return }
         loadingCategoryIDs.insert(categoryID)
         defer { loadingCategoryIDs.remove(categoryID) }
 
@@ -63,60 +92,71 @@ class CourseViewModel: ObservableObject {
             return
         }
 
-        var allCourses: [Course] = []
-        var currentPage = 1
-        var totalPages = 1
-        let pageSize = 100
+        let current = currentStrapiLocale()
+        // Attempt 1: use tapped category id with current locale
+        if let courses = try? await fetchCoursesPagewise(categoryId: categoryID, locale: current, token: token),
+           !courses.isEmpty {
+            self.coursesByCategoryID[categoryID] = courses
+            return
+        }
 
-        do {
-            repeat {
-                let populateQuery = "populate=icon_image,translations,coursecategory"
-                let filterQuery = "filters[coursecategory][id][$eq]=\(categoryID)"
-                let sortQuery = "sort[0]=order:asc&sort[1]=title:asc"
-                let paginationQuery = "pagination[page]=\(currentPage)&pagination[pageSize]=\(pageSize)"
-                
-                var urlComponents = URLComponents(string: "\(strapiUrl)/courses")
-                urlComponents?.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)&\(paginationQuery)"
-
-                guard let url = urlComponents?.url else {
-                    print("Internal error: Invalid URL for fetching courses.")
-                    break
-                }
-
-                var request = URLRequest(url: url)
-                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-                request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-                let (data, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                    print("Server error \(statusCode) while fetching courses for category \(categoryID) on page \(currentPage).")
-                    break
-                }
-                
-                let decoder = JSONDecoder()
-                let decodedResponse = try decoder.decode(StrapiListResponse<Course>.self, from: data)
-
-                if let newCourses = decodedResponse.data {
-                    allCourses.append(contentsOf: newCourses)
-                }
-
-                if let pagination = decodedResponse.meta?.pagination {
-                    totalPages = pagination.pageCount
-                }
-                
-                currentPage += 1
-
-            } while currentPage <= totalPages
-
-            self.coursesByCategoryID[categoryID] = allCourses
-
-        } catch {
-            print("Failed to fetch or decode courses for category \(categoryID): \(error.localizedDescription)")
-            if let decodingError = error as? DecodingError {
-                print("Decoding error details: \(decodingError)")
+        // Attempt 2: map tapped id -> order -> EN id, then fetch with en
+        var fallbackCourses: [Course] = []
+        if let order = localOrderById[categoryID], let enId = enIdByOrder[order] {
+            if let courses = try? await fetchCoursesPagewise(categoryId: enId, locale: "en", token: token),
+               !courses.isEmpty {
+                fallbackCourses = courses
             }
         }
+
+        self.coursesByCategoryID[categoryID] = fallbackCourses // may be empty; UI can handle “no courses”
+    }
+
+    // MARK: - Helpers
+
+    private func fetchCategories(locale: String, token: String) async throws -> [CategoryData] {
+        let query = "sort=order&populate=header_image&locale=\(locale)"
+        guard let url = URL(string: "\(strapiUrl)/coursecategories?\(query)") else {
+            throw URLError(.badURL)
+        }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, _) = try await URLSession.shared.data(for: req)
+        let decoded = try JSONDecoder().decode(StrapiListResponse<CategoryData>.self, from: data)
+        return decoded.data ?? []
+    }
+
+    private func fetchCoursesPagewise(categoryId: Int, locale: String, token: String) async throws -> [Course] {
+        var all: [Course] = []
+        var page = 1
+        var pageCount = 1
+        let pageSize = 100
+
+        repeat {
+            let populateQuery   = "populate=icon_image,translations,coursecategory"
+            let filterQuery     = "filters[coursecategory][id][$eq]=\(categoryId)"
+            let sortQuery       = "sort[0]=order:asc&sort[1]=title:asc"
+            let paginationQuery = "pagination[page]=\(page)&pagination[pageSize]=\(pageSize)"
+            let localeQuery     = "locale=\(locale)"
+
+            var comps = URLComponents(string: "\(strapiUrl)/courses")
+            comps?.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)&\(paginationQuery)&\(localeQuery)"
+
+            guard let url = comps?.url else { break }
+
+            var req = URLRequest(url: url)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            req.setValue("application/json", forHTTPHeaderField: "Accept")
+
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else { break }
+
+            let decoded = try JSONDecoder().decode(StrapiListResponse<Course>.self, from: data)
+            if let items = decoded.data { all.append(contentsOf: items) }
+            if let p = decoded.meta?.pagination { pageCount = p.pageCount }
+            page += 1
+        } while page <= pageCount
+
+        return all
     }
 }

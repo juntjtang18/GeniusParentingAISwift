@@ -217,20 +217,27 @@ class StrapiService {
         let functionName = #function
         logger.info("[StrapiService::\(functionName)] - Fetching courses for category ID \(categoryId), page \(page).")
         do {
+            // Determine app locale and map to Strapi's locale format
+            let appLang = Locale.current.language.languageCode?.identifier.lowercased() ?? "en"
+            let strapiLocale = appLang.hasPrefix("zh") ? "zh" : "en"
+            
             let populateQuery = "populate=icon_image,translations"
             let filterQuery = "filters[coursecategory][id][$eq]=\(categoryId)"
             let sortQuery = "sort[0]=order:asc&sort[1]=title:asc"
+            let localeQuery = "locale=\(strapiLocale)"
+            
             guard var components = URLComponents(string: "\(Config.strapiBaseUrl)/api/courses") else { throw URLError(.badURL) }
-            components.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)"
-            // FIX: Added explicit type annotation
+            components.query = "\(populateQuery)&\(filterQuery)&\(sortQuery)&\(localeQuery)"
+            
             let response: StrapiListResponse<Course> = try await NetworkManager.shared.fetchPage(baseURLComponents: components, page: page, pageSize: pageSize)
-            logger.info("[StrapiService::\(functionName)] - Successfully fetched \(response.data?.count ?? 0) courses for category \(categoryId).")
+            logger.info("[StrapiService::\(functionName)] - Successfully fetched \(response.data?.count ?? 0) \(strapiLocale.uppercased()) courses for category \(categoryId).")
             return response
         } catch {
             logger.error("[StrapiService::\(functionName)] - Failed to fetch courses for category \(categoryId): \(error.localizedDescription)")
             throw error
         }
     }
+
 
     // MARK: - Comment Management
 
