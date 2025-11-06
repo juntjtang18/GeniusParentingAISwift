@@ -13,6 +13,10 @@ struct GeniusParentingAISwiftApp: App {
     @StateObject private var storeManager = StoreManager.shared
     @StateObject private var permissionManager = PermissionManager.shared
 
+    // ✅ Persist the app-level language (default to English)
+    // Use identifiers that match your Localizable.xcstrings (e.g., "en", "zh-Hans")
+    //@AppStorage("appLanguage") private var appLanguage: String = "zh_CN"
+
     init() {
         print("Application is connecting to Strapi Server at: \(Config.strapiBaseUrl)")
     }
@@ -22,30 +26,54 @@ struct GeniusParentingAISwiftApp: App {
             DimensionsProvider {
                 ZStack {
                     if isCheckingToken {
-                        ProgressView("Checking Login Status...")
+                        // This will localize according to .environment(\.locale, ...)
+                        ProgressView(String(localized: "Checking Login Status..."))
                     } else if isLoggedIn, let user = SessionManager.shared.currentUser {
-                        // The logoutAction now calls the centralized SessionManager.logout()
                         MainView(isLoggedIn: $isLoggedIn, logoutAction: { SessionManager.shared.logout() })
                             .id(user.id)
                     } else {
                         LoginView(isLoggedIn: $isLoggedIn)
                     }
                 }
+                // App-wide dependencies
                 .environmentObject(speechManager)
                 .environmentObject(themeManager)
                 .environmentObject(storeManager)
                 .environmentObject(permissionManager)
+
+                // ✅ Apply the selected language globally (one line to rule them all)
+                //.environment(\.locale, Locale(identifier: appLanguage))
+
                 .theme(themeManager.currentTheme)
                 .onAppear {
+                    // Compute an effective locale that actually exists in the bundle
+                    //let available = Set(Bundle.main.localizations.map { $0 }) // e.g. ["Base", "zh_CN", "en"]
+                    //let preferredDefault = Bundle.main.preferredLocalizations.first ?? "en"
+
+                    // If the selected appLanguage isn't shipped, fall back to preferredDefault (or "zh_CN" if that’s your real default)
+                    //let effectiveLanguage = available.contains(appLanguage) ? appLanguage : preferredDefault
+
+                    // Optional debug
+                    //print("AppStorage appLanguage=\(appLanguage), available=\(available), effective=\(effectiveLanguage)")
+
                     checkLoginStatus()
+                    //let defaultLocale = Locale.current.identifier
+                    //print("System locale before override: \(defaultLocale)")
+
+                    // ✅ Verify the appStorage language override
+                    //print("AppStorage locale override (appLanguage): \(appLanguage)")
+
+                    // Optional: check what Locale() would resolve to in SwiftUI environment
+                    //let activeLocale = Locale(identifier: appLanguage)
+                    //print("Effective Locale identifier used by .environment(\\.locale): \(activeLocale.identifier)")
+
                 }
-                // ✅ ADDED: Listen for our custom logout notification
+                // ✅ Listen for our custom logout notification
                 .onReceive(NotificationCenter.default.publisher(for: .didLogout)) { _ in
                     handleLogout()
                 }
                 // Listen for session invalidation (e.g., from NetworkManager)
                 .onReceive(NotificationCenter.default.publisher(for: .didInvalidateSession)) { _ in
-                    // We can call logout directly here as well to ensure data is cleared
                     SessionManager.shared.logout()
                 }
             }
@@ -63,7 +91,6 @@ struct GeniusParentingAISwiftApp: App {
             }
             do {
                 let user = try await StrapiService.shared.fetchCurrentUser()
-                // Use the new convenience method to set up the session
                 SessionManager.shared.startSession(jwt: SessionManager.shared.getJWT()!, user: user)
                 isLoggedIn = true
             } catch {
@@ -73,14 +100,14 @@ struct GeniusParentingAISwiftApp: App {
         }
     }
 
-
-    /// ✅ REFACTORED: This function's only job is to update the UI state.
+    /// Updates only UI state on logout
     private func handleLogout() {
         withAnimation {
             isLoggedIn = false
         }
     }
 }
+
 extension Binding where Value == Bool {
     var inverted: Binding<Bool> {
         Binding<Bool>(
@@ -89,7 +116,6 @@ extension Binding where Value == Bool {
         )
     }
 }
-
 
 extension Notification.Name {
     static let didLogout = Notification.Name("didLogout")
@@ -130,9 +156,8 @@ private struct DimensionsProvider<Content: View>: View {
             )
             content()
                 .environment(\.appDimensions, dims)
-                // ⬇️ ensure the wrapped content (your ZStack) fills the screen
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .ignoresSafeArea() // optional: match your existing safe-area behavior
+                .ignoresSafeArea()
         }
     }
 }

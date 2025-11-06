@@ -103,15 +103,12 @@ struct SignupView: View {
                             //)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Agree to Terms of Service, Privacy Policy, and Community Guidelines")
+                    .accessibilityLabel(String(localized:"Agree to Terms of Service, Privacy Policy, and Community Guidelines"))
                     .accessibilityAddTraits(.isButton)
 
-                    if let md = try? AttributedString(
-                        markdown:
-                """
-                By signing up, the user agrees to the [Terms of Service](\(tosURL)), [Privacy Policy](\(privacyURL)), and [Community Guidelines](\(guidelinesURL)).
-                """
-                    ) {
+                    let agreementFormat = String(localized: "By signing up, the user agrees to the [Terms of Service](%@), [Privacy Policy](%@), and [Community Guidelines](%@).")
+                    let markdown = String(format: agreementFormat, tosURL, privacyURL, guidelinesURL)
+                    if let md = try? AttributedString(markdown: markdown) {
                         Text(md)
                             .font(.footnote)
                             .foregroundColor(theme.foreground)

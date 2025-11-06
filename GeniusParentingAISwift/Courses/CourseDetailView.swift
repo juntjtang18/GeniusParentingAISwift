@@ -24,7 +24,7 @@ struct ShowACourseView: View {
             
             VStack(spacing: 0) {
                 if viewModel.isLoading {
-                    ProgressView("Loading Course...").frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ProgressView(String(localized:"Loading Course...")).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let errorMessage = viewModel.errorMessage {
                     Text("Error: \(errorMessage)")
                         .style(.body)

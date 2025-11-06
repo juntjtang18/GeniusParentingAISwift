@@ -5,8 +5,8 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @StateObject private var refresh = RefreshCoordinator.shared
     private let logger = AppLogger(category: "HomeView")
-
     @Binding var selectedLanguage: String
+    
     @Binding var isSideMenuShowing: Bool
     @Environment(\.theme) var theme: Theme
     @Environment(\.appDimensions) var dims
@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var selectedTip: Tip? = nil
     @State private var searchText: String = ""
     @EnvironmentObject private var tabRouter: MainTabRouter    // ⬅️ add
+    //@Environment(\.locale) private var locale
 
     private var cardWidth: CGFloat { dims.screenSize.width * 0.82 }
     private var cardHeight: CGFloat { cardWidth * 0.9 }
@@ -42,22 +43,24 @@ struct HomeView: View {
                     Spacer()
                     SearchBar(
                         text: $searchText,
-                        placeholder: "Search Courses",
+                        placeholder: String(localized: "Search Courses"),
                         onSubmit: {
                             // Optional: push to CourseView and leverage search later
                         }
                     )
 
                     // MARK: Your Courses + See All
+                    let title = String(localized: "Your Courses")
+                    let trailing = String(localized: "See All")
                     SectionHeader(
-                        title: "Your Courses",
-                        trailing: "See All",
+                        title: title,
+                        trailing: trailing,
                         onTapTrailing: {
-                            tabRouter.needsCourseViewReset = true // Signal the reset
-                            tabRouter.selectedTab = 1             // Then switch tabs
+                            tabRouter.needsCourseViewReset = true
+                            tabRouter.selectedTab = 1
                         }
                     )
-
+                    
                     // Horizontal carousel of today's courses (reusing your model + card)
                     ScrollView(.horizontal, showsIndicators: false) {
                         LazyHStack(spacing: 15) {
@@ -108,7 +111,7 @@ struct HomeView: View {
                         } label: {
                             FeatureCard(
                                 icon: Image("hottopic-icon"), // Changed to use asset image
-                                title: "Hot Topics",
+                                title: String(localized:"Hot Topics"),
                                 tint: theme.primary
                             )
                         }
@@ -122,7 +125,7 @@ struct HomeView: View {
                         } label: {
                             FeatureCard(
                                 icon: Image("tip-icon"), // Changed to use asset image
-                                title: "Tips",
+                                title: String(localized:"Tips"),
                                 tint: theme.primary
                             )
                         }
@@ -133,7 +136,7 @@ struct HomeView: View {
                         } label: {
                             FeatureCard(
                                 icon: Image("community-icon"), // Changed to use asset image
-                                title: "Community",
+                                title: String(localized:"Community"),
                                 tint: theme.primary
                             )
                         }
@@ -170,7 +173,7 @@ struct HomeView: View {
 
                     // Welcome Text
                     VStack(alignment: .leading) { // Ensure the text within the VStack is left-aligned
-                        Text("Welcome back")
+                        Text(String(localized: "Welcome back"))
                             .font(.caption)
                             .foregroundColor(theme.primaryText.opacity(0.9))
                         Text(profileName)
@@ -190,6 +193,8 @@ struct HomeView: View {
             }
         }
         .onAppear {
+            //print("HomeView locale: \(locale.identifier)")
+            //print("HomeView environment locale: \(locale.identifier)")
             Task {
                 let consumed = refresh.consumeRecommendationsNeedsRefresh()
                 logger.info("[onAppear] consumedRecommendations=\(consumed)")
@@ -243,7 +248,7 @@ private struct WelcomeRow: View {
             .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Welcome back")
+                Text(String(localized:"Welcome back"))
                     .font(.body) // Use .body with its default regular weight
                     .foregroundColor(currentTheme.foreground.opacity(0.8))
 
@@ -261,7 +266,7 @@ private struct WelcomeRow: View {
 
 private struct SearchBar: View {
     @Binding var text: String
-    var placeholder: String = "Search"
+    var placeholder: String = String(localized:"Search")
     var onSubmit: () -> Void = {}
     @Environment(\.theme) var currentTheme: Theme // Access theme
 

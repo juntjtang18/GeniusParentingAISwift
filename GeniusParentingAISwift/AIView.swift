@@ -132,7 +132,7 @@ struct AIView: View {
                 } label: {
                     Image(systemName: "keyboard.chevron.compact.down")
                         .imageScale(.large)
-                        .accessibilityLabel("Hide Keyboard")
+                        .accessibilityLabel(String(localized: "Hide Keyboard"))
                 }
                 // Commented out the tint customization for the keyboard accessory toolbar button
                 // .tint(currentTheme.accent)
@@ -141,7 +141,7 @@ struct AIView: View {
         .onAppear {
             if viewModel.messages.isEmpty {
                 let greeting = ChatMessage(
-                    content: "Hello! How can I help you with your parenting questions today?",
+                    content: String(localized: "Hello! How can I help you with your parenting questions today?"),
                     isUser: false
                 )
                 viewModel.messages.append(greeting)

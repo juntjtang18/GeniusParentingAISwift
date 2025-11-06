@@ -15,9 +15,10 @@ struct MainView: View {
     @AppStorage("hasCompletedPersonalityTest") private var hasCompletedPersonalityTest = false
     @AppStorage("personalityReminderSuppressed") private var personalityReminderSuppressed = false
     @StateObject private var tabRouter = MainTabRouter()
+    @AppStorage("appLanguage") private var appLanguage: String = "en" // or "zh_CN"
+
     
     // Existing sheets
-    @State private var selectedLanguage = "en"
     @State private var isShowingLanguageSheet = false
     @State private var isShowingProfileSheet = false
     @State private var isShowingSettingSheet = false
@@ -162,7 +163,7 @@ struct MainView: View {
             }
             
             if isShowingLanguageSheet {
-                LanguagePickerView(selectedLanguage: $selectedLanguage, isPresented: $isShowingLanguageSheet)
+                LanguagePickerView(isPresented: $isShowingLanguageSheet)
                     .transition(.move(edge: .leading))
                     .zIndex(3)
             }
@@ -259,7 +260,7 @@ struct MainView: View {
     
     private var homeTab: some View {
         NavigationView {
-            HomeView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
+            HomeView(selectedLanguage: $appLanguage, isSideMenuShowing: $isSideMenuShowing)
                 // Set toolbar background to clear for transparency
                 //.toolbarBackground(Color.clear, for: .navigationBar)
                 //.toolbarBackground(.visible, for: .navigationBar)
@@ -271,8 +272,8 @@ struct MainView: View {
 
     private var courseTab: some View {
         NavigationStack {
-            CourseView(selectedLanguage: $selectedLanguage, isSideMenuShowing: $isSideMenuShowing)
-                .navigationTitle("Courses") // Keep this for accessibility
+            CourseView(selectedLanguage: $appLanguage, isSideMenuShowing: $isSideMenuShowing)
+                .navigationTitle(String(localized: "Courses")) // Keep this for accessibility
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
@@ -289,7 +290,7 @@ struct MainView: View {
     private var aiTab: some View {
         NavigationView {
             AIView()
-                .navigationTitle("AI Assistant")
+                .navigationTitle(String(localized:"AI Assistant"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
@@ -309,7 +310,7 @@ struct MainView: View {
     private var communityTab: some View {
         NavigationView {
             CommunityView()
-                .navigationTitle("Community")
+                .navigationTitle(String(localized:"Community"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement:.principal) {
@@ -324,27 +325,6 @@ struct MainView: View {
         }
         .navigationViewStyle(.stack)
         .tint(themeManager.currentTheme.accent)
-    }
-}
-
-// Language Picker View
-struct LanguagePickerView: View {
-    @Binding var selectedLanguage: String
-    @Binding var isPresented: Bool
-
-    var body: some View {
-        NavigationView {
-            List {
-                Button("English") { selectedLanguage = "en"; isPresented = false }
-                Button("Spanish") { selectedLanguage = "es"; isPresented = false }
-            }
-            .navigationTitle("Select Language")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { isPresented = false }
-                }
-            }
-        }
     }
 }
 

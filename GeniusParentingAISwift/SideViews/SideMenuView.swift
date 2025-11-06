@@ -44,16 +44,17 @@ struct SideMenuView: View {
                     Label("Blocked Users", systemImage: "person.2.slash")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
-    
-                Divider()
+                
                 /*
+                Divider()
+                
                 Button(action: { handleMenuSelection { isShowingLanguageSheet = true } }) {
                     Label("Language", systemImage: "globe")
                 }
                 .buttonStyle(SideMenuItemButtonStyle())
                 
                 Divider()
-                 */
+                */
                 // Commented out the Theme selection button
                 /*
                 Button(action: { handleMenuSelection { isShowingThemeSheet = true } }) {

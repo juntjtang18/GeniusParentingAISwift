@@ -1,0 +1,1883 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        }
+      }
+    },
+    "Account Details" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账户详情"
+          }
+        }
+      }
+    },
+    "Add a comment..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加评论…"
+          }
+        }
+      }
+    },
+    "Add Child" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加孩子"
+          }
+        }
+      }
+    },
+    "Age:" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年龄："
+          }
+        }
+      }
+    },
+    "Age: %lld | Gender: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Age: %1$lld | Gender: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年龄：%1$lld | 性别：%2$@"
+          }
+        }
+      }
+    },
+    "Agree to Terms of Service, Privacy Policy, and Community Guidelines" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同意服务条款、隐私政策和社区准则"
+          }
+        }
+      }
+    },
+    "AI" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        }
+      }
+    },
+    "AI Assistant" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI助手"
+          }
+        }
+      }
+    },
+    "Already have an account? Login" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已有账户？登录"
+          }
+        }
+      }
+    },
+    "Are you sure?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你确定吗？"
+          }
+        }
+      }
+    },
+    "Ask a parenting question..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提出父母相关问题…"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        }
+      }
+    },
+    "Block this user?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽此用户？"
+          }
+        }
+      }
+    },
+    "Block User" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽用户"
+          }
+        }
+      }
+    },
+    "Blocked Users" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "被屏蔽的用户"
+          }
+        }
+      }
+    },
+    "By accessing or using our Website, you agree to comply with and be bound by these Terms. If you do not agree with any part of these Terms, please do not use our Website." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过访问或使用我们的网站，即表示您同意遵守这些条款并受其约束。如果您不同意这些条款的任何部分，请不要使用我们的网站。"
+          }
+        }
+      }
+    },
+    "By signing up, the user agrees to the [Terms of Service](%@), [Privacy Policy](%@), and [Community Guidelines](%@)." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "By signing up, the user agrees to the [Terms of Service](%1$@), [Privacy Policy](%2$@), and [Community Guidelines](%3$@)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册即表示用户同意[服务条款](%1$@)、[隐私政策](%2$@)和[社区指南](%3$@)。"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Checking Login Status..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查登录状态..."
+          }
+        }
+      }
+    },
+    "Child's Name" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "孩子的名字"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Comment" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论"
+          }
+        }
+      }
+    },
+    "Comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论"
+          }
+        }
+      }
+    },
+    "Community" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社区"
+          }
+        }
+      }
+    },
+    "Community Guidelines" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社区指南"
+          }
+        }
+      }
+    },
+    "Course" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "课程"
+          }
+        }
+      }
+    },
+    "Course data not found." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "课程数据未找到。"
+          }
+        }
+      }
+    },
+    "Courses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "课程"
+          }
+        }
+      }
+    },
+    "Current Plan" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前订购"
+          }
+        }
+      }
+    },
+    "Daily Tips" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日提示"
+          }
+        }
+      }
+    },
+    "Data Options" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据选项"
+          }
+        }
+      }
+    },
+    "Delete Account" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除账户"
+          }
+        }
+      }
+    },
+    "Delete My Account" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除我的账户"
+          }
+        }
+      }
+    },
+    "Details (optional)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "详细信息（可选）"
+          }
+        }
+      }
+    },
+    "Don't have an account? Sign Up" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有账户？注册"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        }
+      }
+    },
+    "Easy steps to guide parents through" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引导家长的简单步骤"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
+          }
+        }
+      }
+    },
+    "Edit Profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑个人资料"
+          }
+        }
+      }
+    },
+    "Effective Date: July 12, 2025" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生效日期：2025年7月12日"
+          }
+        }
+      }
+    },
+    "Email" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电子邮件"
+          }
+        }
+      }
+    },
+    "Email Notifications" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电子邮件通知"
+          }
+        }
+      }
+    },
+    "English" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "英语"
+          }
+        }
+      }
+    },
+    "Error" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "错误"
+          }
+        }
+      }
+    },
+    "Error: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "错误：%@"
+          }
+        }
+      }
+    },
+    "Error: Invalid backend URL" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "错误：无效的后端网址"
+          }
+        }
+      }
+    },
+    "Everything parents need, in one place" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一切家长所需，尽在一处"
+          }
+        }
+      }
+    },
+    "Failed to load questions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载问题失败"
+          }
+        }
+      }
+    },
+    "Family Information" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家庭信息"
+          }
+        }
+      }
+    },
+    "Features" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特性"
+          }
+        }
+      }
+    },
+    "Features:" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "功能："
+          }
+        }
+      }
+    },
+    "Female" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "女性"
+          }
+        }
+      }
+    },
+    "Gender" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "性别"
+          }
+        }
+      }
+    },
+    "GenParenting " : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GenParenting"
+          }
+        }
+      }
+    },
+    "Got it!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明白了！"
+          }
+        }
+      }
+    },
+    "Great! Let's get to know you better. This will only take 30 seconds." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太好了！让我们更好地了解你。这只需30秒。"
+          }
+        }
+      }
+    },
+    "Hello! How can I help you with your parenting questions today?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你好！今天我怎样帮助你解决育儿问题呢？"
+          }
+        }
+      }
+    },
+    "Hide Keyboard" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏键盘"
+          }
+        }
+      }
+    },
+    "Home" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首页"
+          }
+        }
+      }
+    },
+    "Hot Topics" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "热点话题"
+          }
+        }
+      }
+    },
+    "Image failed to load" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像加载失败"
+          }
+        }
+      }
+    },
+    "Invalid Image URL" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的图片URL"
+          }
+        }
+      }
+    },
+    "Invalid Video URL" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的视频网址"
+          }
+        }
+      }
+    },
+    "Know me Better" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更了解我"
+          }
+        }
+      }
+    },
+    "Last Updated: February 23, 2025" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最后更新：2025年2月23日"
+          }
+        }
+      }
+    },
+    "Load more comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载更多评论"
+          }
+        }
+      }
+    },
+    "Loading Categories..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载类别..."
+          }
+        }
+      }
+    },
+    "Loading comments..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载评论..."
+          }
+        }
+      }
+    },
+    "Loading Community..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载社区..."
+          }
+        }
+      }
+    },
+    "Loading Course..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载课程..."
+          }
+        }
+      }
+    },
+    "Loading Plans..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载计划..."
+          }
+        }
+      }
+    },
+    "Loading Profile..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载配置文件…"
+          }
+        }
+      }
+    },
+    "Loading questions…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载问题…"
+          }
+        }
+      }
+    },
+    "Loading Topic..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载主题..."
+          }
+        }
+      }
+    },
+    "Login" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
+          }
+        }
+      }
+    },
+    "Logout" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
+          }
+        }
+      }
+    },
+    "Male" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "男性"
+          }
+        }
+      }
+    },
+    "Manage Subscription" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理订阅"
+          }
+        }
+      }
+    },
+    "Maybe Later" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "也许以后吧"
+          }
+        }
+      }
+    },
+    "Membership Required" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要会员资格"
+          }
+        }
+      }
+    },
+    "New Post" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新帖"
+          }
+        }
+      }
+    },
+    "No blocked users" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有被屏蔽的用户"
+          }
+        }
+      }
+    },
+    "No child details added." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未添加子详细信息。"
+          }
+        }
+      }
+    },
+    "No comments yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无评论。"
+          }
+        }
+      }
+    },
+    "No content for this course." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这门课程没有内容。"
+          }
+        }
+      }
+    },
+    "No content for this topic." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此主题没有内容。"
+          }
+        }
+      }
+    },
+    "No courses available." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无课程。"
+          }
+        }
+      }
+    },
+    "No lessons for today." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天没有课程。"
+          }
+        }
+      }
+    },
+    "No personality result saved yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未保存性格结果。"
+          }
+        }
+      }
+    },
+    "No profile data available." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可用的个人资料数据。"
+          }
+        }
+      }
+    },
+    "No profile details found. Please complete your profile." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到个人资料详细信息。请完善个人资料。"
+          }
+        }
+      }
+    },
+    "No questions available." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可用的问题。"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在不行"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好的"
+          }
+        }
+      }
+    },
+    "Page %lld of %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Page %1$lld of %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 页，共 %2$lld 页"
+          }
+        }
+      }
+    },
+    "Parent Genius AI (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and iPhone app (the \"Services\"). By using our Services, you agree to the practices described in this Privacy Policy." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parent Genius AI（“我们”）致力于保护您的隐私。本隐私政策说明了我们如何在您使用我们的网站和iPhone应用程序（“服务”）时收集、使用和保护您的信息。使用我们的服务即表示您同意本隐私政策中描述的做法。"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码"
+          }
+        }
+      }
+    },
+    "Personality Profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "性格简介"
+          }
+        }
+      }
+    },
+    "Please log in to view your profile." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请登录以查看您的个人资料。"
+          }
+        }
+      }
+    },
+    "Post" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "帖子"
+          }
+        }
+      }
+    },
+    "Posting..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发布中..."
+          }
+        }
+      }
+    },
+    "Preferences" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偏好设置"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私政策"
+          }
+        }
+      }
+    },
+    "Processing..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "处理中..."
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人资料"
+          }
+        }
+      }
+    },
+    "Purchase Failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买失败"
+          }
+        }
+      }
+    },
+    "Purchase Successful" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买成功"
+          }
+        }
+      }
+    },
+    "Reason" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原因"
+          }
+        }
+      }
+    },
+    "REFRESH mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新模式"
+          }
+        }
+      }
+    },
+    "Report Comment" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报告评论"
+          }
+        }
+      }
+    },
+    "Report Post" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "举报帖子"
+          }
+        }
+      }
+    },
+    "Retake Personality Test" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重测性格测试"
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存"
+          }
+        }
+      }
+    },
+    "Saving…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存中…"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
+          }
+        }
+      }
+    },
+    "Search Courses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索课程"
+          }
+        }
+      }
+    },
+    "See All" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看全部"
+          }
+        }
+      }
+    },
+    "Select a Theme" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择主题"
+          }
+        }
+      }
+    },
+    "Select Language" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择语言"
+          }
+        }
+      }
+    },
+    "Select Photos" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择照片"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置"
+          }
+        }
+      }
+    },
+    "Sign Up" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册"
+          }
+        }
+      }
+    },
+    "Simple guidance every step of the way." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每一步都有简单指导。"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
+          }
+        }
+      }
+    },
+    "Skip Test >" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过测试 >"
+          }
+        }
+      }
+    },
+    "Spanish" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "西班牙语"
+          }
+        }
+      }
+    },
+    "Start Personality Test" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始性格测试"
+          }
+        }
+      }
+    },
+    "Submit Report" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提交报告"
+          }
+        }
+      }
+    },
+    "Subscribe" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅"
+          }
+        }
+      }
+    },
+    "Subscribe for %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅%@"
+          }
+        }
+      }
+    },
+    "Subscribe Now" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即订阅"
+          }
+        }
+      }
+    },
+    "Subscription" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅"
+          }
+        }
+      }
+    },
+    "Subscription Plans" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅计划"
+          }
+        }
+      }
+    },
+    "Take the test" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "参加测试"
+          }
+        }
+      }
+    },
+    "Tap to explore" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轻触以探索"
+          }
+        }
+      }
+    },
+    "Terms of Service" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务条款"
+          }
+        }
+      }
+    },
+    "Terms of Use" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用条款"
+          }
+        }
+      }
+    },
+    "Thank you for trusting Parent Genius AI. We are committed to empowering parents while respecting your privacy." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "感谢您信任Parent Genius AI。我们致力于在尊重您隐私的同时增强家长的能力。"
+          }
+        }
+      }
+    },
+    "The correct answer is: **%@**" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正确答案是：**%@**"
+          }
+        }
+      }
+    },
+    "This course is only available to members. Subscribe now to unlock this and all other exclusive content!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此课程仅对会员开放。立即订阅以解锁此课程和所有其他独家内容！"
+          }
+        }
+      }
+    },
+    "This course requires a membership to access." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本课程需要会员资格才能访问。"
+          }
+        }
+      }
+    },
+    "This helps tailor tips and lessons to you." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这有助于为您量身定制建议和课程。"
+          }
+        }
+      }
+    },
+    "This will control data refreshing behavior in a future update." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这将在未来的更新中控制数据刷新行为。"
+          }
+        }
+      }
+    },
+    "Tips" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提示"
+          }
+        }
+      }
+    },
+    "To change your result, retake the personality test." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要更改结果，请重新进行性格测试。"
+          }
+        }
+      }
+    },
+    "Topic data not found." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到主题数据。"
+          }
+        }
+      }
+    },
+    "Try the 30-sec Personality Test?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尝试30秒人格测试？"
+          }
+        }
+      }
+    },
+    "Unblock" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解除阻止"
+          }
+        }
+      }
+    },
+    "Unblock @%@?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解除屏蔽@%@?"
+          }
+        }
+      }
+    },
+    "Unlock exclusive courses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁独家课程"
+          }
+        }
+      }
+    },
+    "Unlock Full Access" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁完整访问权限"
+          }
+        }
+      }
+    },
+    "Unsupported component: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的组件：%@"
+          }
+        }
+      }
+    },
+    "User Name" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户名"
+          }
+        }
+      }
+    },
+    "User unblocked" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户已解锁"
+          }
+        }
+      }
+    },
+    "Username" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户名"
+          }
+        }
+      }
+    },
+    "Video could not be loaded." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载视频。"
+          }
+        }
+      }
+    },
+    "View all %lld comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看全部%lld条评论"
+          }
+        }
+      }
+    },
+    "Welcome back" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎回来"
+          }
+        }
+      }
+    },
+    "Welcome to\nGenius Parenting" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎来到天才育儿"
+          }
+        }
+      }
+    },
+    "Welcome to Genius Parenting AI (\"we,\" \"our,\" or \"us\"). These Terms of Service (\"Terms\") govern your access to and use of our website, https://www.geniusparentingAI.ca (the \"Website\"), and any services, content, and features provided by GNM399 Ventures Corp." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎使用Genius Parenting AI（“我们”）。这些服务条款（“条款”）管理您对我们网站 https://www.geniusparentingAI.ca（“网站”）的访问和使用，以及对由GNM399 Ventures Corp.提供的任何服务、内容和功能的使用。"
+          }
+        }
+      }
+    },
+    "You already know your child best. In 30 seconds, help us know you — so your parenting support is as smart and unique as you are." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您已经对自己的孩子了如指掌。请在30秒内帮助我们了解您，以便让我们的育儿支持如您一样聪明和独特。"
+          }
+        }
+      }
+    },
+    "Your account and all associated data will be permanently deleted. This action is irreversible." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的账户和所有相关数据将被永久删除。此操作不可逆。"
+          }
+        }
+      }
+    },
+    "Your AI-powered partner in building trust, love, and resilience in parenting." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的AI驱动伙伴，助您在养育中建立信任、爱和韧性。"
+          }
+        }
+      }
+    },
+    "Your Courses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的课程"
+          }
+        }
+      }
+    },
+    "Your courses to match your style" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的课程以匹配您的风格"
+          }
+        }
+      }
+    },
+    "Your new plan is now active!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的新计划现已生效！"
+          }
+        }
+      }
+    },
+    "Your Power Tip:" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的强力提示："
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

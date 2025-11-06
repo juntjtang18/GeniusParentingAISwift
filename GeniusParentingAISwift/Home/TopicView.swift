@@ -25,7 +25,7 @@ struct TopicView: View {
             // This is your original content VStack
             VStack(spacing: 0) {
                 if viewModel.isLoading {
-                    ProgressView("Loading Topic...").frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ProgressView(String(localized:"Loading Topic...")).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let errorMessage = viewModel.errorMessage {
                      Text("Error: \(errorMessage)").foregroundColor(.red).padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let topic = viewModel.topic {

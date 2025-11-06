@@ -23,7 +23,7 @@ class ChatViewModel: ObservableObject {
     /// Fetches a response from the Strapi OpenAI bridge endpoint.
     private func fetchBotResponse(userInput: String) async {
         guard let url = URL(string: "\(strapiUrl)/openai/completion") else {
-            addErrorMessage(text: "Error: Invalid backend URL")
+            addErrorMessage(text: String(localized: "Error: Invalid backend URL"))
             return
         }
 
